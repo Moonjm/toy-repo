@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/toy
+    username: ${DB_USERNAME:toy}
+    password: ${DB_PASSWORD:toy00}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+
+holidays:
+  url: https://date.nager.at/api/v3/PublicHolidays/{year}/KR
+

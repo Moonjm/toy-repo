@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { ConfirmDialog } from "@repo/ui";
 
 export default function App() {
+  const apiBase = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [month, setMonth] = useState<Date>(new Date());
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -56,7 +57,7 @@ export default function App() {
     if (holidayCacheRef.current[year]) return;
 
     let cancelled = false;
-    fetch(`/api/holidays?year=${year}`)
+    fetch(`${apiBase}/api/holidays?year=${year}`)
       .then((res) => res.json())
       .then((res) => {
         if (cancelled || !res?.success) return;
