@@ -1,6 +1,7 @@
 package com.example.backend.holidays
 
-import org.springframework.http.HttpStatus
+import com.example.backend.common.response.DataResponseBody
+import com.example.backend.common.response.ResponseBody
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -13,27 +14,7 @@ class HolidaysController(
     private val holidaysService: HolidaysService
 ) {
     @GetMapping
-    fun getHolidays(@RequestParam year: String?): ResponseEntity<HolidaysResponse> {
-        val safeYear = year?.trim().orEmpty()
-        if (!safeYear.matches(Regex("\\d{4}"))) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(HolidaysResponse(success = false, data = emptyList(), message = "year required"))
-        }
-
-        return try {
-            val data = holidaysService.fetch(safeYear)
-            ResponseEntity.ok(HolidaysResponse(success = true, data = data))
-        } catch (ex: Exception) {
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body(HolidaysResponse(success = false, data = emptyList(), message = "holiday fetch failed"))
-        }
+    fun getHolidays(@RequestParam(name ="year", required = true) year: String): ResponseEntity<ResponseBody> {
+        return ResponseEntity.ok(DataResponseBody(holidaysService.fetch(year)))
     }
 }
-
-data class HolidaysResponse(
-    val success: Boolean,
-    val data: List<HolidayItem>,
-    val message: String? = null
-)
