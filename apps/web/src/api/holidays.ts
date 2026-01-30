@@ -14,5 +14,5 @@ export type HolidaysResponse = {
 };
 
 export function fetchHolidays(year: string): Promise<HolidaysResponse> {
-  return getJson<HolidaysResponse>(`/api/holidays?year=${encodeURIComponent(year)}`);
+  return getJson<HolidaysResponse>(`/holidays?year=${encodeURIComponent(year)}`);
 }
