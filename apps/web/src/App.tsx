@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DayPicker, type DayButtonProps } from "react-day-picker";
 import dayjs from "dayjs";
 import { ConfirmDialog } from "@repo/ui";
+import { fetchHolidays } from "./api/holidays";
 
 export default function App() {
-  const apiBase = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [month, setMonth] = useState<Date>(new Date());
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -57,17 +57,20 @@ export default function App() {
     if (holidayCacheRef.current[year]) return;
 
     let cancelled = false;
-    fetch(`${apiBase}/api/holidays?year=${year}`)
-      .then((res) => res.json())
+    fetchHolidays(year)
       .then((res) => {
-        if (cancelled || !res?.success) return;
+        if (cancelled || !Array.isArray(res?.data)) return;
         setHolidayMap((prev) => {
           const next = { ...prev };
-          res.data.forEach((item: { date: number; name: string }) => {
-            const key = dayjs(String(item.date), "YYYYMMDD").format("YYYY-MM-DD");
-            if (!next[key]) next[key] = [];
-            next[key].push(item.name);
-          });
+          res.data.forEach(
+            (item: { date: string; localName?: string | null; name?: string | null }) => {
+              const key = dayjs(item.date).format("YYYY-MM-DD");
+              const label = item.localName ?? item.name;
+              if (!label) return;
+              if (!next[key]) next[key] = [];
+              next[key].push(label);
+            }
+          );
           return next;
         });
         holidayCacheRef.current[year] = true;
