@@ -16,6 +16,3 @@ spring:
         jdbc:
           batch_size: 100
 
-holidays:
-  url: https://date.nager.at/api/v3/PublicHolidays/{year}/KR
-

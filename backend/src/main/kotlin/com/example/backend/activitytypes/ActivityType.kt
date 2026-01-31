@@ -29,5 +29,5 @@ class ActivityType(
     var createdAt: LocalDateTime? = null,
     @UpdateTimestamp
     @Column(nullable = false)
-    var updatedAt: LocalDateTime? = null
+    var updatedAt: LocalDateTime? = null,
 )

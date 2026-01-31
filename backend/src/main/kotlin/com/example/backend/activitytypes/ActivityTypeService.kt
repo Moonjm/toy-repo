@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ActivityTypeService(
-    private val repository: ActivityTypeRepository
+    private val repository: ActivityTypeRepository,
 ) {
     @Transactional(readOnly = true)
     fun list(active: Boolean?): List<ActivityTypeResponse> {
@@ -27,9 +27,9 @@ class ActivityTypeService(
             ?: throw CustomException(ErrorCode.RESOURCE_NOT_FOUND, id)
 
     @Transactional
-    fun create(request: ActivityTypeCreateRequest): ActivityTypeResponse {
-        val emoji = request.emoji?.trim().orEmpty()
-        val name = request.name?.trim().orEmpty()
+    fun create(request: ActivityTypeRequest): ActivityTypeResponse {
+        val emoji = request.emoji.trim()
+        val name = request.name.trim()
         validateRequired(emoji, name)
 
         if (repository.existsByEmoji(emoji)) {
@@ -40,28 +40,33 @@ class ActivityTypeService(
             ActivityType(
                 emoji = emoji,
                 name = name,
-                isActive = request.isActive ?: true,
-                sortOrder = request.sortOrder ?: 0
+                isActive = request.isActive,
+                sortOrder = request.sortOrder,
             )
         return repository.save(entity).toResponse()
     }
 
     @Transactional
-    fun update(id: Long, request: ActivityTypeUpdateRequest): ActivityTypeResponse {
+    fun update(
+        id: Long,
+        request: ActivityTypeRequest,
+    ): ActivityTypeResponse {
         val entity =
             repository.findByIdOrNull(id)
                 ?: throw CustomException(ErrorCode.RESOURCE_NOT_FOUND, id)
 
-        request.emoji?.trim()?.takeIf { it.isNotEmpty() }?.let { emoji ->
-            if (emoji != entity.emoji && repository.existsByEmoji(emoji)) {
-                throw CustomException(ErrorCode.DUPLICATE_RESOURCE, emoji)
-            }
-            entity.emoji = emoji
+        val emoji = request.emoji.trim()
+        val name = request.name.trim()
+        validateRequired(emoji, name)
+
+        if (emoji != entity.emoji && repository.existsByEmoji(emoji)) {
+            throw CustomException(ErrorCode.DUPLICATE_RESOURCE, emoji)
         }
 
-        request.name?.trim()?.takeIf { it.isNotEmpty() }?.let { entity.name = it }
-        request.isActive?.let { entity.isActive = it }
-        request.sortOrder?.let { entity.sortOrder = it }
+        entity.emoji = emoji
+        entity.name = name
+        entity.isActive = request.isActive
+        entity.sortOrder = request.sortOrder
 
         return repository.save(entity).toResponse()
     }
@@ -74,7 +79,43 @@ class ActivityTypeService(
         repository.delete(entity)
     }
 
-    private fun validateRequired(emoji: String, name: String) {
+    @Transactional
+    fun move(request: ActivityTypeMoveRequest) {
+        val beforeId = request.beforeId
+        if (beforeId == request.targetId) {
+            throw CustomException(ErrorCode.INVALID_REQUEST, "targetId")
+        }
+
+        val entities = repository.findAllByOrderBySortOrderAscIdAsc().toMutableList()
+        val targetIndex = entities.indexOfFirst { it.id == request.targetId }
+        if (targetIndex < 0) {
+            throw CustomException(ErrorCode.RESOURCE_NOT_FOUND, request.targetId)
+        }
+        val target = entities.removeAt(targetIndex)
+
+        val insertIndex =
+            beforeId
+                ?.let { id ->
+                    val idx = entities.indexOfFirst { it.id == id }
+                    if (idx < 0) {
+                        throw CustomException(ErrorCode.RESOURCE_NOT_FOUND, id)
+                    }
+                    idx
+                }
+                ?: entities.size
+
+        entities.add(insertIndex, target)
+
+        entities.forEachIndexed { index, entity ->
+            entity.sortOrder = index + 1
+        }
+        repository.saveAll(entities)
+    }
+
+    private fun validateRequired(
+        emoji: String,
+        name: String,
+    ) {
         if (emoji.isBlank()) {
             throw CustomException(ErrorCode.INVALID_REQUEST, "emoji")
         }
@@ -82,13 +123,4 @@ class ActivityTypeService(
             throw CustomException(ErrorCode.INVALID_REQUEST, "name")
         }
     }
-
-    private fun ActivityType.toResponse(): ActivityTypeResponse =
-        ActivityTypeResponse(
-            id = id ?: 0L,
-            emoji = emoji,
-            name = name,
-            isActive = isActive,
-            sortOrder = sortOrder
-        )
 }

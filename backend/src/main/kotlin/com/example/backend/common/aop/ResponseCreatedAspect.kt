@@ -1,47 +1,44 @@
 package com.example.backend.common.aop
 
 import com.example.backend.common.annotation.ResponseCreated
-import com.example.backend.common.response.DataResponseBody
-import com.example.backend.common.response.ResponseBody
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
+import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
+import kotlin.collections.indexOf
 
 @Aspect
 @Component
 class ResponseCreatedAspect {
-
     @Around("@annotation(responseCreated)")
-    fun wrapCreatedResponse(
+    fun handleResponseCreated(
         joinPoint: ProceedingJoinPoint,
-        responseCreated: ResponseCreated
-    ): ResponseEntity<ResponseBody> {
-        val result = joinPoint.proceed()
-        val id = result as? Long
-            ?: throw IllegalStateException("@ResponseCreated requires controller to return Long id")
-        val location = buildLocation(responseCreated.locationPath, id)
+        responseCreated: ResponseCreated,
+    ): ResponseEntity<Void> {
+        val result = joinPoint.proceed() as ResponseEntity<*>
+        val id = result.getBody()
 
         return ResponseEntity
-            .created(location)
-            .body(DataResponseBody(id))
+            .created(
+                URI.create(
+                    responseCreated.path
+                        .replace("{id}", id?.toString() ?: ""),
+                ),
+            ).build()
     }
 
-    private fun buildLocation(path: String, id: Long): URI {
-        val resolvedPath =
-            if (path.contains("{id}")) {
-                path.replace("{id}", id.toString())
-            } else {
-                "${path.trimEnd('/')}/$id"
-            }
+    private fun getArgument(
+        joinPoint: ProceedingJoinPoint,
+        name: String,
+    ): Any? {
+        val signature = joinPoint.signature as MethodSignature
+        val paramNames = signature.parameterNames
+        val args = joinPoint.args
 
-        return ServletUriComponentsBuilder
-            .fromCurrentContextPath()
-            .path(resolvedPath)
-            .build()
-            .toUri()
+        val index = paramNames.indexOf(name)
+        return if (index >= 0) args[index] else null
     }
 }
