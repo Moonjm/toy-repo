@@ -20,7 +20,7 @@ class ApiError extends Error {
   }
 }
 
-async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
     ...init,
     headers: {
@@ -42,6 +42,24 @@ async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T
 
 export function getJson<T>(path: string): Promise<T> {
   return requestJson<T>(`${apiBase}${path}`);
+}
+
+export function postJson<T>(path: string, body?: JsonValue): Promise<T> {
+  return requestJson<T>(`${apiBase}${path}`, {
+    method: "POST",
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+}
+
+export function putJson<T>(path: string, body?: JsonValue): Promise<T> {
+  return requestJson<T>(`${apiBase}${path}`, {
+    method: "PUT",
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+}
+
+export function deleteJson<T>(path: string): Promise<T> {
+  return requestJson<T>(`${apiBase}${path}`, { method: "DELETE" });
 }
 
 export { ApiError };
