@@ -24,7 +24,7 @@ function formatError(error: unknown): string {
   return '요청 처리 중 문제가 발생했습니다.';
 }
 
-export default function ActivityTypesPage() {
+export default function CategoriesPage() {
   const [items, setItems] = useState<ActivityType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export default function ActivityTypesPage() {
         emoji: createForm.emoji.trim(),
         name: createForm.name.trim(),
       });
-      setNotice('새 운동 타입을 추가했어요.');
+      setNotice('새 카테고리를 추가했어요.');
       setCreateForm(emptyForm);
       await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {
@@ -94,7 +94,7 @@ export default function ActivityTypesPage() {
         emoji: editForm.emoji.trim(),
         name: editForm.name.trim(),
       });
-      setNotice('운동 타입을 저장했어요.');
+      setNotice('카테고리를 저장했어요.');
       setEditingId(null);
       await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {
@@ -128,14 +128,14 @@ export default function ActivityTypesPage() {
 
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">activity types</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">categories</p>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h1
                 className="text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                운동 타입 관리
+                카테고리 관리
               </h1>
               <p className="mt-2 text-base text-slate-600">
                 이모지, 이름, 활성 상태를 빠르게 관리하세요.
@@ -162,7 +162,7 @@ export default function ActivityTypesPage() {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
           <section className="rounded-3xl bg-white/90 p-6 shadow-[var(--shadow)] backdrop-blur">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">새 운동 타입</h2>
+              <h2 className="text-lg font-semibold text-slate-900">새 카테고리</h2>
               <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                 CREATE
               </span>
@@ -248,7 +248,7 @@ export default function ActivityTypesPage() {
 
           <section className="rounded-3xl bg-white/90 p-6 shadow-[var(--shadow)] backdrop-blur">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">운동 타입 목록</h2>
+              <h2 className="text-lg font-semibold text-slate-900">카테고리 목록</h2>
               <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
                 {sortedItems.length} items
               </span>
@@ -272,7 +272,7 @@ export default function ActivityTypesPage() {
                 </div>
               ) : sortedItems.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                  아직 등록된 운동 타입이 없습니다.
+                  아직 등록된 카테고리가 없습니다.
                 </div>
               ) : (
                 sortedItems.map((item) => {

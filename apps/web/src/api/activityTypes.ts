@@ -32,7 +32,7 @@ export type DataResponse<T> = {
 
 export function fetchActivityTypes(active?: boolean): Promise<DataResponse<ActivityType[]>> {
   const query = active === undefined ? '' : `?active=${encodeURIComponent(String(active))}`;
-  return getJson<DataResponse<ActivityTypeApi[]>>(`/activity-types${query}`).then((res) => ({
+  return getJson<DataResponse<ActivityTypeApi[]>>(`/categories${query}`).then((res) => ({
     ...res,
     data: (res.data ?? []).map((item) => ({
       id: item.id,
@@ -45,7 +45,7 @@ export function fetchActivityTypes(active?: boolean): Promise<DataResponse<Activ
 }
 
 export function createActivityType(payload: ActivityTypeRequest): Promise<number> {
-  return postJson<number>('/activity-types', {
+  return postJson<number>('/categories', {
     emoji: payload.emoji,
     name: payload.name,
     active: payload.isActive,
@@ -53,7 +53,7 @@ export function createActivityType(payload: ActivityTypeRequest): Promise<number
 }
 
 export function updateActivityType(id: number, payload: ActivityTypeRequest): Promise<void> {
-  return putJson<void>(`/activity-types/${id}`, {
+  return putJson<void>(`/categories/${id}`, {
     emoji: payload.emoji,
     name: payload.name,
     active: payload.isActive,
@@ -61,5 +61,5 @@ export function updateActivityType(id: number, payload: ActivityTypeRequest): Pr
 }
 
 export function deleteActivityType(id: number): Promise<void> {
-  return deleteJson<void>(`/activity-types/${id}`);
+  return deleteJson<void>(`/categories/${id}`);
 }
