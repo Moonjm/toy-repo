@@ -1,19 +1,19 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "./button";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from './button';
 
 const meta: Meta<typeof Button> = {
-  title: "Components/Button",
+  title: 'Components/Button',
   component: Button,
   args: {
-    children: "Click me",
-    variant: "primary"
+    children: 'Click me',
+    variant: 'primary',
   },
   argTypes: {
     variant: {
-      control: "radio",
-      options: ["primary", "secondary", "ghost"]
-    }
-  }
+      control: 'radio',
+      options: ['primary', 'secondary', 'ghost'],
+    },
+  },
 };
 
 export default meta;
@@ -24,12 +24,12 @@ export const Primary: Story = {};
 
 export const Secondary: Story = {
   args: {
-    variant: "secondary"
-  }
+    variant: 'secondary',
+  },
 };
 
 export const Ghost: Story = {
   args: {
-    variant: "ghost"
-  }
+    variant: 'ghost',
+  },
 };

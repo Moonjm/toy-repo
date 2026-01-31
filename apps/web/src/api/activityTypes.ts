@@ -1,4 +1,4 @@
-import { deleteJson, getJson, postJson, putJson } from "./client";
+import { deleteJson, getJson, postJson, putJson } from './client';
 
 export type ActivityType = {
   id: number;
@@ -31,7 +31,7 @@ export type DataResponse<T> = {
 };
 
 export function fetchActivityTypes(active?: boolean): Promise<DataResponse<ActivityType[]>> {
-  const query = active === undefined ? "" : `?active=${encodeURIComponent(String(active))}`;
+  const query = active === undefined ? '' : `?active=${encodeURIComponent(String(active))}`;
   return getJson<DataResponse<ActivityTypeApi[]>>(`/activity-types${query}`).then((res) => ({
     ...res,
     data: (res.data ?? []).map((item) => ({
@@ -39,29 +39,24 @@ export function fetchActivityTypes(active?: boolean): Promise<DataResponse<Activ
       emoji: item.emoji,
       name: item.name,
       sortOrder: item.sortOrder,
-      isActive: item.isActive ?? item.active ?? false
-    }))
+      isActive: item.isActive ?? item.active ?? false,
+    })),
   }));
 }
 
-export function createActivityType(
-  payload: ActivityTypeRequest
-): Promise<number> {
-  return postJson<number>("/activity-types", {
+export function createActivityType(payload: ActivityTypeRequest): Promise<number> {
+  return postJson<number>('/activity-types', {
     emoji: payload.emoji,
     name: payload.name,
-    active: payload.isActive
+    active: payload.isActive,
   });
 }
 
-export function updateActivityType(
-  id: number,
-  payload: ActivityTypeRequest
-): Promise<void> {
+export function updateActivityType(id: number, payload: ActivityTypeRequest): Promise<void> {
   return putJson<void>(`/activity-types/${id}`, {
     emoji: payload.emoji,
     name: payload.name,
-    active: payload.isActive
+    active: payload.isActive,
   });
 }
 

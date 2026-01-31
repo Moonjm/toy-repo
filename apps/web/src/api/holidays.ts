@@ -1,4 +1,4 @@
-import { getJson } from "./client";
+import { getJson } from './client';
 
 export type Holiday = {
   date: string;

@@ -1,7 +1,7 @@
-import * as React from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { Button } from "./button";
-import { cn } from "./utils";
+import * as React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from './button';
+import { cn } from './utils';
 
 export type ConfirmDialogProps = {
   title: string;
@@ -17,10 +17,10 @@ export function ConfirmDialog({
   title,
   description,
   triggerLabel,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
   onConfirm,
-  className
+  className,
 }: ConfirmDialogProps) {
   return (
     <Dialog.Root>
@@ -31,14 +31,12 @@ export function ConfirmDialog({
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
         <Dialog.Content
           className={cn(
-            "fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2",
-            "rounded-xl bg-white p-6 shadow-xl",
+            'fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2',
+            'rounded-xl bg-white p-6 shadow-xl',
             className
           )}
         >
-          <Dialog.Title className="text-lg font-semibold text-slate-900">
-            {title}
-          </Dialog.Title>
+          <Dialog.Title className="text-lg font-semibold text-slate-900">{title}</Dialog.Title>
           {description ? (
             <Dialog.Description className="mt-2 text-sm text-slate-600">
               {description}

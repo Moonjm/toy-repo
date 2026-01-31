@@ -1,34 +1,34 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   createActivityType,
   deleteActivityType,
   fetchActivityTypes,
   type ActivityType,
   type ActivityTypeRequest,
-  updateActivityType
-} from "../api/activityTypes";
-import { ApiError } from "../api/client";
+  updateActivityType,
+} from '../api/activityTypes';
+import { ApiError } from '../api/client';
 
 const emptyForm: ActivityTypeRequest = {
-  emoji: "",
-  name: "",
-  isActive: true
+  emoji: '',
+  name: '',
+  isActive: true,
 };
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === "object") {
+  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
     const message = (error.body as { message?: string }).message;
     if (message) return message;
   }
   if (error instanceof Error) return error.message;
-  return "요청 처리 중 문제가 발생했습니다.";
+  return '요청 처리 중 문제가 발생했습니다.';
 }
 
 export default function ActivityTypesPage() {
   const [items, setItems] = useState<ActivityType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [createForm, setCreateForm] = useState<ActivityTypeRequest>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<ActivityTypeRequest>(emptyForm);
@@ -45,7 +45,7 @@ export default function ActivityTypesPage() {
   };
 
   useEffect(() => {
-    const active = filter === "all" ? undefined : filter === "active";
+    const active = filter === 'all' ? undefined : filter === 'active';
     loadList(active);
   }, [filter]);
 
@@ -62,11 +62,11 @@ export default function ActivityTypesPage() {
       await createActivityType({
         ...createForm,
         emoji: createForm.emoji.trim(),
-        name: createForm.name.trim()
+        name: createForm.name.trim(),
       });
-      setNotice("새 운동 타입을 추가했어요.");
+      setNotice('새 운동 타입을 추가했어요.');
       setCreateForm(emptyForm);
-      await loadList(filter === "all" ? undefined : filter === "active");
+      await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {
       setError(formatError(err));
     }
@@ -77,7 +77,7 @@ export default function ActivityTypesPage() {
     setEditForm({
       emoji: item.emoji,
       name: item.name,
-      isActive: item.isActive
+      isActive: item.isActive,
     });
     setNotice(null);
     setError(null);
@@ -92,11 +92,11 @@ export default function ActivityTypesPage() {
       await updateActivityType(editingId, {
         ...editForm,
         emoji: editForm.emoji.trim(),
-        name: editForm.name.trim()
+        name: editForm.name.trim(),
       });
-      setNotice("운동 타입을 저장했어요.");
+      setNotice('운동 타입을 저장했어요.');
       setEditingId(null);
-      await loadList(filter === "all" ? undefined : filter === "active");
+      await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {
       setError(formatError(err));
     } finally {
@@ -112,8 +112,8 @@ export default function ActivityTypesPage() {
     setNotice(null);
     try {
       await deleteActivityType(item.id);
-      setNotice("삭제가 완료됐어요.");
-      await loadList(filter === "all" ? undefined : filter === "active");
+      setNotice('삭제가 완료됐어요.');
+      await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {
       setError(formatError(err));
     } finally {
@@ -128,14 +128,12 @@ export default function ActivityTypesPage() {
 
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
-            activity types
-          </p>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">activity types</p>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h1
                 className="text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl"
-                style={{ fontFamily: "var(--font-display)" }}
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 운동 타입 관리
               </h1>
@@ -144,21 +142,17 @@ export default function ActivityTypesPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-[var(--shadow)]">
-              {(["all", "active", "inactive"] as const).map((value) => (
+              {(['all', 'active', 'inactive'] as const).map((value) => (
                 <button
                   key={value}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                     filter === value
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                   onClick={() => setFilter(value)}
                 >
-                  {value === "all"
-                    ? "전체"
-                    : value === "active"
-                      ? "활성"
-                      : "비활성"}
+                  {value === 'all' ? '전체' : value === 'active' ? '활성' : '비활성'}
                 </button>
               ))}
             </div>
@@ -179,7 +173,10 @@ export default function ActivityTypesPage() {
                 <input
                   value={createForm.emoji}
                   onChange={(event) =>
-                    setCreateForm((prev) => ({ ...prev, emoji: event.target.value }))
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      emoji: event.target.value,
+                    }))
                   }
                   placeholder="예: 🏋️"
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg shadow-sm focus:border-orange-400 focus:outline-none"
@@ -191,7 +188,10 @@ export default function ActivityTypesPage() {
                 <input
                   value={createForm.name}
                   onChange={(event) =>
-                    setCreateForm((prev) => ({ ...prev, name: event.target.value }))
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
                   }
                   placeholder="예: 헬스"
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-orange-400 focus:outline-none"
@@ -206,11 +206,14 @@ export default function ActivityTypesPage() {
                       type="button"
                       className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                         createForm.isActive
-                          ? "bg-emerald-500 text-white"
-                          : "bg-slate-100 text-slate-500"
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-100 text-slate-500'
                       }`}
                       onClick={() =>
-                        setCreateForm((prev) => ({ ...prev, isActive: true }))
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          isActive: true,
+                        }))
                       }
                     >
                       Active
@@ -219,11 +222,14 @@ export default function ActivityTypesPage() {
                       type="button"
                       className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                         !createForm.isActive
-                          ? "bg-slate-900 text-white"
-                          : "bg-slate-100 text-slate-500"
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-500'
                       }`}
                       onClick={() =>
-                        setCreateForm((prev) => ({ ...prev, isActive: false }))
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          isActive: false,
+                        }))
                       }
                     >
                       Inactive
@@ -288,11 +294,11 @@ export default function ActivityTypesPage() {
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               item.isActive
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-slate-200 text-slate-600"
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-slate-200 text-slate-600'
                             }`}
                           >
-                            {item.isActive ? "ACTIVE" : "INACTIVE"}
+                            {item.isActive ? 'ACTIVE' : 'INACTIVE'}
                           </span>
                           <button
                             className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
@@ -320,7 +326,7 @@ export default function ActivityTypesPage() {
                                 onChange={(event) =>
                                   setEditForm((prev) => ({
                                     ...prev,
-                                    emoji: event.target.value
+                                    emoji: event.target.value,
                                   }))
                                 }
                                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
@@ -333,7 +339,7 @@ export default function ActivityTypesPage() {
                                 onChange={(event) =>
                                   setEditForm((prev) => ({
                                     ...prev,
-                                    name: event.target.value
+                                    name: event.target.value,
                                   }))
                                 }
                                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
@@ -350,13 +356,13 @@ export default function ActivityTypesPage() {
                                   type="button"
                                   className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
                                     editForm.isActive
-                                      ? "bg-emerald-500 text-white"
-                                      : "bg-slate-100 text-slate-500"
+                                      ? 'bg-emerald-500 text-white'
+                                      : 'bg-slate-100 text-slate-500'
                                   }`}
                                   onClick={() =>
                                     setEditForm((prev) => ({
                                       ...prev,
-                                      isActive: true
+                                      isActive: true,
                                     }))
                                   }
                                 >
@@ -366,13 +372,13 @@ export default function ActivityTypesPage() {
                                   type="button"
                                   className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
                                     !editForm.isActive
-                                      ? "bg-slate-900 text-white"
-                                      : "bg-slate-100 text-slate-500"
+                                      ? 'bg-slate-900 text-white'
+                                      : 'bg-slate-100 text-slate-500'
                                   }`}
                                   onClick={() =>
                                     setEditForm((prev) => ({
                                       ...prev,
-                                      isActive: false
+                                      isActive: false,
                                     }))
                                   }
                                 >

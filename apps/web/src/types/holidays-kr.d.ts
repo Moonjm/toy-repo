@@ -1,4 +1,4 @@
-declare module "@kyungseopk1m/holidays-kr" {
+declare module '@kyungseopk1m/holidays-kr' {
   export const holidays: (
     year: string,
     year2?: string
