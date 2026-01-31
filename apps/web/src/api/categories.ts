@@ -1,6 +1,6 @@
 import { deleteJson, getJson, postJson, putJson } from './client';
 
-export type ActivityType = {
+export type Category = {
   id: number;
   emoji: string;
   name: string;
@@ -8,13 +8,13 @@ export type ActivityType = {
   sortOrder: number;
 };
 
-export type ActivityTypeRequest = {
+export type CategoryRequest = {
   emoji: string;
   name: string;
   isActive: boolean;
 };
 
-type ActivityTypeApi = {
+type CategoryApi = {
   id: number;
   emoji: string;
   name: string;
@@ -30,9 +30,9 @@ export type DataResponse<T> = {
   timestamp: string;
 };
 
-export function fetchActivityTypes(active?: boolean): Promise<DataResponse<ActivityType[]>> {
+export function fetchCategories(active?: boolean): Promise<DataResponse<Category[]>> {
   const query = active === undefined ? '' : `?active=${encodeURIComponent(String(active))}`;
-  return getJson<DataResponse<ActivityTypeApi[]>>(`/categories${query}`).then((res) => ({
+  return getJson<DataResponse<CategoryApi[]>>(`/categories${query}`).then((res) => ({
     ...res,
     data: (res.data ?? []).map((item) => ({
       id: item.id,
@@ -44,22 +44,22 @@ export function fetchActivityTypes(active?: boolean): Promise<DataResponse<Activ
   }));
 }
 
-export function createActivityType(payload: ActivityTypeRequest): Promise<number> {
+export function createCategory(payload: CategoryRequest): Promise<number> {
   return postJson<number>('/categories', {
     emoji: payload.emoji,
     name: payload.name,
-    active: payload.isActive,
+    isActive: payload.isActive,
   });
 }
 
-export function updateActivityType(id: number, payload: ActivityTypeRequest): Promise<void> {
+export function updateCategory(id: number, payload: CategoryRequest): Promise<void> {
   return putJson<void>(`/categories/${id}`, {
     emoji: payload.emoji,
     name: payload.name,
-    active: payload.isActive,
+    isActive: payload.isActive,
   });
 }
 
-export function deleteActivityType(id: number): Promise<void> {
+export function deleteCategory(id: number): Promise<void> {
   return deleteJson<void>(`/categories/${id}`);
 }

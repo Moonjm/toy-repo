@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  createActivityType,
-  deleteActivityType,
-  fetchActivityTypes,
-  type ActivityType,
-  type ActivityTypeRequest,
-  updateActivityType,
-} from '../api/activityTypes';
+  createCategory,
+  deleteCategory,
+  fetchCategories,
+  type Category,
+  type CategoryRequest,
+  updateCategory,
+} from '../api/categories';
 import { ApiError } from '../api/client';
 
-const emptyForm: ActivityTypeRequest = {
+const emptyForm: CategoryRequest = {
   emoji: '',
   name: '',
   isActive: true,
@@ -25,20 +25,20 @@ function formatError(error: unknown): string {
 }
 
 export default function CategoriesPage() {
-  const [items, setItems] = useState<ActivityType[]>([]);
+  const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [createForm, setCreateForm] = useState<ActivityTypeRequest>(emptyForm);
+  const [createForm, setCreateForm] = useState<CategoryRequest>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<ActivityTypeRequest>(emptyForm);
+  const [editForm, setEditForm] = useState<CategoryRequest>(emptyForm);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadList = (active?: boolean) => {
     setLoading(true);
     setError(null);
-    return fetchActivityTypes(active)
+    return fetchCategories(active)
       .then((res) => setItems(res.data ?? []))
       .catch((err) => setError(formatError(err)))
       .finally(() => setLoading(false));
@@ -59,7 +59,7 @@ export default function CategoriesPage() {
     setError(null);
     setNotice(null);
     try {
-      await createActivityType({
+      await createCategory({
         ...createForm,
         emoji: createForm.emoji.trim(),
         name: createForm.name.trim(),
@@ -72,7 +72,7 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleEditStart = (item: ActivityType) => {
+  const handleEditStart = (item: Category) => {
     setEditingId(item.id);
     setEditForm({
       emoji: item.emoji,
@@ -89,7 +89,7 @@ export default function CategoriesPage() {
     setError(null);
     setNotice(null);
     try {
-      await updateActivityType(editingId, {
+      await updateCategory(editingId, {
         ...editForm,
         emoji: editForm.emoji.trim(),
         name: editForm.name.trim(),
@@ -104,14 +104,14 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (item: ActivityType) => {
+  const handleDelete = async (item: Category) => {
     const ok = window.confirm(`${item.name}을(를) 삭제할까요?`);
     if (!ok) return;
     setBusyId(item.id);
     setError(null);
     setNotice(null);
     try {
-      await deleteActivityType(item.id);
+      await deleteCategory(item.id);
       setNotice('삭제가 완료됐어요.');
       await loadList(filter === 'all' ? undefined : filter === 'active');
     } catch (err) {

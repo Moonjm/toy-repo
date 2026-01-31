@@ -2,14 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
 import { fetchHolidays } from './api/holidays';
-import { fetchActivityTypes, type ActivityType } from './api/activityTypes';
+import { fetchCategories, type Category } from './api/categories';
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [month, setMonth] = useState<Date>(new Date());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [workoutsByDate, setWorkoutsByDate] = useState<Record<string, number[]>>({});
-  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [holidayMap, setHolidayMap] = useState<Record<string, string[]>>({});
   const holidayCacheRef = useRef<Record<string, boolean>>({});
 
@@ -89,10 +89,10 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchActivityTypes(true)
+    fetchCategories(true)
       .then((res) => {
         if (cancelled) return;
-        setActivityTypes(res.data ?? []);
+        setCategories(res.data ?? []);
       })
       .catch(() => {});
     return () => {
@@ -124,8 +124,8 @@ export default function App() {
           <div className={`font-medium ${dateTextClass}`}>{children}</div>
           <div className="flex min-h-5 items-center gap-1 text-base" aria-hidden="true">
             {items.map((itemId) => {
-              const type = activityTypes.find((typeItem) => typeItem.id === itemId);
-              return <span key={`${key}-${itemId}`}>{type?.emoji ?? '❓'}</span>;
+              const category = categories.find((typeItem) => typeItem.id === itemId);
+              return <span key={`${key}-${itemId}`}>{category?.emoji ?? '❓'}</span>;
             })}
           </div>
           <div className="flex min-h-3 items-center">
@@ -200,28 +200,30 @@ export default function App() {
           {selectedKey ? dayjs(selectedKey).format('dddd, MMM D') : 'Pick a day'}
         </div>
         <div className="grid gap-3">
-          {activityTypes.length === 0 ? (
+          {categories.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              선택할 운동 타입이 없습니다.
+              선택할 카테고리가 없습니다.
             </div>
           ) : (
-            activityTypes.map((type) => {
-              const isSelected = !!(selectedKey && workoutsByDate[selectedKey]?.includes(type.id));
+            categories.map((category) => {
+              const isSelected = !!(
+                selectedKey && workoutsByDate[selectedKey]?.includes(category.id)
+              );
               return (
                 <button
-                  key={type.id}
+                  key={category.id}
                   className={`rounded-xl border px-4 py-3 text-left text-base transition ${
                     isSelected
                       ? 'border-blue-300 bg-blue-50 text-blue-700'
                       : 'border-slate-200 bg-slate-50 text-slate-700'
                   }`}
                   onClick={() => {
-                    toggleWorkout(type.id);
+                    toggleWorkout(category.id);
                     setSheetOpen(false);
                   }}
                 >
-                  <span className="mr-2 text-lg">{type.emoji}</span>
-                  {type.name}
+                  <span className="mr-2 text-lg">{category.emoji}</span>
+                  {category.name}
                 </button>
               );
             })
