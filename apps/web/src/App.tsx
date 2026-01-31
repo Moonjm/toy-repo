@@ -3,31 +3,30 @@ import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
 import { fetchHolidays } from './api/holidays';
 import { fetchCategories, type Category } from './api/categories';
+import {
+  createDailyRecord,
+  deleteDailyRecord,
+  fetchDailyRecords,
+  type DailyRecord,
+  updateDailyRecord,
+} from './api/dailyRecords';
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [month, setMonth] = useState<Date>(new Date());
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [workoutsByDate, setWorkoutsByDate] = useState<Record<string, number[]>>({});
+  const [recordsByDate, setRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [holidayMap, setHolidayMap] = useState<Record<string, string[]>>({});
   const holidayCacheRef = useRef<Record<string, boolean>>({});
+  const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [memoInput, setMemoInput] = useState('');
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
     [selectedDate]
   );
-
-  const toggleWorkout = (typeId: number) => {
-    if (!selectedKey) return;
-    setWorkoutsByDate((prev) => {
-      const existing = prev[selectedKey] || [];
-      const next = existing.includes(typeId)
-        ? existing.filter((t) => t !== typeId)
-        : [...existing, typeId];
-      return { ...prev, [selectedKey]: next };
-    });
-  };
 
   const goPrevMonth = () => {
     setMonth((current) => dayjs(current).subtract(1, 'month').toDate());
@@ -37,24 +36,62 @@ export default function App() {
     setMonth((current) => dayjs(current).add(1, 'month').toDate());
   };
 
-  const touchStartX = useRef<number | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeAxis = useRef<'x' | 'y' | null>(null);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null;
+    const touch = event.touches[0];
+    if (!touch) return;
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+    swipeAxis.current = null;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    if (!start) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (!swipeAxis.current) {
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
+      swipeAxis.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+    }
+    if (swipeAxis.current === 'x') {
+      event.preventDefault();
+    }
   };
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    const startX = touchStartX.current;
-    touchStartX.current = null;
-    if (startX == null) return;
-    const endX = event.changedTouches[0]?.clientX ?? startX;
-    const deltaX = endX - startX;
+    const start = touchStart.current;
+    const axis = swipeAxis.current;
+    touchStart.current = null;
+    swipeAxis.current = null;
+    if (!start || axis !== 'x') return;
+    const endX = event.changedTouches[0]?.clientX ?? start.x;
+    const deltaX = endX - start.x;
     if (Math.abs(deltaX) < 40) return;
     if (deltaX > 0) {
       goPrevMonth();
     } else {
       goNextMonth();
     }
+  };
+
+  const loadMonthRecords = (targetMonth: Date) => {
+    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+    return fetchDailyRecords({ from, to })
+      .then((res) => {
+        const next: Record<string, DailyRecord[]> = {};
+        (res.data ?? []).forEach((record) => {
+          const key = dayjs(record.date).format('YYYY-MM-DD');
+          if (!next[key]) next[key] = [];
+          next[key].push(record);
+        });
+        setRecordsByDate(next);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -100,10 +137,14 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    loadMonthRecords(month);
+  }, [month]);
+
   const DayButton = (props: DayButtonProps) => {
     const { day, modifiers, children, ...buttonProps } = props;
     const key = dayjs(day.date).format('YYYY-MM-DD');
-    const items = workoutsByDate[key] || [];
+    const items = recordsByDate[key] || [];
     const holidayNames = holidayMap[key];
     const weekday = dayjs(day.date).day();
     const isSunday = weekday === 0;
@@ -123,10 +164,15 @@ export default function App() {
         <div className="flex h-20 w-full flex-col items-center justify-start gap-1 pt-2 text-sm">
           <div className={`font-medium ${dateTextClass}`}>{children}</div>
           <div className="flex min-h-5 items-center gap-1 text-base" aria-hidden="true">
-            {items.map((itemId) => {
-              const category = categories.find((typeItem) => typeItem.id === itemId);
-              return <span key={`${key}-${itemId}`}>{category?.emoji ?? '❓'}</span>;
-            })}
+            {Array.from(new Set(items.map((item) => item.category.id)))
+              .slice(0, 3)
+              .map((categoryId) => {
+                const category = categories.find((typeItem) => typeItem.id === categoryId);
+                return <span key={`${key}-${categoryId}`}>{category?.emoji ?? '❓'}</span>;
+              })}
+            {items.length > 3 && (
+              <span className="text-xs text-slate-400">+{items.length - 3}</span>
+            )}
           </div>
           <div className="flex min-h-3 items-center">
             {holidayNames && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
@@ -140,8 +186,9 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 text-slate-900">
       <div className="mx-auto flex w-full max-w-md flex-col gap-4">
         <main
-          className="rounded-2xl bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
+          className="rounded-2xl bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] touch-pan-y"
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <DayPicker
@@ -151,6 +198,9 @@ export default function App() {
             onMonthChange={setMonth}
             onDayClick={(day) => {
               setSelectedDate(day);
+              setEditingRecordId(null);
+              setSelectedCategoryId(null);
+              setMemoInput('');
               setSheetOpen(true);
             }}
             components={{ DayButton }}
@@ -200,34 +250,110 @@ export default function App() {
           {selectedKey ? dayjs(selectedKey).format('dddd, MMM D') : 'Pick a day'}
         </div>
         <div className="grid gap-3">
-          {categories.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              선택할 카테고리가 없습니다.
+          {(recordsByDate[selectedKey ?? ''] ?? []).map((record) => (
+            <div
+              key={record.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+            >
+              <button
+                className="flex flex-1 items-center gap-2 text-left"
+                onClick={() => {
+                  setEditingRecordId(record.id);
+                  setSelectedCategoryId(record.category.id);
+                  setMemoInput(record.memo ?? '');
+                }}
+              >
+                <span className="text-lg">{record.category.emoji}</span>
+                <span className="font-medium text-slate-800">{record.category.name}</span>
+                {record.memo && <span className="text-slate-500">· {record.memo}</span>}
+              </button>
+              <button
+                className="rounded-lg border border-red-200 px-2 py-1 text-xs font-semibold text-red-600"
+                onClick={async () => {
+                  await deleteDailyRecord(record.id);
+                  await loadMonthRecords(month);
+                }}
+              >
+                삭제
+              </button>
             </div>
-          ) : (
-            categories.map((category) => {
-              const isSelected = !!(
-                selectedKey && workoutsByDate[selectedKey]?.includes(category.id)
-              );
-              return (
+          ))}
+          <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {editingRecordId ? '기록 수정' : '기록 추가'}
+            </p>
+            <div className="grid gap-3">
+              {categories.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-center text-sm text-slate-500">
+                  선택할 카테고리가 없습니다.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => {
+                    const isSelected = selectedCategoryId === category.id;
+                    return (
+                      <button
+                        key={category.id}
+                        className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                          isSelected
+                            ? 'border-blue-300 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 bg-white text-slate-700'
+                        }`}
+                        onClick={() => setSelectedCategoryId(category.id)}
+                        type="button"
+                      >
+                        <span className="mr-1">{category.emoji}</span>
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <input
+                value={memoInput}
+                maxLength={10}
+                onChange={(event) => setMemoInput(event.target.value)}
+                placeholder="메모 (최대 10자)"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              />
+              <div className="flex items-center gap-2">
                 <button
-                  key={category.id}
-                  className={`rounded-xl border px-4 py-3 text-left text-base transition ${
-                    isSelected
-                      ? 'border-blue-300 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 bg-slate-50 text-slate-700'
-                  }`}
-                  onClick={() => {
-                    toggleWorkout(category.id);
-                    setSheetOpen(false);
+                  className="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                  onClick={async () => {
+                    if (!selectedKey || selectedCategoryId == null) return;
+                    const payload = {
+                      date: selectedKey,
+                      categoryId: selectedCategoryId,
+                      memo: memoInput.trim() || null,
+                    };
+                    if (editingRecordId) {
+                      await updateDailyRecord(editingRecordId, payload);
+                    } else {
+                      await createDailyRecord(payload);
+                    }
+                    setEditingRecordId(null);
+                    setSelectedCategoryId(null);
+                    setMemoInput('');
+                    await loadMonthRecords(month);
                   }}
                 >
-                  <span className="mr-2 text-lg">{category.emoji}</span>
-                  {category.name}
+                  저장
                 </button>
-              );
-            })
-          )}
+                {editingRecordId && (
+                  <button
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600"
+                    onClick={() => {
+                      setEditingRecordId(null);
+                      setSelectedCategoryId(null);
+                      setMemoInput('');
+                    }}
+                  >
+                    취소
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
