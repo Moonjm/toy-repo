@@ -167,6 +167,13 @@ export default function CategoriesPage() {
                   >
                     캘린더
                   </Link>
+                  <Link
+                    className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    to="/admin/users"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    사용자 관리
+                  </Link>
                 </div>
               )}
               <button

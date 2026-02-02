@@ -5,6 +5,7 @@ import App from './App';
 import { AuthProvider } from './auth/AuthContext';
 import RequireAuth from './auth/RequireAuth';
 import CategoriesPage from './pages/CategoriesPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import LoginPage from './pages/LoginPage';
 import RootRedirect from './pages/RootRedirect';
 import './index.css';
@@ -35,6 +36,14 @@ root.render(
           element={
             <RequireAuth allow={['ADMIN']}>
               <CategoriesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth allow={['ADMIN']}>
+              <AdminUsersPage />
             </RequireAuth>
           }
         />

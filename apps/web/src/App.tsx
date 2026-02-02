@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
 import { fetchHolidays } from './api/holidays';
@@ -221,13 +222,20 @@ export default function App() {
                   </button>
                   {menuOpen && (
                     <div className="absolute right-0 top-9 z-10 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-                      <a
+                      <Link
                         className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        href="/admin/categories"
+                        to="/admin/categories"
                         onClick={() => setMenuOpen(false)}
                       >
                         카테고리 관리
-                      </a>
+                      </Link>
+                      <Link
+                        className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                        to="/admin/users"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        사용자 관리
+                      </Link>
                     </div>
                   )}
                 </>
