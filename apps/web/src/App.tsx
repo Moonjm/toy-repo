@@ -10,6 +10,7 @@ import {
   type DailyRecord,
   updateDailyRecord,
 } from './api/dailyRecords';
+import { useAuth } from './auth/AuthContext';
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -22,6 +23,9 @@ export default function App() {
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
+  const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -56,9 +60,6 @@ export default function App() {
     if (!swipeAxis.current) {
       if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
       swipeAxis.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
-    }
-    if (swipeAxis.current === 'x') {
-      event.preventDefault();
     }
   };
 
@@ -141,6 +142,20 @@ export default function App() {
     loadMonthRecords(month);
   }, [month]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (event.target instanceof Node && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [menuOpen]);
+
   const DayButton = (props: DayButtonProps) => {
     const { day, modifiers, children, ...buttonProps } = props;
     const key = dayjs(day.date).format('YYYY-MM-DD');
@@ -191,6 +206,40 @@ export default function App() {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-xs font-semibold text-slate-500">
+              {user ? `${user.username}님 캘린더` : '캘린더'}
+            </div>
+            <div ref={menuRef} className="relative flex items-center gap-2">
+              {user?.authority === 'ADMIN' && (
+                <>
+                  <button
+                    className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
+                    onClick={() => setMenuOpen((prev) => !prev)}
+                  >
+                    메뉴
+                  </button>
+                  {menuOpen && (
+                    <div className="absolute right-0 top-9 z-10 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
+                      <a
+                        className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                        href="/admin/categories"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        카테고리 관리
+                      </a>
+                    </div>
+                  )}
+                </>
+              )}
+              <button
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
+                onClick={logout}
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
           <DayPicker
             mode="single"
             selected={selectedDate ?? undefined}
@@ -356,6 +405,7 @@ export default function App() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

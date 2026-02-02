@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   createCategory,
   deleteCategory,
@@ -8,6 +9,7 @@ import {
   updateCategory,
 } from '../api/categories';
 import { ApiError } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 
 const emptyForm: CategoryRequest = {
   emoji: '',
@@ -25,6 +27,9 @@ function formatError(error: unknown): string {
 }
 
 export default function CategoriesPage() {
+  const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +53,20 @@ export default function CategoriesPage() {
     const active = filter === 'all' ? undefined : filter === 'active';
     loadList(active);
   }, [filter]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (event.target instanceof Node && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [menuOpen]);
 
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
@@ -128,6 +147,36 @@ export default function CategoriesPage() {
 
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              {user ? `${user.username} admin` : 'admin'}
+            </div>
+            <div ref={menuRef} className="relative flex items-center gap-2">
+              <button
+                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600"
+                onClick={() => setMenuOpen((prev) => !prev)}
+              >
+                메뉴
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-9 z-10 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
+                  <Link
+                    className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    to="/calendar"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    캘린더
+                  </Link>
+                </div>
+              )}
+              <button
+                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600"
+                onClick={logout}
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
           <p className="text-sm uppercase tracking-[0.3em] text-slate-500">categories</p>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>

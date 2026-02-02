@@ -17,6 +17,7 @@ class ApiError extends Error {
 export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
     ...init,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(init?.headers ?? {}),
@@ -28,10 +29,33 @@ export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Pr
   const body = isJson ? await res.json() : undefined;
 
   if (!res.ok) {
+    if (res.status === 401) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        return requestJson<T>(input, init);
+      }
+    }
     throw new ApiError('Request failed', res.status, body);
   }
 
   return body as T;
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${apiBase}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then((res) => res.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
 }
 
 export function getJson<T>(path: string): Promise<T> {
