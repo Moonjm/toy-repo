@@ -27,7 +27,9 @@ type DailyRecordQuery = {
   to?: string;
 };
 
-export function fetchDailyRecords(query: DailyRecordQuery = {}): Promise<DataResponse<DailyRecord[]>> {
+export function fetchDailyRecords(
+  query: DailyRecordQuery = {}
+): Promise<DataResponse<DailyRecord[]>> {
   const params = new URLSearchParams();
   if (query.date) params.set('date', query.date);
   if (query.from) params.set('from', query.from);

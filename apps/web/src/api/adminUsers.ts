@@ -5,6 +5,7 @@ export type Authority = 'USER' | 'ADMIN';
 export type AdminUser = {
   id: number;
   username: string;
+  name: string;
   authority: Authority;
 };
 
@@ -17,11 +18,13 @@ export type DataResponse<T> = {
 
 export type CreateUserRequest = {
   username: string;
+  name: string;
   password: string;
 };
 
 export type UpdateUserRequest = {
   password: string;
+  name: string;
   authority: Authority;
 };
 

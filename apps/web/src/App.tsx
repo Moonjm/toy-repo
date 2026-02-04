@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@repo/ui';
+import { Bars3Icon, TrashIcon } from '@heroicons/react/24/outline';
+import BottomTabs from './components/BottomTabs';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
 import { fetchHolidays } from './api/holidays';
 import { fetchCategories, type Category } from './api/categories';
 import {
@@ -12,6 +16,8 @@ import {
   updateDailyRecord,
 } from './api/dailyRecords';
 import { useAuth } from './auth/AuthContext';
+
+dayjs.locale('ko');
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -24,9 +30,7 @@ export default function App() {
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const { user } = useAuth();
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -143,20 +147,6 @@ export default function App() {
     loadMonthRecords(month);
   }, [month]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (event.target instanceof Node && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [menuOpen]);
-
   const DayButton = (props: DayButtonProps) => {
     const { day, modifiers, children, ...buttonProps } = props;
     const key = dayjs(day.date).format('YYYY-MM-DD');
@@ -199,94 +189,104 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 pb-28 pt-6 text-slate-900">
+    <div className="min-h-screen bg-white pb-28 pt-6 text-slate-900">
       <div className="mx-auto flex w-full max-w-md flex-col gap-4">
         <main
-          className="rounded-2xl bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] touch-pan-y"
+          className="touch-pan-y"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between px-4">
             <div className="text-xs font-semibold text-slate-500">
-              {user ? `${user.username}님 캘린더` : '캘린더'}
+              {user ? `${user.name ?? user.username}님 캘린더` : '캘린더'}
             </div>
-            <div ref={menuRef} className="relative flex items-center gap-2">
-              {user?.authority === 'ADMIN' && (
-                <>
-                  <button
-                    className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
-                    onClick={() => setMenuOpen((prev) => !prev)}
-                  >
-                    메뉴
-                  </button>
-                  {menuOpen && (
-                    <div className="absolute right-0 top-9 z-10 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-                      <Link
-                        className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        to="/admin/categories"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        카테고리 관리
-                      </Link>
-                      <Link
-                        className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        to="/admin/users"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        사용자 관리
-                      </Link>
-                    </div>
-                  )}
-                </>
-              )}
+            <div />
+          </div>
+          <div className="mb-3 grid grid-cols-[96px_1fr_96px] items-center px-4">
+            <button
+              className="justify-self-start flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
+              onClick={goPrevMonth}
+              type="button"
+              aria-label="이전 달"
+              title="이전 달"
+            >
+              <span className="text-lg leading-none">‹</span>
+            </button>
+            <div className="text-center text-lg font-semibold tracking-tight text-slate-800">
+              {dayjs(month).format('YYYY년 M월')}
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <div className="min-w-[52px]">
+                <button
+                  className={`rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50 ${
+                    dayjs(month).isSame(dayjs(), 'month') ? 'invisible' : ''
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setMonth(today);
+                    setSelectedDate(today);
+                    setEditingRecordId(null);
+                    setSelectedCategoryId(null);
+                    setMemoInput('');
+                  }}
+                >
+                  오늘
+                </button>
+              </div>
               <button
-                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
-                onClick={logout}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
+                onClick={goNextMonth}
+                type="button"
+                aria-label="다음 달"
+                title="다음 달"
               >
-                로그아웃
+                <span className="text-lg leading-none">›</span>
               </button>
             </div>
           </div>
-          <DayPicker
-            mode="single"
-            selected={selectedDate ?? undefined}
-            month={month}
-            onMonthChange={setMonth}
-            onDayClick={(day) => {
-              setSelectedDate(day);
-              setEditingRecordId(null);
-              setSelectedCategoryId(null);
-              setMemoInput('');
-              setSheetOpen(true);
-            }}
-            components={{ DayButton }}
-            classNames={{
-              root: 'w-full',
-              months: 'w-full',
-              month: 'w-full',
-              month_caption: 'flex items-center justify-between pb-3',
-              caption_label: 'text-lg font-semibold tracking-tight text-slate-800',
-              nav: 'flex items-center gap-2',
-              button_previous:
-                'flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100',
-              button_next:
-                'flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100',
-              chevron: 'h-4 w-4 text-slate-700',
-              month_grid: 'w-full table-fixed border-collapse',
-              weekdays: 'text-center',
-              weekday:
-                'py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400',
-              weeks: 'table-row-group',
-              week: 'table-row',
-              day: 'group relative border border-slate-100 p-0 align-top',
-              day_button:
-                'relative flex h-20 w-full flex-col items-center justify-start gap-1 rounded-none bg-white pt-2 text-sm text-slate-800 transition hover:bg-slate-50 focus:outline-none',
-              selected: 'text-blue-600 font-semibold',
-              outside: 'text-slate-300',
-              today: 'text-blue-600',
-            }}
-          />
+          <div style={{ '--rdp-outside-opacity': 0.35 } as React.CSSProperties}>
+            <DayPicker
+              mode="single"
+              selected={selectedDate ?? undefined}
+              month={month}
+              hideNavigation
+              showOutsideDays
+              onMonthChange={setMonth}
+              onDayClick={(day) => {
+                setSelectedDate(day);
+                setEditingRecordId(null);
+                setSelectedCategoryId(null);
+                setMemoInput('');
+                setSheetOpen(true);
+              }}
+              components={{ DayButton }}
+              classNames={{
+                root: 'w-full',
+                months: 'w-full',
+                month: 'w-full',
+                month_caption: 'hidden',
+                nav: 'hidden',
+                caption_label: 'hidden',
+                button_previous: 'hidden',
+                button_next: 'hidden',
+                chevron: 'hidden',
+                month_grid: 'w-full table-fixed border-collapse',
+                weekdays: 'text-center',
+                weekday:
+                  'py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400',
+                weeks: 'table-row-group',
+                week: 'table-row',
+                day: 'group relative border border-slate-100 p-0 align-top',
+                day_button:
+                  'relative flex h-20 w-full flex-col items-center justify-start gap-1 rounded-none bg-white pt-2 text-sm text-slate-600 transition hover:bg-slate-50 focus:outline-none',
+                selected: 'text-blue-600 font-semibold',
+                outside: 'opacity-40',
+                today: 'text-blue-600',
+              }}
+            />
+          </div>
         </main>
       </div>
 
@@ -298,41 +298,59 @@ export default function App() {
       />
 
       <div
-        className={`fixed inset-x-0 bottom-0 mx-auto w-full max-w-md transform rounded-t-2xl bg-white p-5 shadow-lg transition-transform duration-300 ${
+        className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md transform rounded-t-2xl bg-white p-5 shadow-lg transition-transform duration-300 ${
           sheetOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
         <div className="mb-4 text-center text-base font-semibold text-slate-800">
-          {selectedKey ? dayjs(selectedKey).format('dddd, MMM D') : 'Pick a day'}
+          {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
         </div>
+        {selectedKey && holidayMap[selectedKey] && holidayMap[selectedKey].length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+            {holidayMap[selectedKey].map((name) => (
+              <span
+                key={`${selectedKey}-${name}`}
+                className="rounded-full bg-red-50 px-3 py-1 font-semibold text-red-600"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="grid gap-3">
           {(recordsByDate[selectedKey ?? ''] ?? []).map((record) => (
             <div
               key={record.id}
               className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
             >
-              <button
+              <Button
+                variant="ghost"
                 className="flex flex-1 items-center gap-2 text-left"
                 onClick={() => {
                   setEditingRecordId(record.id);
                   setSelectedCategoryId(record.category.id);
                   setMemoInput(record.memo ?? '');
                 }}
+                type="button"
               >
                 <span className="text-lg">{record.category.emoji}</span>
                 <span className="font-medium text-slate-800">{record.category.name}</span>
                 {record.memo && <span className="text-slate-500">· {record.memo}</span>}
-              </button>
-              <button
-                className="rounded-lg border border-red-200 px-2 py-1 text-xs font-semibold text-red-600"
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-600"
                 onClick={async () => {
                   await deleteDailyRecord(record.id);
                   await loadMonthRecords(month);
                 }}
+                type="button"
+                aria-label="삭제"
+                title="삭제"
               >
-                삭제
-              </button>
+                <TrashIcon className="h-4 w-4" />
+              </Button>
             </div>
           ))}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -349,9 +367,10 @@ export default function App() {
                   {categories.map((category) => {
                     const isSelected = selectedCategoryId === category.id;
                     return (
-                      <button
+                      <Button
                         key={category.id}
-                        className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                        variant={isSelected ? 'secondary' : 'ghost'}
+                        className={`rounded-full border px-3 py-2 text-sm font-medium ${
                           isSelected
                             ? 'border-blue-300 bg-blue-50 text-blue-700'
                             : 'border-slate-200 bg-white text-slate-700'
@@ -361,7 +380,7 @@ export default function App() {
                       >
                         <span className="mr-1">{category.emoji}</span>
                         {category.name}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -374,7 +393,7 @@ export default function App() {
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
               />
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   className="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                   onClick={async () => {
                     if (!selectedKey || selectedCategoryId == null) return;
@@ -393,27 +412,30 @@ export default function App() {
                     setMemoInput('');
                     await loadMonthRecords(month);
                   }}
+                  type="button"
                 >
                   저장
-                </button>
+                </Button>
                 {editingRecordId && (
-                  <button
+                  <Button
+                    variant="secondary"
                     className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600"
                     onClick={() => {
                       setEditingRecordId(null);
                       setSelectedCategoryId(null);
                       setMemoInput('');
                     }}
+                    type="button"
                   >
                     취소
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
-
+      <BottomTabs />
     </div>
   );
 }

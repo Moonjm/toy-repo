@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@repo/ui';
 import { login as loginRequest } from '../api/auth';
 import { useAuth } from '../auth/AuthContext';
 
@@ -82,13 +83,13 @@ export default function LoginPage() {
                 required
               />
             </label>
-            <button
+            <Button
               type="submit"
               disabled={busy}
-              className="mt-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-2 rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-70"
             >
               {busy ? '로그인 중...' : '로그인'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -76,6 +76,13 @@ export function putJson<T>(path: string, body?: JsonValue): Promise<T> {
   });
 }
 
+export function patchJson<T>(path: string, body?: JsonValue): Promise<T> {
+  return requestJson<T>(`${apiBase}${path}`, {
+    method: 'PATCH',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 export function deleteJson<T>(path: string): Promise<T> {
   return requestJson<T>(`${apiBase}${path}`, { method: 'DELETE' });
 }

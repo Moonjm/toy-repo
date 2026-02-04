@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, ConfirmDialog } from '@repo/ui';
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
   createCategory,
   deleteCategory,
@@ -9,7 +10,7 @@ import {
   updateCategory,
 } from '../api/categories';
 import { ApiError } from '../api/client';
-import { useAuth } from '../auth/AuthContext';
+import BottomTabs from '../components/BottomTabs';
 
 const emptyForm: CategoryRequest = {
   emoji: '',
@@ -27,46 +28,27 @@ function formatError(error: unknown): string {
 }
 
 export default function CategoriesPage() {
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [createForm, setCreateForm] = useState<CategoryRequest>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<CategoryRequest>(emptyForm);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const loadList = (active?: boolean) => {
+  const loadList = () => {
     setLoading(true);
     setError(null);
-    return fetchCategories(active)
+    return fetchCategories()
       .then((res) => setItems(res.data ?? []))
       .catch((err) => setError(formatError(err)))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    const active = filter === 'all' ? undefined : filter === 'active';
-    loadList(active);
-  }, [filter]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (event.target instanceof Node && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [menuOpen]);
+    loadList();
+  }, []);
 
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
@@ -124,8 +106,6 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (item: Category) => {
-    const ok = window.confirm(`${item.name}을(를) 삭제할까요?`);
-    if (!ok) return;
     setBusyId(item.id);
     setError(null);
     setNotice(null);
@@ -141,51 +121,19 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#fef3c7,_#f8fafc_45%,_#e0f2fe_100%)] px-6 py-10 text-slate-900">
-      <div className="pointer-events-none absolute -left-40 top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(249,115,22,0.35),_rgba(249,115,22,0))]" />
-      <div className="pointer-events-none absolute -right-24 bottom-12 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(14,165,233,0.35),_rgba(14,165,233,0))]" />
-
+    <div className="min-h-screen bg-white px-6 pb-28 pt-10 text-slate-900">
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {user ? `${user.username} admin` : 'admin'}
-            </div>
-            <div ref={menuRef} className="relative flex items-center gap-2">
-              <button
-                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600"
-                onClick={() => setMenuOpen((prev) => !prev)}
-              >
-                메뉴
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-9 z-10 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-                  <Link
-                    className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                    to="/calendar"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    캘린더
-                  </Link>
-                  <Link
-                    className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                    to="/admin/users"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    사용자 관리
-                  </Link>
-                </div>
-              )}
-              <button
-                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600"
-                onClick={logout}
-              >
-                로그아웃
-              </button>
-            </div>
-          </div>
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">categories</p>
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <header className="flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <Button
+              variant="secondary"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/80 p-0 text-slate-600 !rounded-full"
+              asChild
+            >
+              <a href="/admin" aria-label="뒤로가기" title="뒤로가기">
+                <span className="text-lg leading-none">‹</span>
+              </a>
+            </Button>
             <div>
               <h1
                 className="text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl"
@@ -197,26 +145,11 @@ export default function CategoriesPage() {
                 이모지, 이름, 활성 상태를 빠르게 관리하세요.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-[var(--shadow)]">
-              {(['all', 'active', 'inactive'] as const).map((value) => (
-                <button
-                  key={value}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                    filter === value
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                  onClick={() => setFilter(value)}
-                >
-                  {value === 'all' ? '전체' : value === 'active' ? '활성' : '비활성'}
-                </button>
-              ))}
-            </div>
           </div>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
-          <section className="rounded-3xl bg-white/90 p-6 shadow-[var(--shadow)] backdrop-blur">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">새 카테고리</h2>
               <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
@@ -258,12 +191,11 @@ export default function CategoriesPage() {
                 <label className="grid gap-2 text-sm font-medium text-slate-700">
                   활성 여부
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <button
+                    <Button
                       type="button"
-                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                        createForm.isActive
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                      variant={createForm.isActive ? 'primary' : 'secondary'}
+                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold ${
+                        createForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''
                       }`}
                       onClick={() =>
                         setCreateForm((prev) => ({
@@ -273,13 +205,12 @@ export default function CategoriesPage() {
                       }
                     >
                       Active
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                        !createForm.isActive
-                          ? 'bg-slate-900 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                      variant={!createForm.isActive ? 'primary' : 'secondary'}
+                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold ${
+                        !createForm.isActive ? 'bg-slate-900 text-white hover:bg-slate-900' : ''
                       }`}
                       onClick={() =>
                         setCreateForm((prev) => ({
@@ -289,20 +220,20 @@ export default function CategoriesPage() {
                       }
                     >
                       Inactive
-                    </button>
+                    </Button>
                   </div>
                 </label>
               </div>
-              <button
+              <Button
                 className="mt-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:translate-y-[-1px]"
                 type="submit"
               >
                 추가하기
-              </button>
+              </Button>
             </form>
           </section>
 
-          <section className="rounded-3xl bg-white/90 p-6 shadow-[var(--shadow)] backdrop-blur">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">카테고리 목록</h2>
               <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
@@ -337,7 +268,7 @@ export default function CategoriesPage() {
                   return (
                     <article
                       key={item.id}
-                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 animate-[fadeUp_0.5s_ease]"
+                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -356,24 +287,40 @@ export default function CategoriesPage() {
                           >
                             {item.isActive ? 'ACTIVE' : 'INACTIVE'}
                           </span>
-                          <button
-                            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
+                          <Button
+                            variant="secondary"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600"
                             onClick={() => handleEditStart(item)}
+                            type="button"
+                            aria-label="편집"
+                            title="편집"
                           >
-                            편집
-                          </button>
-                          <button
-                            className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:border-red-300"
-                            onClick={() => handleDelete(item)}
-                            disabled={busy}
-                          >
-                            삭제
-                          </button>
+                            <PencilSquareIcon className="h-4 w-4" />
+                          </Button>
+                          <ConfirmDialog
+                            title="카테고리 삭제"
+                            description={`${item.name}을(를) 삭제할까요?`}
+                            confirmLabel="삭제"
+                            cancelLabel="취소"
+                            onConfirm={() => handleDelete(item)}
+                            trigger={
+                              <Button
+                                variant="secondary"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:border-red-300"
+                                disabled={busy}
+                                type="button"
+                                aria-label="삭제"
+                                title="삭제"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
                         </div>
                       </div>
 
                       {isEditing && (
-                        <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4 animate-[floatIn_0.4s_ease]">
+                        <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4">
                           <div className="grid gap-3 md:grid-cols-2">
                             <label className="grid gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Emoji
@@ -408,12 +355,13 @@ export default function CategoriesPage() {
                                 Status
                               </span>
                               <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
-                                <button
+                                <Button
                                   type="button"
-                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                  variant={editForm.isActive ? 'primary' : 'secondary'}
+                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
                                     editForm.isActive
-                                      ? 'bg-emerald-500 text-white'
-                                      : 'bg-slate-100 text-slate-500'
+                                      ? 'bg-emerald-500 text-white hover:bg-emerald-500'
+                                      : ''
                                   }`}
                                   onClick={() =>
                                     setEditForm((prev) => ({
@@ -423,13 +371,14 @@ export default function CategoriesPage() {
                                   }
                                 >
                                   Active
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
-                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                  variant={!editForm.isActive ? 'primary' : 'secondary'}
+                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
                                     !editForm.isActive
-                                      ? 'bg-slate-900 text-white'
-                                      : 'bg-slate-100 text-slate-500'
+                                      ? 'bg-slate-900 text-white hover:bg-slate-900'
+                                      : ''
                                   }`}
                                   onClick={() =>
                                     setEditForm((prev) => ({
@@ -439,25 +388,28 @@ export default function CategoriesPage() {
                                   }
                                 >
                                   Inactive
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            <button
+                            <Button
                               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm"
                               onClick={handleEditSave}
                               disabled={busy}
+                              type="button"
                             >
                               저장
-                            </button>
-                            <button
-                              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600"
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600"
                               onClick={() => setEditingId(null)}
                               disabled={busy}
+                              type="button"
                             >
                               취소
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -469,6 +421,7 @@ export default function CategoriesPage() {
           </section>
         </div>
       </div>
+      <BottomTabs />
     </div>
   );
 }

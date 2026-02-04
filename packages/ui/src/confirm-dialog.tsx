@@ -6,7 +6,8 @@ import { cn } from './utils';
 export type ConfirmDialogProps = {
   title: string;
   description?: string;
-  triggerLabel: string;
+  triggerLabel?: string;
+  trigger?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm?: () => void;
@@ -17,6 +18,7 @@ export function ConfirmDialog({
   title,
   description,
   triggerLabel,
+  trigger,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   onConfirm,
@@ -24,30 +26,45 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog.Root>
-      <Dialog.Trigger asChild>
-        <Button variant="primary">{triggerLabel}</Button>
-      </Dialog.Trigger>
+      {trigger ? (
+        <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+      ) : (
+        <Dialog.Trigger asChild>
+          <Button variant="primary">{triggerLabel ?? 'Open dialog'}</Button>
+        </Dialog.Trigger>
+      )}
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[3px]" />
         <Dialog.Content
           className={cn(
-            'fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2',
-            'rounded-xl bg-white p-6 shadow-xl',
+            'fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2',
+            'rounded-2xl border border-white/70 bg-white/95 px-6 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.2)]',
             className
           )}
         >
-          <Dialog.Title className="text-lg font-semibold text-slate-900">{title}</Dialog.Title>
+          <Dialog.Title className="text-center text-[17px] font-semibold text-slate-900">
+            {title}
+          </Dialog.Title>
           {description ? (
-            <Dialog.Description className="mt-2 text-sm text-slate-600">
+            <Dialog.Description className="mt-2 text-center text-[13px] leading-5 text-slate-600">
               {description}
             </Dialog.Description>
           ) : null}
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="mt-5 grid grid-cols-2 gap-2">
             <Dialog.Close asChild>
-              <Button variant="ghost">{cancelLabel}</Button>
+              <Button
+                variant="secondary"
+                className="h-10 rounded-xl bg-slate-100 text-[14px] font-semibold text-slate-700 hover:bg-slate-200"
+              >
+                {cancelLabel}
+              </Button>
             </Dialog.Close>
             <Dialog.Close asChild>
-              <Button variant="primary" onClick={onConfirm}>
+              <Button
+                variant="primary"
+                onClick={onConfirm}
+                className="h-10 rounded-xl bg-slate-900 text-[14px] font-semibold text-white hover:bg-slate-800"
+              >
                 {confirmLabel}
               </Button>
             </Dialog.Close>

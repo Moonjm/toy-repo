@@ -6,7 +6,10 @@ import { AuthProvider } from './auth/AuthContext';
 import RequireAuth from './auth/RequireAuth';
 import CategoriesPage from './pages/CategoriesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminHomePage from './pages/AdminHomePage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
+import StatsPage from './pages/StatsPage';
 import RootRedirect from './pages/RootRedirect';
 import './index.css';
 
@@ -32,10 +35,34 @@ root.render(
           }
         />
         <Route
+          path="/me"
+          element={
+            <RequireAuth allow={['USER', 'ADMIN']}>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/stats"
+          element={
+            <RequireAuth allow={['USER', 'ADMIN']}>
+              <StatsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/admin/categories"
           element={
             <RequireAuth allow={['ADMIN']}>
               <CategoriesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth allow={['ADMIN']}>
+              <AdminHomePage />
             </RequireAuth>
           }
         />
