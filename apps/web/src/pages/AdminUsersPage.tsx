@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, ConfirmDialog, FormField, Input, Select } from '@repo/ui';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
   createAdminUser,
@@ -139,10 +139,7 @@ export default function AdminUsersPage() {
               </a>
             </Button>
             <div>
-              <h1
-                className="text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
                 사용자 관리
               </h1>
               <p className="mt-2 text-base text-slate-600">
@@ -172,9 +169,8 @@ export default function AdminUsersPage() {
               </span>
             </div>
             <form className="mt-5 grid gap-4" onSubmit={handleCreate}>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                아이디
-                <input
+              <FormField label="아이디">
+                <Input
                   value={createForm.username}
                   onChange={(event) =>
                     setCreateForm((prev) => ({
@@ -183,13 +179,11 @@ export default function AdminUsersPage() {
                     }))
                   }
                   placeholder="예: user1"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-blue-400 focus:outline-none"
                   required
                 />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                이름
-                <input
+              </FormField>
+              <FormField label="이름">
+                <Input
                   value={createForm.name}
                   onChange={(event) =>
                     setCreateForm((prev) => ({
@@ -198,13 +192,11 @@ export default function AdminUsersPage() {
                     }))
                   }
                   placeholder="예: 홍길동"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-blue-400 focus:outline-none"
                   required
                 />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                비밀번호
-                <input
+              </FormField>
+              <FormField label="비밀번호">
+                <Input
                   type="password"
                   value={createForm.password}
                   onChange={(event) =>
@@ -214,10 +206,9 @@ export default function AdminUsersPage() {
                     }))
                   }
                   placeholder="초기 비밀번호"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-blue-400 focus:outline-none"
                   required
                 />
-              </label>
+              </FormField>
               <Button type="submit" className="rounded-2xl px-4 py-3 text-sm font-semibold">
                 사용자 추가
               </Button>
@@ -297,9 +288,11 @@ export default function AdminUsersPage() {
 
                       {isEditing && (
                         <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4 md:grid-cols-[1fr_1fr]">
-                          <label className="grid gap-2 text-xs font-semibold text-slate-600">
-                            이름
-                            <input
+                          <FormField
+                            label="이름"
+                            labelClassName="text-xs font-semibold text-slate-600"
+                          >
+                            <Input
                               value={editForm.name}
                               onChange={(event) =>
                                 setEditForm((prev) => ({
@@ -308,13 +301,14 @@ export default function AdminUsersPage() {
                                 }))
                               }
                               placeholder="이름"
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                               required
                             />
-                          </label>
-                          <label className="grid gap-2 text-xs font-semibold text-slate-600">
-                            비밀번호 변경
-                            <input
+                          </FormField>
+                          <FormField
+                            label="비밀번호 변경"
+                            labelClassName="text-xs font-semibold text-slate-600"
+                          >
+                            <Input
                               type="password"
                               value={editForm.password}
                               onChange={(event) =>
@@ -324,13 +318,14 @@ export default function AdminUsersPage() {
                                 }))
                               }
                               placeholder="새 비밀번호"
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                               required
                             />
-                          </label>
-                          <label className="grid gap-2 text-xs font-semibold text-slate-600">
-                            권한
-                            <select
+                          </FormField>
+                          <FormField
+                            label="권한"
+                            labelClassName="text-xs font-semibold text-slate-600"
+                          >
+                            <Select
                               value={editForm.authority}
                               onChange={(event) =>
                                 setEditForm((prev) => ({
@@ -338,12 +333,11 @@ export default function AdminUsersPage() {
                                   authority: event.target.value as Authority,
                                 }))
                               }
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                             >
                               <option value="USER">USER</option>
                               <option value="ADMIN">ADMIN</option>
-                            </select>
-                          </label>
+                            </Select>
+                          </FormField>
                           <div className="flex items-center gap-2 md:col-span-2">
                             <Button
                               variant="primary"

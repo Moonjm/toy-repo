@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
   createCategory,
@@ -135,10 +135,7 @@ export default function CategoriesPage() {
               </a>
             </Button>
             <div>
-              <h1
-                className="text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
                 카테고리 관리
               </h1>
               <p className="mt-2 text-base text-slate-600">
@@ -157,9 +154,8 @@ export default function CategoriesPage() {
               </span>
             </div>
             <form className="mt-5 grid gap-4" onSubmit={handleCreate}>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                이모지
-                <input
+              <FormField label="이모지">
+                <Input
                   value={createForm.emoji}
                   onChange={(event) =>
                     setCreateForm((prev) => ({
@@ -171,10 +167,9 @@ export default function CategoriesPage() {
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg shadow-sm focus:border-orange-400 focus:outline-none"
                   required
                 />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                이름
-                <input
+              </FormField>
+              <FormField label="이름">
+                <Input
                   value={createForm.name}
                   onChange={(event) =>
                     setCreateForm((prev) => ({
@@ -186,10 +181,9 @@ export default function CategoriesPage() {
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-orange-400 focus:outline-none"
                   required
                 />
-              </label>
+              </FormField>
               <div className="grid gap-4">
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
-                  활성 여부
+                <FormField label="활성 여부">
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
                     <Button
                       type="button"
@@ -222,7 +216,7 @@ export default function CategoriesPage() {
                       Inactive
                     </Button>
                   </div>
-                </label>
+                </FormField>
               </div>
               <Button
                 className="mt-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:translate-y-[-1px]"
@@ -322,9 +316,11 @@ export default function CategoriesPage() {
                       {isEditing && (
                         <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4">
                           <div className="grid gap-3 md:grid-cols-2">
-                            <label className="grid gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Emoji
-                              <input
+                            <FormField
+                              label="Emoji"
+                              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
+                              <Input
                                 value={editForm.emoji}
                                 onChange={(event) =>
                                   setEditForm((prev) => ({
@@ -334,10 +330,12 @@ export default function CategoriesPage() {
                                 }
                                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
                               />
-                            </label>
-                            <label className="grid gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Name
-                              <input
+                            </FormField>
+                            <FormField
+                              label="Name"
+                              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
+                              <Input
                                 value={editForm.name}
                                 onChange={(event) =>
                                   setEditForm((prev) => ({
@@ -347,7 +345,7 @@ export default function CategoriesPage() {
                                 }
                                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
                               />
-                            </label>
+                            </FormField>
                           </div>
                           <div className="grid gap-3">
                             <div className="md:col-span-3">

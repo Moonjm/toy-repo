@@ -2,26 +2,27 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { fetchDailyRecords } from '../api/dailyRecords';
 import BottomTabs from '../components/BottomTabs';
-import { Button } from '@repo/ui';
+import { FormField, Select } from '@repo/ui';
 
 export default function StatsPage() {
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
+  const [year, setYear] = useState(dayjs().year());
+  const [month, setMonth] = useState<number | 'all'>(dayjs().month() + 1);
   const [stats, setStats] = useState<
     { id: number; name: string; emoji: string; count: number; ratio: number }[]
   >([]);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    const now = dayjs();
+    const target = dayjs(`${year}-${String(month === 'all' ? 1 : month).padStart(2, '0')}-01`);
     const from =
-      viewMode === 'year'
-        ? now.startOf('year').format('YYYY-MM-DD')
-        : now.startOf('month').format('YYYY-MM-DD');
+      month === 'all'
+        ? target.startOf('year').format('YYYY-MM-DD')
+        : target.startOf('month').format('YYYY-MM-DD');
     const to =
-      viewMode === 'year'
-        ? now.endOf('year').format('YYYY-MM-DD')
-        : now.endOf('month').format('YYYY-MM-DD');
+      month === 'all'
+        ? target.endOf('year').format('YYYY-MM-DD')
+        : target.endOf('month').format('YYYY-MM-DD');
 
     let cancelled = false;
     setLoading(true);
@@ -64,12 +65,12 @@ export default function StatsPage() {
     return () => {
       cancelled = true;
     };
-  }, [viewMode]);
+  }, [year, month]);
 
   const periodLabel = useMemo(() => {
-    const now = dayjs();
-    return viewMode === 'year' ? now.format('YYYY년') : now.format('YYYY년 M월');
-  }, [viewMode]);
+    const base = dayjs(`${year}-${String(month === 'all' ? 1 : month).padStart(2, '0')}-01`);
+    return month === 'all' ? base.format('YYYY년') : base.format('YYYY년 M월');
+  }, [year, month]);
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 pb-28 pt-8 text-slate-900">
@@ -77,12 +78,7 @@ export default function StatsPage() {
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">stats</p>
-            <h1
-              className="mt-1 text-3xl font-semibold tracking-tight text-slate-900"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              월간 통계
-            </h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">월간 통계</h1>
             <p className="mt-1 text-sm text-slate-500">
               {periodLabel} · 총 {total}건
             </p>
@@ -91,20 +87,33 @@ export default function StatsPage() {
         </header>
 
         <section className="rounded-3xl bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-          <div className="mb-4 flex items-center gap-2">
-            {(['month', 'year'] as const).map((mode) => (
-              <Button
-                key={mode}
-                variant={viewMode === mode ? 'primary' : 'ghost'}
-                className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                  viewMode === mode ? '' : 'text-slate-600'
-                }`}
-                type="button"
-                onClick={() => setViewMode(mode)}
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <FormField>
+              <Select value={year} onChange={(event) => setYear(Number(event.target.value))}>
+                {Array.from({ length: dayjs().year() - 2017 + 2 }, (_, idx) => 2018 + idx).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {value}년
+                    </option>
+                  )
+                )}
+              </Select>
+            </FormField>
+            <FormField>
+              <Select
+                value={month}
+                onChange={(event) =>
+                  setMonth(event.target.value === 'all' ? 'all' : Number(event.target.value))
+                }
               >
-                {mode === 'month' ? '이번 달' : '올해'}
-              </Button>
-            ))}
+                <option value="all">전체</option>
+                {Array.from({ length: 12 }, (_, idx) => idx + 1).map((value) => (
+                  <option key={value} value={value}>
+                    {value}월
+                  </option>
+                ))}
+              </Select>
+            </FormField>
           </div>
           {loading ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
@@ -112,7 +121,7 @@ export default function StatsPage() {
             </div>
           ) : stats.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              이번 달 기록이 없습니다.
+              {month === 'all' ? '해당 연도 기록이 없습니다.' : '해당 월 기록이 없습니다.'}
             </div>
           ) : (
             <div className="grid gap-4">

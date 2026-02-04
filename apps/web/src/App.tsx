@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@repo/ui';
+import { Button, Input } from '@repo/ui';
 import { Bars3Icon, TrashIcon } from '@heroicons/react/24/outline';
 import BottomTabs from './components/BottomTabs';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
@@ -203,9 +203,9 @@ export default function App() {
             </div>
             <div />
           </div>
-          <div className="mb-3 grid grid-cols-[96px_1fr_96px] items-center px-4">
+          <div className="relative mb-3 flex items-center justify-between px-4">
             <button
-              className="justify-self-start flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
+              className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
               onClick={goPrevMonth}
               type="button"
               aria-label="이전 달"
@@ -213,10 +213,10 @@ export default function App() {
             >
               <span className="text-lg leading-none">‹</span>
             </button>
-            <div className="text-center text-lg font-semibold tracking-tight text-slate-800">
+            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-slate-800">
               {dayjs(month).format('YYYY년 M월')}
             </div>
-            <div className="flex items-center justify-end gap-2">
+            <div className="z-10 flex items-center justify-end gap-2">
               <div className="min-w-[52px]">
                 <button
                   className={`rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50 ${
@@ -385,12 +385,12 @@ export default function App() {
                   })}
                 </div>
               )}
-              <input
+              <Input
                 value={memoInput}
                 maxLength={10}
                 onChange={(event) => setMemoInput(event.target.value)}
                 placeholder="메모 (최대 10자)"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
               />
               <div className="flex items-center gap-2">
                 <Button

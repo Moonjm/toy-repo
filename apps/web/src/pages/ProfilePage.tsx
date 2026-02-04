@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
 import { PowerIcon } from '@heroicons/react/24/outline';
 import { updateMe } from '../api/users';
 import { ApiError } from '../api/client';
@@ -66,10 +66,7 @@ export default function ProfilePage() {
         <header className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">profile</p>
-            <h1
-              className="mt-1 text-3xl font-semibold tracking-tight text-slate-900"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
               내 정보 수정
             </h1>
           </div>
@@ -111,42 +108,31 @@ export default function ProfilePage() {
           onSubmit={handleSubmit}
         >
           <div className="grid gap-4">
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              아이디
-              <input
-                value={user?.username ?? ''}
-                disabled
-                className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-base text-slate-500"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              이름
-              <input
+            <FormField label="아이디">
+              <Input value={user?.username ?? ''} disabled />
+            </FormField>
+            <FormField label="이름">
+              <Input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="이름을 입력하세요"
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-pink-400 focus:outline-none"
               />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              기존 비밀번호
-              <input
+            </FormField>
+            <FormField label="기존 비밀번호">
+              <Input
                 type="password"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 placeholder="비밀번호 변경 시 필요"
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-pink-400 focus:outline-none"
               />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
-              새 비밀번호
-              <input
+            </FormField>
+            <FormField label="새 비밀번호">
+              <Input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-pink-400 focus:outline-none"
               />
-            </label>
+            </FormField>
             <Button
               type="submit"
               disabled={busy}

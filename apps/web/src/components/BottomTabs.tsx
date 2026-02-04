@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   CalendarDaysIcon,
   ChartBarIcon,
+  MagnifyingGlassIcon,
   WrenchScrewdriverIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -14,6 +15,7 @@ export default function BottomTabs() {
   const tabs = [
     { to: '/calendar', label: '캘린더', Icon: CalendarDaysIcon },
     { to: '/stats', label: '통계', Icon: ChartBarIcon },
+    { to: '/search', label: '검색', Icon: MagnifyingGlassIcon },
     ...(user?.authority === 'ADMIN'
       ? [{ to: '/admin', label: '관리', Icon: WrenchScrewdriverIcon }]
       : []),

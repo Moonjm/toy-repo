@@ -10,6 +10,7 @@ import AdminHomePage from './pages/AdminHomePage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import StatsPage from './pages/StatsPage';
+import SearchPage from './pages/SearchPage';
 import RootRedirect from './pages/RootRedirect';
 import './index.css';
 
@@ -47,6 +48,14 @@ root.render(
           element={
             <RequireAuth allow={['USER', 'ADMIN']}>
               <StatsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <RequireAuth allow={['USER', 'ADMIN']}>
+              <SearchPage />
             </RequireAuth>
           }
         />

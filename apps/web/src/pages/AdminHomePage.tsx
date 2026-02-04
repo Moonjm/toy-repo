@@ -8,12 +8,7 @@ export default function AdminHomePage() {
     <div className="min-h-screen bg-white px-6 pb-28 pt-8 text-slate-900">
       <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <header>
-          <h1
-            className="text-3xl font-semibold tracking-tight text-slate-900"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            관리
-          </h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">관리</h1>
           <p className="mt-2 text-sm text-slate-500">카테고리와 사용자를 관리하세요.</p>
         </header>
 

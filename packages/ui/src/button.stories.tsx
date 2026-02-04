@@ -7,6 +7,7 @@ const meta: Meta<typeof Button> = {
   args: {
     children: 'Click me',
     variant: 'primary',
+    className: 'rounded-xl px-4 py-2',
   },
   argTypes: {
     variant: {
