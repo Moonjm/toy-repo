@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react';
-import '../../../apps/web/src/index.css';
+import '../../../apps/daily-record/src/index.css';
 
 const preview: Preview = {
   parameters: {

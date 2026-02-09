@@ -1,4 +1,4 @@
-const apiBase = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '');
+const apiBase = (import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, '');
 
 type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
 

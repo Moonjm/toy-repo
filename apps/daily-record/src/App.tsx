@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Input } from '@repo/ui';
-import { Bars3Icon, TrashIcon } from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import BottomTabs from './components/BottomTabs';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
@@ -15,8 +14,6 @@ import {
   type DailyRecord,
   updateDailyRecord,
 } from './api/dailyRecords';
-import { useAuth } from './auth/AuthContext';
-
 dayjs.locale('ko');
 
 export default function App() {
@@ -30,7 +27,6 @@ export default function App() {
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
-  const { user } = useAuth();
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -155,148 +151,164 @@ export default function App() {
     const weekday = dayjs(day.date).day();
     const isSunday = weekday === 0;
     const isSaturday = weekday === 6;
-    const dateTextClass = holidayNames
-      ? 'text-red-500 font-semibold'
-      : modifiers.today
-        ? 'text-emerald-600 font-semibold'
-        : isSunday
-          ? 'text-red-500'
-          : isSaturday
-            ? 'text-blue-500'
-            : 'text-slate-800';
+    const isToday = modifiers.today;
+
+    let dateClass = 'text-slate-800';
+    if (holidayNames || isSunday) dateClass = 'text-red-500';
+    else if (isSaturday) dateClass = 'text-blue-500';
 
     return (
       <button {...buttonProps} title={holidayNames?.join(', ') || undefined}>
-        <div className="flex h-20 w-full flex-col items-center justify-start gap-1 pt-2 text-sm">
-          <div className={`font-medium ${dateTextClass}`}>{children}</div>
-          <div className="flex min-h-5 items-center gap-1 text-base" aria-hidden="true">
-            {Array.from(new Set(items.map((item) => item.category.id)))
-              .slice(0, 3)
-              .map((categoryId) => {
-                const category = categories.find((typeItem) => typeItem.id === categoryId);
-                return <span key={`${key}-${categoryId}`}>{category?.emoji ?? '❓'}</span>;
-              })}
-            {items.length > 3 && (
-              <span className="text-xs text-slate-400">+{items.length - 3}</span>
-            )}
-          </div>
-          <div className="flex min-h-3 items-center">
-            {holidayNames && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
-          </div>
+        <div className="flex h-full w-full flex-col items-center gap-0.5 overflow-hidden pt-1.5">
+          {isToday ? (
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[13px] font-bold text-white">
+              {children}
+            </span>
+          ) : (
+            <span className={`text-[13px] font-medium ${dateClass}`}>{children}</span>
+          )}
+          {holidayNames && (
+            <div className="flex w-full flex-col items-center gap-px px-0.5">
+              {holidayNames.slice(0, 2).map((name) => (
+                <span
+                  key={name}
+                  className="w-full truncate rounded-sm bg-red-50 px-0.5 text-center text-[9px] leading-tight text-red-500"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          )}
+          {items.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-0.5">
+              {Array.from(new Set(items.map((item) => item.category.id)))
+                .slice(0, 3)
+                .map((categoryId) => {
+                  const category = categories.find((c) => c.id === categoryId);
+                  return (
+                    <span key={`${key}-${categoryId}`} className="text-xs leading-none">
+                      {category?.emoji ?? '?'}
+                    </span>
+                  );
+                })}
+              {items.length > 3 && (
+                <span className="text-[9px] text-slate-400">+{items.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
       </button>
     );
   };
 
   return (
-    <div className="min-h-screen bg-white pb-28 pt-6 text-slate-900">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-4">
-        <main
-          className="touch-pan-y"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div className="mb-3 flex items-center justify-between px-4">
-            <div className="text-xs font-semibold text-slate-500">
-              {user ? `${user.name ?? user.username}님 캘린더` : '캘린더'}
-            </div>
-            <div />
+    <div className="flex h-dvh flex-col bg-white text-slate-900">
+      {/* Header */}
+      <header className="flex-shrink-0 px-4 pt-6">
+        <div className="relative mb-3 flex items-center justify-between">
+          <button
+            className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
+            onClick={goPrevMonth}
+            type="button"
+            aria-label="이전 달"
+            title="이전 달"
+          >
+            <span className="text-lg leading-none">&lsaquo;</span>
+          </button>
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-slate-800">
+            {dayjs(month).format('YYYY년 M월')}
           </div>
-          <div className="relative mb-3 flex items-center justify-between px-4">
-            <button
-              className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
-              onClick={goPrevMonth}
-              type="button"
-              aria-label="이전 달"
-              title="이전 달"
-            >
-              <span className="text-lg leading-none">‹</span>
-            </button>
-            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-slate-800">
-              {dayjs(month).format('YYYY년 M월')}
-            </div>
-            <div className="z-10 flex items-center justify-end gap-2">
-              <div className="min-w-[52px]">
-                <button
-                  className={`rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50 ${
-                    dayjs(month).isSame(dayjs(), 'month') ? 'invisible' : ''
-                  }`}
-                  type="button"
-                  onClick={() => {
-                    const today = new Date();
-                    setMonth(today);
-                    setSelectedDate(today);
-                    setEditingRecordId(null);
-                    setSelectedCategoryId(null);
-                    setMemoInput('');
-                  }}
-                >
-                  오늘
-                </button>
-              </div>
+          <div className="z-10 flex items-center justify-end gap-2">
+            <div className="min-w-[52px]">
               <button
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
-                onClick={goNextMonth}
+                className={`rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50 ${
+                  dayjs(month).isSame(dayjs(), 'month') ? 'invisible' : ''
+                }`}
                 type="button"
-                aria-label="다음 달"
-                title="다음 달"
+                onClick={() => {
+                  const today = new Date();
+                  setMonth(today);
+                  setSelectedDate(today);
+                  setEditingRecordId(null);
+                  setSelectedCategoryId(null);
+                  setMemoInput('');
+                }}
               >
-                <span className="text-lg leading-none">›</span>
+                오늘
               </button>
             </div>
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
+              onClick={goNextMonth}
+              type="button"
+              aria-label="다음 달"
+              title="다음 달"
+            >
+              <span className="text-lg leading-none">&rsaquo;</span>
+            </button>
           </div>
-          <div style={{ '--rdp-outside-opacity': 0.35 } as React.CSSProperties}>
-            <DayPicker
-              mode="single"
-              selected={selectedDate ?? undefined}
-              month={month}
-              hideNavigation
-              showOutsideDays
-              onMonthChange={setMonth}
-              onDayClick={(day) => {
-                setSelectedDate(day);
-                setEditingRecordId(null);
-                setSelectedCategoryId(null);
-                setMemoInput('');
-                setSheetOpen(true);
-              }}
-              components={{ DayButton }}
-              classNames={{
-                root: 'w-full',
-                months: 'w-full',
-                month: 'w-full',
-                month_caption: 'hidden',
-                nav: 'hidden',
-                caption_label: 'hidden',
-                button_previous: 'hidden',
-                button_next: 'hidden',
-                chevron: 'hidden',
-                month_grid: 'w-full table-fixed border-collapse',
-                weekdays: 'text-center',
-                weekday:
-                  'py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400',
-                weeks: 'table-row-group',
-                week: 'table-row',
-                day: 'group relative border border-slate-100 p-0 align-top',
-                day_button:
-                  'relative flex h-20 w-full flex-col items-center justify-start gap-1 rounded-none bg-white pt-2 text-sm text-slate-600 transition hover:bg-slate-50 focus:outline-none',
-                selected: 'text-blue-600 font-semibold',
-                outside: 'opacity-40',
-                today: 'text-blue-600',
-              }}
-            />
-          </div>
-        </main>
+        </div>
+      </header>
+
+      {/* Calendar grid */}
+      <div
+        className="calendar-full flex min-h-0 flex-1 flex-col pb-16 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <DayPicker
+          mode="single"
+          selected={selectedDate ?? undefined}
+          month={month}
+          hideNavigation
+          showOutsideDays
+          onMonthChange={setMonth}
+          onDayClick={(day) => {
+            setSelectedDate(day);
+            setEditingRecordId(null);
+            setSelectedCategoryId(null);
+            setMemoInput('');
+            setSheetOpen(true);
+          }}
+          components={{ DayButton }}
+          formatters={{
+            formatWeekdayName: (date) =>
+              ['\uC77C', '\uC6D4', '\uD654', '\uC218', '\uBAA9', '\uAE08', '\uD1A0'][date.getDay()],
+          }}
+          classNames={{
+            root: 'flex-1 flex flex-col min-h-0',
+            months: 'flex-1 flex flex-col min-h-0',
+            month: 'flex-1 flex flex-col min-h-0',
+            month_caption: 'hidden',
+            nav: 'hidden',
+            caption_label: 'hidden',
+            button_previous: 'hidden',
+            button_next: 'hidden',
+            chevron: 'hidden',
+            month_grid: 'flex-1',
+            weekdays: '',
+            weekday: 'py-2 text-center text-xs font-semibold text-slate-400',
+            weeks: '',
+            week: '',
+            day: 'p-0 align-top',
+            day_button: 'w-full bg-transparent focus:outline-none',
+            selected: '',
+            outside: 'opacity-30',
+            today: '',
+          }}
+        />
       </div>
 
+      {/* Bottom sheet overlay */}
       <div
-        className={`fixed inset-0 bg-black/30 transition-opacity ${
+        className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
           sheetOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={() => setSheetOpen(false)}
       />
 
+      {/* Bottom sheet */}
       <div
         className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md transform rounded-t-2xl bg-white p-5 shadow-lg transition-transform duration-300 ${
           sheetOpen ? 'translate-y-0' : 'translate-y-full'
@@ -336,7 +348,7 @@ export default function App() {
               >
                 <span className="text-lg">{record.category.emoji}</span>
                 <span className="font-medium text-slate-800">{record.category.name}</span>
-                {record.memo && <span className="text-slate-500">· {record.memo}</span>}
+                {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
               </Button>
               <Button
                 variant="secondary"
