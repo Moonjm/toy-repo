@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import BottomTabs from '../components/BottomTabs';
+import PageHeader from '../components/PageHeader';
 import { FormField, Input, Select } from '@repo/ui';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { fetchCategories, type Category } from '../api/categories';
@@ -74,8 +74,9 @@ export default function SearchPage() {
   }, [records, categoryId, keyword]);
 
   return (
-    <div className="min-h-screen bg-white px-6 pb-28 pt-8 text-slate-900">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+    <div className="min-h-screen bg-white text-slate-900">
+      <PageHeader title="검색" />
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-6 pb-8">
         <section className="sticky top-0 z-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-2 gap-3">
             <FormField>
@@ -161,7 +162,6 @@ export default function SearchPage() {
           )}
         </section>
       </div>
-      <BottomTabs />
     </div>
   );
 }

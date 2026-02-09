@@ -10,7 +10,7 @@ import {
   updateAdminUser,
 } from '../api/adminUsers';
 import { ApiError } from '../api/client';
-import BottomTabs from '../components/BottomTabs';
+import PageHeader from '../components/PageHeader';
 
 const emptyCreateForm = {
   username: '',
@@ -125,30 +125,9 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pb-28 pt-10 text-slate-900">
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-4">
-          <div className="flex items-start gap-3">
-            <Button
-              variant="secondary"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/80 p-0 text-slate-600 !rounded-full"
-              asChild
-            >
-              <a href="/admin" aria-label="뒤로가기" title="뒤로가기">
-                <span className="text-lg leading-none">‹</span>
-              </a>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-                사용자 관리
-              </h1>
-              <p className="mt-2 text-base text-slate-600">
-                계정 생성, 권한 수정, 비밀번호 변경을 관리하세요.
-              </p>
-            </div>
-          </div>
-        </header>
-
+    <div className="min-h-screen bg-white text-slate-900">
+      <PageHeader title="사용자 관리" />
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-8">
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -370,7 +349,6 @@ export default function AdminUsersPage() {
           </section>
         </div>
       </div>
-      <BottomTabs />
     </div>
   );
 }

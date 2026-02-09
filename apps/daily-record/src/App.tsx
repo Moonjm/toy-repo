@@ -1,7 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input } from '@repo/ui';
-import { TrashIcon } from '@heroicons/react/24/outline';
-import BottomTabs from './components/BottomTabs';
+import { Link } from 'react-router-dom';
+import { Button, ConfirmDialog, Input } from '@repo/ui';
+import {
+  Bars3Icon,
+  TrashIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  ChartBarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  WrenchScrewdriverIcon,
+  UserCircleIcon,
+  ArrowRightStartOnRectangleIcon,
+} from '@heroicons/react/24/outline';
+import { useAuth } from './auth/AuthContext';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
@@ -27,6 +39,11 @@ export default function App() {
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const yearScrollRef = useRef<HTMLDivElement>(null);
+  const monthScrollRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -204,59 +221,130 @@ export default function App() {
   return (
     <div className="flex h-dvh flex-col bg-white text-slate-900">
       {/* Header */}
-      <header className="flex-shrink-0 px-4 pt-6">
-        <div className="relative mb-3 flex items-center justify-between">
+      <header className="flex flex-shrink-0 items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
           <button
-            className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
-            onClick={goPrevMonth}
             type="button"
-            aria-label="이전 달"
-            title="이전 달"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100"
+            onClick={() => setDrawerOpen(true)}
           >
-            <span className="text-lg leading-none">&lsaquo;</span>
+            <Bars3Icon className="h-6 w-6 text-slate-700" />
           </button>
-          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-slate-800">
-            {dayjs(month).format('YYYY년 M월')}
-          </div>
-          <div className="z-10 flex items-center justify-end gap-2">
-            <div className="min-w-[52px]">
-              <button
-                className={`rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50 ${
-                  dayjs(month).isSame(dayjs(), 'month') ? 'invisible' : ''
-                }`}
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  setMonth(today);
-                  setSelectedDate(today);
-                  setEditingRecordId(null);
-                  setSelectedCategoryId(null);
-                  setMemoInput('');
-                }}
-              >
-                오늘
-              </button>
-            </div>
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100"
-              onClick={goNextMonth}
-              type="button"
-              aria-label="다음 달"
-              title="다음 달"
-            >
-              <span className="text-lg leading-none">&rsaquo;</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-1"
+            onClick={() => {
+              setPickerOpen((prev) => {
+                if (!prev) {
+                  requestAnimationFrame(() => {
+                    const y = dayjs(month).year();
+                    const row = yearScrollRef.current?.querySelector(
+                      `[data-year="${y}"]`
+                    ) as HTMLElement | null;
+                    if (row && yearScrollRef.current) {
+                      yearScrollRef.current.scrollTop =
+                        row.offsetTop -
+                        yearScrollRef.current.offsetHeight / 2 +
+                        row.offsetHeight / 2;
+                    }
+                  });
+                }
+                return !prev;
+              });
+            }}
+          >
+            <span className="text-lg font-semibold tracking-tight text-slate-800">
+              {dayjs(month).format('YYYY. M')}
+            </span>
+            {pickerOpen ? (
+              <ChevronUpIcon className="h-4 w-4 stroke-2 text-slate-500" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4 stroke-2 text-slate-500" />
+            )}
+          </button>
         </div>
+        <Link
+          to="/search"
+          className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100"
+        >
+          <MagnifyingGlassIcon className="h-6 w-6 text-slate-700" />
+        </Link>
       </header>
 
       {/* Calendar grid */}
       <div
-        className="calendar-full flex min-h-0 flex-1 flex-col pb-16 touch-pan-y"
+        className="calendar-full relative flex min-h-0 flex-1 flex-col overflow-hidden touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Year/Month picker overlay */}
+        <div
+          className={`absolute inset-x-0 top-0 z-30 flex justify-center gap-0 bg-white transition-all duration-300 ${
+            pickerOpen
+              ? 'translate-y-0 border-b border-slate-100 shadow-md'
+              : '-translate-y-full border-b border-transparent shadow-none'
+          }`}
+        >
+            <div
+              ref={yearScrollRef}
+              className="flex h-48 w-28 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
+            >
+              {Array.from({ length: 20 }, (_, i) => 2018 + i).map((y) => {
+                const isSelected = dayjs(month).year() === y;
+                return (
+                  <button
+                    key={y}
+                    data-year={y}
+                    type="button"
+                    className={`snap-center px-3 py-2 text-center text-sm ${
+                      isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
+                    }`}
+                    onClick={() => {
+                      setMonth(dayjs(month).year(y).toDate());
+                    }}
+                  >
+                    {y}년
+                  </button>
+                );
+              })}
+            </div>
+            <div
+              ref={monthScrollRef}
+              className="flex h-48 w-20 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                const isSelected = dayjs(month).month() + 1 === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`snap-center px-3 py-2 text-center text-sm ${
+                      isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
+                    }`}
+                    onClick={() => {
+                      setMonth(
+                        dayjs(month)
+                          .month(m - 1)
+                          .toDate()
+                      );
+                    }}
+                  >
+                    {m}월
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+        {/* Picker backdrop – closes picker on tap */}
+        {pickerOpen && (
+          <div
+            className="absolute inset-0 z-20"
+            onClick={() => setPickerOpen(false)}
+          />
+        )}
+
         <DayPicker
           mode="single"
           selected={selectedDate ?? undefined}
@@ -299,6 +387,24 @@ export default function App() {
           }}
         />
       </div>
+
+      {/* Today button */}
+      {!dayjs(month).isSame(dayjs(), 'month') && (
+        <button
+          type="button"
+          className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-md active:bg-slate-50"
+          onClick={() => {
+            const today = new Date();
+            setMonth(today);
+            setSelectedDate(today);
+            setEditingRecordId(null);
+            setSelectedCategoryId(null);
+            setMemoInput('');
+          }}
+        >
+          &lsaquo; 오늘
+        </button>
+      )}
 
       {/* Bottom sheet overlay */}
       <div
@@ -366,9 +472,11 @@ export default function App() {
             </div>
           ))}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {editingRecordId ? '기록 수정' : '기록 추가'}
-            </p>
+            {editingRecordId && (
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                기록 수정
+              </p>
+            )}
             <div className="grid gap-3">
               {categories.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-center text-sm text-slate-500">
@@ -447,7 +555,68 @@ export default function App() {
           </div>
         </div>
       </div>
-      <BottomTabs />
+      {/* Side drawer overlay */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
+          drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={() => setDrawerOpen(false)}
+      />
+
+      {/* Side drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 transform flex-col bg-white shadow-xl transition-transform duration-300 ${
+          drawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <span className="text-base font-semibold text-slate-800">메뉴</span>
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100"
+            onClick={() => setDrawerOpen(false)}
+          >
+            <XMarkIcon className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+        <nav className="flex flex-col py-2">
+          {[
+            { to: '/stats', label: '통계', Icon: ChartBarIcon },
+            ...(user?.authority === 'ADMIN'
+              ? [{ to: '/admin', label: '관리', Icon: WrenchScrewdriverIcon }]
+              : []),
+            { to: '/me', label: '내정보', Icon: UserCircleIcon },
+          ].map(({ to, label, Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              onClick={() => setDrawerOpen(false)}
+            >
+              <Icon className="h-5 w-5 text-slate-500" />
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-auto border-t border-slate-100 px-4 py-3">
+          <ConfirmDialog
+            title="로그아웃"
+            description="로그아웃 하시겠어요?"
+            confirmLabel="로그아웃"
+            cancelLabel="취소"
+            onConfirm={logout}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium text-slate-500 hover:text-slate-700"
+              >
+                <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
+                로그아웃
+              </button>
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
-import { PowerIcon } from '@heroicons/react/24/outline';
+import { Button, FormField, Input } from '@repo/ui';
 import { updateMe } from '../api/users';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import BottomTabs from '../components/BottomTabs';
+import PageHeader from '../components/PageHeader';
 
 function formatError(error: unknown): string {
   if (error instanceof ApiError && error.body && typeof error.body === 'object') {
@@ -16,7 +15,7 @@ function formatError(error: unknown): string {
 }
 
 export default function ProfilePage() {
-  const { user, refresh, logout } = useAuth();
+  const { user, refresh } = useAuth();
   const [name, setName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
@@ -61,37 +60,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pb-28 pt-12 text-slate-900">
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">profile</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
-              내 정보 수정
-            </h1>
-          </div>
-          <div className="relative flex items-center gap-2">
-            <ConfirmDialog
-              title="로그아웃"
-              description="로그아웃 하시겠어요?"
-              confirmLabel="로그아웃"
-              cancelLabel="취소"
-              onConfirm={logout}
-              trigger={
-                <Button
-                  variant="secondary"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/80 p-0 text-slate-600 !rounded-full"
-                  aria-label="로그아웃"
-                  title="로그아웃"
-                  type="button"
-                >
-                  <PowerIcon className="h-4 w-4" />
-                </Button>
-              }
-            />
-          </div>
-        </header>
-
+    <div className="min-h-screen bg-white text-slate-900">
+      <PageHeader title="내 정보" />
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-6 pb-8">
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -143,7 +114,6 @@ export default function ProfilePage() {
           </div>
         </form>
       </div>
-      <BottomTabs />
     </div>
   );
 }

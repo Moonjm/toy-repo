@@ -1,16 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import BottomTabs from '../components/BottomTabs';
+import PageHeader from '../components/PageHeader';
 import { FolderIcon, UsersIcon } from '@heroicons/react/24/outline';
 
 export default function AdminHomePage() {
   return (
-    <div className="min-h-screen bg-white px-6 pb-28 pt-8 text-slate-900">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <header>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">관리</h1>
-          <p className="mt-2 text-sm text-slate-500">카테고리와 사용자를 관리하세요.</p>
-        </header>
+    <div className="min-h-screen bg-white text-slate-900">
+      <PageHeader title="관리" />
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-6 pb-8">
+        <p className="text-sm text-slate-500">카테고리와 사용자를 관리하세요.</p>
 
         <div className="grid gap-4">
           <Link
@@ -46,7 +44,6 @@ export default function AdminHomePage() {
           </Link>
         </div>
       </div>
-      <BottomTabs />
     </div>
   );
 }

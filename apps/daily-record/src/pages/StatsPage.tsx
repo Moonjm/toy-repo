@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { fetchDailyRecords } from '../api/dailyRecords';
-import BottomTabs from '../components/BottomTabs';
+import PageHeader from '../components/PageHeader';
 import { FormField, Select } from '@repo/ui';
 
 export default function StatsPage() {
@@ -73,18 +73,12 @@ export default function StatsPage() {
   }, [year, month]);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 pb-28 pt-8 text-slate-900">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">stats</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">월간 통계</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {periodLabel} · 총 {total}건
-            </p>
-          </div>
-          <div />
-        </header>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <PageHeader title="통계" />
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-6 pb-8">
+        <div className="text-sm text-slate-500">
+          {periodLabel} · 총 {total}건
+        </div>
 
         <section className="rounded-3xl bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
           <div className="mb-4 grid grid-cols-2 gap-3">
@@ -148,7 +142,6 @@ export default function StatsPage() {
           )}
         </section>
       </div>
-      <BottomTabs />
     </div>
   );
 }
