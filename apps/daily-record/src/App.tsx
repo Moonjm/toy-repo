@@ -243,7 +243,7 @@ export default function App() {
                   key={name}
                   className="w-full truncate rounded-sm bg-red-50 px-0.5 text-center text-[9px] leading-tight text-red-500"
                 >
-                  {name}
+                  {name.replace(/\s*\(.*?\)/g, '')}
                 </span>
               ))}
             </div>
