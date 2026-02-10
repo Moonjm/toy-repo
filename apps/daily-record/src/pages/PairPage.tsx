@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
-import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { ApiError } from '../api/client';
 import {
   acceptInvite,
@@ -170,7 +171,14 @@ export default function PairPage() {
                 </div>
               )}
             </div>
-            <div className="mt-6">
+            <Link
+              to="/pair/events"
+              className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <CalendarDaysIcon className="h-4 w-4" />
+              기념일 관리
+            </Link>
+            <div className="mt-4">
               <ConfirmDialog
                 title="페어 해제"
                 description="정말로 페어를 해제하시겠어요? 상대방의 기록을 더 이상 볼 수 없습니다."

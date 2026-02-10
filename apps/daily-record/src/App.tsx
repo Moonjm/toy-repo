@@ -32,6 +32,7 @@ import {
   fetchPartnerDailyRecords,
   type PairResponse,
 } from './api/pair';
+import { fetchPairEvents, type PairEvent } from './api/pairEvents';
 dayjs.locale('ko');
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
   const { user, logout } = useAuth();
   const [pairInfo, setPairInfo] = useState<PairResponse | null>(null);
   const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
+  const [pairEventsByDate, setPairEventsByDate] = useState<Record<string, PairEvent[]>>({});
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -195,9 +197,33 @@ export default function App() {
       .catch(() => setPartnerRecordsByDate({}));
   };
 
+  const loadPairEvents = (targetMonth: Date) => {
+    if (!pairInfo || pairInfo.status !== 'CONNECTED') {
+      setPairEventsByDate({});
+      return;
+    }
+    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+    fetchPairEvents({ from, to })
+      .then((res) => {
+        const next: Record<string, PairEvent[]> = {};
+        (res.data ?? []).forEach((event) => {
+          const eventMonth = event.eventDate.substring(5, 7);
+          const eventDay = event.eventDate.substring(8, 10);
+          const year = dayjs(targetMonth).year();
+          const key = `${year}-${eventMonth}-${eventDay}`;
+          if (!next[key]) next[key] = [];
+          next[key].push(event);
+        });
+        setPairEventsByDate(next);
+      })
+      .catch(() => setPairEventsByDate({}));
+  };
+
   useEffect(() => {
     loadMonthRecords(month);
     loadPartnerRecords(month);
+    loadPairEvents(month);
   }, [month, pairInfo]);
 
   const isPaired = pairInfo?.status === 'CONNECTED';
@@ -207,6 +233,7 @@ export default function App() {
     const key = dayjs(day.date).format('YYYY-MM-DD');
     const items = recordsByDate[key] || [];
     const partnerItems = partnerRecordsByDate[key] || [];
+    const dayEvents = pairEventsByDate[key] || [];
     const holidayNames = holidayMap[key];
     const weekday = dayjs(day.date).day();
     const isSunday = weekday === 0;
@@ -243,6 +270,13 @@ export default function App() {
                 >
                   {name.replace(/\s*\(.*?\)/g, '')}
                 </span>
+              ))}
+            </div>
+          )}
+          {dayEvents.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-0.5">
+              {dayEvents.map((event) => (
+                <span key={`ev-${event.id}`} className="text-[10px] leading-tight">{event.emoji}</span>
               ))}
             </div>
           )}
@@ -500,6 +534,18 @@ export default function App() {
           )}
         </div>
         <div className="grid gap-3 overflow-y-auto px-5 pb-5">
+          {selectedKey && (pairEventsByDate[selectedKey] ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(pairEventsByDate[selectedKey] ?? []).map((event) => (
+                <span
+                  key={`ev-${event.id}`}
+                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                >
+                  {event.emoji} {event.title}
+                </span>
+              ))}
+            </div>
+          )}
           {isPaired && (
             <p className="text-xs font-semibold text-slate-400">나의 기록</p>
           )}

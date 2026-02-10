@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import StatsPage from './pages/StatsPage';
 import SearchPage from './pages/SearchPage';
 import PairPage from './pages/PairPage';
+import PairEventsPage from './pages/PairEventsPage';
 import RootRedirect from './pages/RootRedirect';
 import './index.css';
 
@@ -65,6 +66,14 @@ root.render(
           element={
             <RequireAuth allow={['USER', 'ADMIN']}>
               <PairPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pair/events"
+          element={
+            <RequireAuth allow={['USER', 'ADMIN']}>
+              <PairEventsPage />
             </RequireAuth>
           }
         />
