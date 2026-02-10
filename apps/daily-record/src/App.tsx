@@ -12,6 +12,7 @@ import {
   WrenchScrewdriverIcon,
   UserCircleIcon,
   ArrowRightStartOnRectangleIcon,
+  HeartIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from './auth/AuthContext';
 import { DayPicker, type DayButtonProps } from 'react-day-picker';
@@ -26,6 +27,11 @@ import {
   type DailyRecord,
   updateDailyRecord,
 } from './api/dailyRecords';
+import {
+  getPairStatus,
+  fetchPartnerDailyRecords,
+  type PairResponse,
+} from './api/pair';
 dayjs.locale('ko');
 
 export default function App() {
@@ -44,6 +50,8 @@ export default function App() {
   const yearScrollRef = useRef<HTMLDivElement>(null);
   const monthScrollRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
+  const [pairInfo, setPairInfo] = useState<PairResponse | null>(null);
+  const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
@@ -157,13 +165,48 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    getPairStatus()
+      .then((res) => {
+        if (cancelled) return;
+        setPairInfo(res.data ?? null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const loadPartnerRecords = (targetMonth: Date) => {
+    if (!pairInfo || pairInfo.status !== 'CONNECTED') {
+      setPartnerRecordsByDate({});
+      return;
+    }
+    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+    fetchPartnerDailyRecords({ from, to })
+      .then((res) => {
+        const next: Record<string, DailyRecord[]> = {};
+        (res.data ?? []).forEach((record) => {
+          const key = dayjs(record.date).format('YYYY-MM-DD');
+          if (!next[key]) next[key] = [];
+          next[key].push(record);
+        });
+        setPartnerRecordsByDate(next);
+      })
+      .catch(() => setPartnerRecordsByDate({}));
+  };
+
+  useEffect(() => {
     loadMonthRecords(month);
-  }, [month]);
+    loadPartnerRecords(month);
+  }, [month, pairInfo]);
+
+  const isPaired = pairInfo?.status === 'CONNECTED';
 
   const DayButton = (props: DayButtonProps) => {
     const { day, modifiers, children, ...buttonProps } = props;
     const key = dayjs(day.date).format('YYYY-MM-DD');
     const items = recordsByDate[key] || [];
+    const partnerItems = partnerRecordsByDate[key] || [];
     const holidayNames = holidayMap[key];
     const weekday = dayjs(day.date).day();
     const isSunday = weekday === 0;
@@ -173,6 +216,15 @@ export default function App() {
     let dateClass = 'text-slate-800';
     if (holidayNames || isSunday) dateClass = 'text-red-500';
     else if (isSaturday) dateClass = 'text-blue-500';
+
+    const myEmojis = Array.from(new Set(items.map((item) => item.category.id)))
+      .slice(0, isPaired ? 2 : 3)
+      .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?');
+    const partnerEmojis = isPaired
+      ? Array.from(new Set(partnerItems.map((item) => item.category.id)))
+          .slice(0, 2)
+          .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?')
+      : [];
 
     return (
       <button {...buttonProps} title={holidayNames?.join(', ') || undefined}>
@@ -196,22 +248,35 @@ export default function App() {
               ))}
             </div>
           )}
-          {items.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-0.5">
-              {Array.from(new Set(items.map((item) => item.category.id)))
-                .slice(0, 3)
-                .map((categoryId) => {
-                  const category = categories.find((c) => c.id === categoryId);
-                  return (
-                    <span key={`${key}-${categoryId}`} className="text-xs leading-none">
-                      {category?.emoji ?? '?'}
-                    </span>
-                  );
-                })}
-              {items.length > 3 && (
-                <span className="text-[9px] text-slate-400">+{items.length - 3}</span>
-              )}
-            </div>
+          {isPaired ? (
+            (myEmojis.length > 0 || partnerEmojis.length > 0) && (
+              <div className="flex w-full items-start justify-center gap-px">
+                <div className="flex flex-col items-center">
+                  {myEmojis.map((emoji, i) => (
+                    <span key={`m-${i}`} className="text-[10px] leading-tight">{emoji}</span>
+                  ))}
+                </div>
+                {(myEmojis.length > 0 && partnerEmojis.length > 0) && (
+                  <span className="text-[8px] leading-tight text-slate-300">|</span>
+                )}
+                <div className="flex flex-col items-center">
+                  {partnerEmojis.map((emoji, i) => (
+                    <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">{emoji}</span>
+                  ))}
+                </div>
+              </div>
+            )
+          ) : (
+            items.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-0.5">
+                {myEmojis.map((emoji, i) => (
+                  <span key={`${key}-${i}`} className="text-xs leading-none">{emoji}</span>
+                ))}
+                {items.length > 3 && (
+                  <span className="text-[9px] text-slate-400">+{items.length - 3}</span>
+                )}
+              </div>
+            )
           )}
         </div>
       </button>
@@ -437,6 +502,12 @@ export default function App() {
           </div>
         )}
         <div className="grid gap-3">
+          {isPaired && (
+            <p className="text-xs font-semibold text-slate-400">나의 기록</p>
+          )}
+          {(recordsByDate[selectedKey ?? ''] ?? []).length === 0 && (
+            <p className="text-center text-xs text-slate-400">기록이 없습니다</p>
+          )}
           {(recordsByDate[selectedKey ?? ''] ?? []).map((record) => (
             <div
               key={record.id}
@@ -471,6 +542,23 @@ export default function App() {
               </Button>
             </div>
           ))}
+          {isPaired && selectedKey && (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
+            <>
+              <p className="mt-2 text-xs font-semibold text-slate-400">
+                {pairInfo?.partnerName ?? '상대방'}의 기록
+              </p>
+              {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
+                <div
+                  key={`p-${record.id}`}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <span className="text-lg">{record.category.emoji}</span>
+                  <span className="font-medium text-slate-800">{record.category.name}</span>
+                  {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
+                </div>
+              ))}
+            </>
+          )}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
             {editingRecordId && (
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -581,6 +669,7 @@ export default function App() {
         </div>
         <nav className="flex flex-col py-2">
           {[
+            { to: '/pair', label: '페어', Icon: HeartIcon },
             { to: '/stats', label: '통계', Icon: ChartBarIcon },
             ...(user?.authority === 'ADMIN'
               ? [{ to: '/admin', label: '관리', Icon: WrenchScrewdriverIcon }]
