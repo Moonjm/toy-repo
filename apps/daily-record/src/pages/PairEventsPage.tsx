@@ -106,14 +106,14 @@ export default function PairEventsPage() {
                 maxLength={4}
                 onChange={(event) => setEmoji(event.target.value)}
                 placeholder="💍"
-                className="w-16 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-lg"
+                className="w-14 shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-lg"
               />
               <Input
                 value={title}
                 maxLength={30}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="기념일 이름"
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
               />
             </div>
             <Input
