@@ -218,11 +218,9 @@ export default function App() {
     else if (isSaturday) dateClass = 'text-blue-500';
 
     const myEmojis = Array.from(new Set(items.map((item) => item.category.id)))
-      .slice(0, isPaired ? 2 : 3)
       .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?');
     const partnerEmojis = isPaired
       ? Array.from(new Set(partnerItems.map((item) => item.category.id)))
-          .slice(0, 2)
           .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?')
       : [];
 
@@ -267,14 +265,11 @@ export default function App() {
               </div>
             )
           ) : (
-            items.length > 0 && (
+            myEmojis.length > 0 && (
               <div className="flex flex-wrap justify-center gap-0.5">
                 {myEmojis.map((emoji, i) => (
                   <span key={`${key}-${i}`} className="text-xs leading-none">{emoji}</span>
                 ))}
-                {items.length > 3 && (
-                  <span className="text-[9px] text-slate-400">+{items.length - 3}</span>
-                )}
               </div>
             )
           )}
@@ -481,27 +476,30 @@ export default function App() {
 
       {/* Bottom sheet */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md transform rounded-t-2xl bg-white p-5 shadow-lg transition-transform duration-300 ${
+        className={`fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md transform flex-col rounded-t-2xl bg-white shadow-lg transition-transform duration-300 ${
           sheetOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
+        style={{ maxHeight: '70dvh' }}
       >
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
-        <div className="mb-4 text-center text-base font-semibold text-slate-800">
-          {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
-        </div>
-        {selectedKey && holidayMap[selectedKey] && holidayMap[selectedKey].length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-            {holidayMap[selectedKey].map((name) => (
-              <span
-                key={`${selectedKey}-${name}`}
-                className="rounded-full bg-red-50 px-3 py-1 font-semibold text-red-600"
-              >
-                {name}
-              </span>
-            ))}
+        <div className="flex-shrink-0 px-5 pt-5">
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
+          <div className="mb-4 text-center text-base font-semibold text-slate-800">
+            {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
           </div>
-        )}
-        <div className="grid gap-3">
+          {selectedKey && holidayMap[selectedKey] && holidayMap[selectedKey].length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+              {holidayMap[selectedKey].map((name) => (
+                <span
+                  key={`${selectedKey}-${name}`}
+                  className="rounded-full bg-red-50 px-3 py-1 font-semibold text-red-600"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="grid gap-3 overflow-y-auto px-5 pb-5">
           {isPaired && (
             <p className="text-xs font-semibold text-slate-400">나의 기록</p>
           )}
