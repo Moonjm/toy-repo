@@ -122,7 +122,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <PageHeader title="카테고리 관리" />
+      <PageHeader title="카테고리 관리" backTo="/admin" />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-8">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

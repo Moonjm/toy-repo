@@ -126,7 +126,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <PageHeader title="사용자 관리" />
+      <PageHeader title="사용자 관리" backTo="/admin" />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-8">
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
