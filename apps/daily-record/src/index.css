@@ -89,6 +89,10 @@ body {
   display: flex;
   min-height: 0;
   overflow: hidden;
+  border-right: 1px solid #f1f5f9;
+}
+.calendar-full tbody td:last-child {
+  border-right: none;
 }
 .calendar-full tbody td button {
   flex: 1;

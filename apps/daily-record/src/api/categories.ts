@@ -63,3 +63,7 @@ export function updateCategory(id: number, payload: CategoryRequest): Promise<vo
 export function deleteCategory(id: number): Promise<void> {
   return deleteJson<void>(`/categories/${id}`);
 }
+
+export function reorderCategory(targetId: number, beforeId: number | null): Promise<void> {
+  return putJson<void>('/categories/order', { targetId, beforeId });
+}

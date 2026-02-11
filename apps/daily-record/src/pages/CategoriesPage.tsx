@@ -1,10 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   createCategory,
   deleteCategory,
   fetchCategories,
+  reorderCategory,
   type Category,
   type CategoryRequest,
   updateCategory,
@@ -27,6 +43,212 @@ function formatError(error: unknown): string {
   return '요청 처리 중 문제가 발생했습니다.';
 }
 
+function SortableItem({
+  item,
+  isEditing,
+  busy,
+  editForm,
+  setEditForm,
+  onEditStart,
+  onEditSave,
+  onEditCancel,
+  onDelete,
+}: {
+  item: Category;
+  isEditing: boolean;
+  busy: boolean;
+  editForm: CategoryRequest;
+  setEditForm: React.Dispatch<React.SetStateAction<CategoryRequest>>;
+  onEditStart: () => void;
+  onEditSave: () => void;
+  onEditCancel: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    position: isDragging ? 'relative' as const : undefined,
+  };
+
+  return (
+    <article
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition ${
+        isDragging ? 'shadow-lg opacity-90' : 'hover:border-slate-300'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="cursor-grab touch-none rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+            aria-label="드래그하여 순서 변경"
+            title="드래그하여 순서 변경"
+          >
+            <Bars3Icon className="h-5 w-5" />
+          </button>
+          <span className="text-3xl">{item.emoji}</span>
+          <div>
+            <p className="text-base font-semibold text-slate-900">{item.name}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              item.isActive
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-slate-200 text-slate-600'
+            }`}
+          >
+            {item.isActive ? 'ACTIVE' : 'INACTIVE'}
+          </span>
+          <Button
+            variant="secondary"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600"
+            onClick={onEditStart}
+            type="button"
+            aria-label="편집"
+            title="편집"
+          >
+            <PencilSquareIcon className="h-4 w-4" />
+          </Button>
+          <ConfirmDialog
+            title="카테고리 삭제"
+            description={`${item.name}을(를) 삭제할까요?`}
+            confirmLabel="삭제"
+            cancelLabel="취소"
+            onConfirm={onDelete}
+            trigger={
+              <Button
+                variant="secondary"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:border-red-300"
+                disabled={busy}
+                type="button"
+                aria-label="삭제"
+                title="삭제"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+            }
+          />
+        </div>
+      </div>
+
+      {isEditing && (
+        <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <FormField
+              label="Emoji"
+              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              <Input
+                value={editForm.emoji}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    emoji: event.target.value,
+                  }))
+                }
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
+              />
+            </FormField>
+            <FormField
+              label="Name"
+              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              <Input
+                value={editForm.name}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
+                }
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
+              />
+            </FormField>
+          </div>
+          <div className="grid gap-3">
+            <div className="md:col-span-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Status
+              </span>
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
+                <Button
+                  type="button"
+                  variant={editForm.isActive ? 'primary' : 'secondary'}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    editForm.isActive
+                      ? 'bg-emerald-500 text-white hover:bg-emerald-500'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      isActive: true,
+                    }))
+                  }
+                >
+                  Active
+                </Button>
+                <Button
+                  type="button"
+                  variant={!editForm.isActive ? 'primary' : 'secondary'}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    !editForm.isActive
+                      ? 'bg-slate-900 text-white hover:bg-slate-900'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      isActive: false,
+                    }))
+                  }
+                >
+                  Inactive
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm"
+              onClick={onEditSave}
+              disabled={busy}
+              type="button"
+            >
+              저장
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600"
+              onClick={onEditCancel}
+              disabled={busy}
+              type="button"
+            >
+              취소
+            </Button>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
 export default function CategoriesPage() {
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +258,11 @@ export default function CategoriesPage() {
   const [editForm, setEditForm] = useState<CategoryRequest>(emptyForm);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
 
   const loadList = () => {
     setLoading(true);
@@ -102,6 +329,40 @@ export default function CategoriesPage() {
       setError(formatError(err));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedItems.findIndex((item) => item.id === active.id);
+    const newIndex = sortedItems.findIndex((item) => item.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    // Optimistic reorder
+    const reordered = [...sortedItems];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    setItems(reordered.map((item, i) => ({ ...item, sortOrder: i + 1 })));
+
+    // Calculate beforeId for the API
+    const targetId = Number(active.id);
+    const beforeId = newIndex < reordered.length - 1
+      ? reordered[newIndex + 1].id
+      : null;
+
+    // But wait - if the moved item IS at newIndex, the item after it is at newIndex+1
+    // However we need beforeId to be the item that should come after the target
+    // Since we already spliced, reordered[newIndex] === moved, reordered[newIndex+1] is the next item
+    setError(null);
+    setNotice(null);
+    try {
+      await reorderCategory(targetId, beforeId);
+      await loadList();
+    } catch (err) {
+      setError(formatError(err));
+      await loadList(); // Revert on failure
     }
   };
 
@@ -235,164 +496,31 @@ export default function CategoriesPage() {
                   아직 등록된 카테고리가 없습니다.
                 </div>
               ) : (
-                sortedItems.map((item) => {
-                  const isEditing = editingId === item.id;
-                  const busy = busyId === item.id;
-                  return (
-                    <article
-                      key={item.id}
-                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">{item.emoji}</span>
-                          <div>
-                            <p className="text-base font-semibold text-slate-900">{item.name}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              item.isActive
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-slate-200 text-slate-600'
-                            }`}
-                          >
-                            {item.isActive ? 'ACTIVE' : 'INACTIVE'}
-                          </span>
-                          <Button
-                            variant="secondary"
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600"
-                            onClick={() => handleEditStart(item)}
-                            type="button"
-                            aria-label="편집"
-                            title="편집"
-                          >
-                            <PencilSquareIcon className="h-4 w-4" />
-                          </Button>
-                          <ConfirmDialog
-                            title="카테고리 삭제"
-                            description={`${item.name}을(를) 삭제할까요?`}
-                            confirmLabel="삭제"
-                            cancelLabel="취소"
-                            onConfirm={() => handleDelete(item)}
-                            trigger={
-                              <Button
-                                variant="secondary"
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:border-red-300"
-                                disabled={busy}
-                                type="button"
-                                aria-label="삭제"
-                                title="삭제"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      {isEditing && (
-                        <div className="mt-4 grid gap-4 rounded-2xl bg-slate-50 p-4">
-                          <div className="grid gap-3 md:grid-cols-2">
-                            <FormField
-                              label="Emoji"
-                              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
-                            >
-                              <Input
-                                value={editForm.emoji}
-                                onChange={(event) =>
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    emoji: event.target.value,
-                                  }))
-                                }
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
-                              />
-                            </FormField>
-                            <FormField
-                              label="Name"
-                              labelClassName="text-xs font-semibold uppercase tracking-wide text-slate-500"
-                            >
-                              <Input
-                                value={editForm.name}
-                                onChange={(event) =>
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    name: event.target.value,
-                                  }))
-                                }
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus:border-orange-400 focus:outline-none"
-                              />
-                            </FormField>
-                          </div>
-                          <div className="grid gap-3">
-                            <div className="md:col-span-3">
-                              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Status
-                              </span>
-                              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
-                                <Button
-                                  type="button"
-                                  variant={editForm.isActive ? 'primary' : 'secondary'}
-                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                                    editForm.isActive
-                                      ? 'bg-emerald-500 text-white hover:bg-emerald-500'
-                                      : ''
-                                  }`}
-                                  onClick={() =>
-                                    setEditForm((prev) => ({
-                                      ...prev,
-                                      isActive: true,
-                                    }))
-                                  }
-                                >
-                                  Active
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant={!editForm.isActive ? 'primary' : 'secondary'}
-                                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                                    !editForm.isActive
-                                      ? 'bg-slate-900 text-white hover:bg-slate-900'
-                                      : ''
-                                  }`}
-                                  onClick={() =>
-                                    setEditForm((prev) => ({
-                                      ...prev,
-                                      isActive: false,
-                                    }))
-                                  }
-                                >
-                                  Inactive
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm"
-                              onClick={handleEditSave}
-                              disabled={busy}
-                              type="button"
-                            >
-                              저장
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600"
-                              onClick={() => setEditingId(null)}
-                              disabled={busy}
-                              type="button"
-                            >
-                              취소
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={sortedItems.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {sortedItems.map((item) => (
+                      <SortableItem
+                        key={item.id}
+                        item={item}
+                        isEditing={editingId === item.id}
+                        busy={busyId === item.id}
+                        editForm={editForm}
+                        setEditForm={setEditForm}
+                        onEditStart={() => handleEditStart(item)}
+                        onEditSave={handleEditSave}
+                        onEditCancel={() => setEditingId(null)}
+                        onDelete={() => handleDelete(item)}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
           </section>

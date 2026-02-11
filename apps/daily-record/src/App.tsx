@@ -244,23 +244,32 @@ export default function App() {
     if (holidayNames || isSunday) dateClass = 'text-red-500';
     else if (isSaturday) dateClass = 'text-blue-500';
 
-    const myEmojis = Array.from(new Set(items.map((item) => item.category.id)))
+    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.id)))
       .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?');
-    const partnerEmojis = isPaired
+    const allPartnerEmojis = isPaired
       ? Array.from(new Set(partnerItems.map((item) => item.category.id)))
           .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?')
       : [];
+    const HIGHLIGHT_EMOJI = '🐷';
+    const hasHighlight = allMyEmojis.includes(HIGHLIGHT_EMOJI) || allPartnerEmojis.includes(HIGHLIGHT_EMOJI);
+    const myEmojis = allMyEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
+    const partnerEmojis = allPartnerEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
 
     return (
       <button {...buttonProps} title={holidayNames?.join(', ') || undefined}>
         <div className="flex h-full w-full flex-col items-center gap-0.5 overflow-hidden pt-1.5">
-          {isToday ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[13px] font-bold text-white">
-              {children}
-            </span>
-          ) : (
-            <span className={`text-[13px] font-medium ${dateClass}`}>{children}</span>
-          )}
+          <div className="flex items-center justify-center gap-0.5">
+            {isToday ? (
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[13px] font-bold text-white">
+                {children}
+              </span>
+            ) : (
+              <span className={`text-[13px] font-medium ${dateClass}`}>{children}</span>
+            )}
+            {hasHighlight && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[12px] leading-none ring-1 ring-orange-200">{HIGHLIGHT_EMOJI}</span>
+            )}
+          </div>
           {holidayNames && (
             <div className="flex w-full flex-col items-center gap-px px-0.5">
               {holidayNames.slice(0, 2).map((name) => (
