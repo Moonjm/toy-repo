@@ -50,50 +50,17 @@ body {
   }
 }
 
-/* Full-height calendar grid */
-.calendar-full table {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+/* Continuous-scroll calendar */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
-.calendar-full thead {
-  flex-shrink: 0;
-}
-.calendar-full thead tr {
-  display: flex;
-}
-.calendar-full thead th {
-  flex: 1;
-}
-.calendar-full thead th:first-child {
-  color: #ef4444;
-}
-.calendar-full thead th:last-child {
-  color: #3b82f6;
-}
-.calendar-full tbody {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.calendar-full tbody tr {
-  flex: 1;
-  display: flex;
-  min-height: 0;
+.cal-cell {
+  min-height: 120px;
   border-bottom: 1px solid #f1f5f9;
-}
-.calendar-full tbody td {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
   border-right: 1px solid #f1f5f9;
+  overflow: hidden;
 }
-.calendar-full tbody td:last-child {
+.cal-cell:nth-child(7n) {
   border-right: none;
-}
-.calendar-full tbody td button {
-  flex: 1;
 }

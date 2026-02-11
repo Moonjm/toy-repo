@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import {
@@ -15,7 +15,6 @@ import {
   HeartIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from './auth/AuthContext';
-import { DayPicker, type DayButtonProps } from 'react-day-picker';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { fetchHolidays } from './api/holidays';
@@ -35,14 +34,33 @@ import {
 import { fetchPairEvents, type PairEvent } from './api/pairEvents';
 dayjs.locale('ko');
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const INITIAL_RANGE = 12;
+
+function getMonthCells(monthStart: dayjs.Dayjs): (dayjs.Dayjs | null)[] {
+  const first = monthStart.startOf('month');
+  const startDay = first.day();
+  const daysInMonth = first.daysInMonth();
+  const cells: (dayjs.Dayjs | null)[] = [];
+  for (let i = 0; i < startDay; i++) cells.push(null);
+  for (let d = 0; d < daysInMonth; d++) cells.push(first.add(d, 'day'));
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [month, setMonth] = useState<Date>(new Date());
+  const [visibleMonth, setVisibleMonth] = useState<string>(() => dayjs().format('YYYY-MM'));
   const [sheetOpen, setSheetOpen] = useState(false);
   const [recordsByDate, setRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [holidayMap, setHolidayMap] = useState<Record<string, string[]>>({});
   const holidayCacheRef = useRef<Record<string, boolean>>({});
+  const loadedMonthsRef = useRef({
+    records: new Set<string>(),
+    partner: new Set<string>(),
+    events: new Set<string>(),
+  });
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
@@ -50,108 +68,181 @@ export default function App() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const yearScrollRef = useRef<HTMLDivElement>(null);
   const monthScrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const monthSentinelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const initialScrollDone = useRef(false);
+  const scrollRestoreRef = useRef<{ prevHeight: number } | null>(null);
   const { user, logout } = useAuth();
   const [pairInfo, setPairInfo] = useState<PairResponse | null>(null);
-  const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
+  const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<
+    Record<string, DailyRecord[]>
+  >({});
   const [pairEventsByDate, setPairEventsByDate] = useState<Record<string, PairEvent[]>>({});
+
+  const [rangeStart, setRangeStart] = useState(() =>
+    dayjs().subtract(INITIAL_RANGE, 'month').startOf('month')
+  );
+  const [rangeEnd, setRangeEnd] = useState(() =>
+    dayjs().add(INITIAL_RANGE, 'month').startOf('month')
+  );
+
+  const months = useMemo(() => {
+    const result: dayjs.Dayjs[] = [];
+    let cur = rangeStart;
+    while (cur.isBefore(rangeEnd) || cur.isSame(rangeEnd, 'month')) {
+      result.push(cur);
+      cur = cur.add(1, 'month');
+    }
+    return result;
+  }, [rangeStart, rangeEnd]);
 
   const selectedKey = useMemo(
     () => (selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : null),
     [selectedDate]
   );
 
-  const goPrevMonth = () => {
-    setMonth((current) => dayjs(current).subtract(1, 'month').toDate());
-  };
+  /* ---------- Data loading (cumulative) ---------- */
 
-  const goNextMonth = () => {
-    setMonth((current) => dayjs(current).add(1, 'month').toDate());
-  };
-
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const swipeAxis = useRef<'x' | 'y' | null>(null);
-
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0];
-    if (!touch) return;
-    touchStart.current = { x: touch.clientX, y: touch.clientY };
-    swipeAxis.current = null;
-  };
-
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    const start = touchStart.current;
-    if (!start) return;
-    const touch = event.touches[0];
-    if (!touch) return;
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-    if (!swipeAxis.current) {
-      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
-      swipeAxis.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
-    }
-  };
-
-  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    const start = touchStart.current;
-    const axis = swipeAxis.current;
-    touchStart.current = null;
-    swipeAxis.current = null;
-    if (!start || axis !== 'x') return;
-    const endX = event.changedTouches[0]?.clientX ?? start.x;
-    const deltaX = endX - start.x;
-    if (Math.abs(deltaX) < 40) return;
-    if (deltaX > 0) {
-      goPrevMonth();
-    } else {
-      goNextMonth();
-    }
-  };
-
-  const loadMonthRecords = (targetMonth: Date) => {
+  const loadMonthRecords = useCallback((targetMonth: Date) => {
+    const mk = dayjs(targetMonth).format('YYYY-MM');
+    if (loadedMonthsRef.current.records.has(mk)) return;
+    loadedMonthsRef.current.records.add(mk);
     const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
     const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
-    return fetchDailyRecords({ from, to })
+    fetchDailyRecords({ from, to })
       .then((res) => {
-        const next: Record<string, DailyRecord[]> = {};
+        setRecordsByDate((prev) => {
+          const next = { ...prev };
+          (res.data ?? []).forEach((record) => {
+            const key = dayjs(record.date).format('YYYY-MM-DD');
+            if (!next[key]) next[key] = [];
+            next[key].push(record);
+          });
+          return next;
+        });
+      })
+      .catch(() => {
+        loadedMonthsRef.current.records.delete(mk);
+      });
+  }, []);
+
+  const loadPartnerRecords = useCallback(
+    (targetMonth: Date) => {
+      if (!pairInfo || pairInfo.status !== 'CONNECTED') return;
+      const mk = dayjs(targetMonth).format('YYYY-MM');
+      if (loadedMonthsRef.current.partner.has(mk)) return;
+      loadedMonthsRef.current.partner.add(mk);
+      const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+      const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+      fetchPartnerDailyRecords({ from, to })
+        .then((res) => {
+          setPartnerRecordsByDate((prev) => {
+            const next = { ...prev };
+            (res.data ?? []).forEach((record) => {
+              const key = dayjs(record.date).format('YYYY-MM-DD');
+              if (!next[key]) next[key] = [];
+              next[key].push(record);
+            });
+            return next;
+          });
+        })
+        .catch(() => {
+          loadedMonthsRef.current.partner.delete(mk);
+        });
+    },
+    [pairInfo]
+  );
+
+  const loadPairEvents = useCallback(
+    (targetMonth: Date) => {
+      if (!pairInfo || pairInfo.status !== 'CONNECTED') return;
+      const mk = dayjs(targetMonth).format('YYYY-MM');
+      if (loadedMonthsRef.current.events.has(mk)) return;
+      loadedMonthsRef.current.events.add(mk);
+      const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+      const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+      fetchPairEvents({ from, to })
+        .then((res) => {
+          setPairEventsByDate((prev) => {
+            const next = { ...prev };
+            (res.data ?? []).forEach((event) => {
+              const eventMonth = event.eventDate.substring(5, 7);
+              const eventDay = event.eventDate.substring(8, 10);
+              const year = dayjs(targetMonth).year();
+              const key = `${year}-${eventMonth}-${eventDay}`;
+              if (!next[key]) next[key] = [];
+              next[key].push(event);
+            });
+            return next;
+          });
+        })
+        .catch(() => {
+          loadedMonthsRef.current.events.delete(mk);
+        });
+    },
+    [pairInfo]
+  );
+
+  const loadMonthData = useCallback(
+    (targetMonth: Date) => {
+      loadMonthRecords(targetMonth);
+      loadPartnerRecords(targetMonth);
+      loadPairEvents(targetMonth);
+    },
+    [loadMonthRecords, loadPartnerRecords, loadPairEvents]
+  );
+
+  const reloadMonthRecords = useCallback(async (targetDate: Date) => {
+    const from = dayjs(targetDate).startOf('month').format('YYYY-MM-DD');
+    const to = dayjs(targetDate).endOf('month').format('YYYY-MM-DD');
+    try {
+      const res = await fetchDailyRecords({ from, to });
+      setRecordsByDate((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((key) => {
+          if (key >= from && key <= to) delete next[key];
+        });
         (res.data ?? []).forEach((record) => {
           const key = dayjs(record.date).format('YYYY-MM-DD');
           if (!next[key]) next[key] = [];
           next[key].push(record);
         });
-        setRecordsByDate(next);
-      })
-      .catch(() => {});
-  };
+        return next;
+      });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  /* ---------- Holidays ---------- */
 
   useEffect(() => {
-    const year = String(dayjs(month).year());
-    if (holidayCacheRef.current[year]) return;
+    const years = new Set(months.map((m) => String(m.year())));
+    years.forEach((year) => {
+      if (holidayCacheRef.current[year]) return;
+      fetchHolidays(year)
+        .then((res) => {
+          if (!Array.isArray(res?.data)) return;
+          setHolidayMap((prev) => {
+            const next = { ...prev };
+            res.data.forEach(
+              (item: { date: string; localName?: string | null; name?: string | null }) => {
+                const key = dayjs(item.date).format('YYYY-MM-DD');
+                const label = item.localName ?? item.name;
+                if (!label) return;
+                if (!next[key]) next[key] = [];
+                next[key].push(label);
+              }
+            );
+            return next;
+          });
+          holidayCacheRef.current[year] = true;
+        })
+        .catch(() => {});
+    });
+  }, [months]);
 
-    let cancelled = false;
-    fetchHolidays(year)
-      .then((res) => {
-        if (cancelled || !Array.isArray(res?.data)) return;
-        setHolidayMap((prev) => {
-          const next = { ...prev };
-          res.data.forEach(
-            (item: { date: string; localName?: string | null; name?: string | null }) => {
-              const key = dayjs(item.date).format('YYYY-MM-DD');
-              const label = item.localName ?? item.name;
-              if (!label) return;
-              if (!next[key]) next[key] = [];
-              next[key].push(label);
-            }
-          );
-          return next;
-        });
-        holidayCacheRef.current[year] = true;
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [month]);
+  /* ---------- Categories & pair ---------- */
 
   useEffect(() => {
     let cancelled = false;
@@ -174,100 +265,164 @@ export default function App() {
         setPairInfo(res.data ?? null);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  const loadPartnerRecords = (targetMonth: Date) => {
-    if (!pairInfo || pairInfo.status !== 'CONNECTED') {
-      setPartnerRecordsByDate({});
-      return;
-    }
-    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
-    fetchPartnerDailyRecords({ from, to })
-      .then((res) => {
-        const next: Record<string, DailyRecord[]> = {};
-        (res.data ?? []).forEach((record) => {
-          const key = dayjs(record.date).format('YYYY-MM-DD');
-          if (!next[key]) next[key] = [];
-          next[key].push(record);
-        });
-        setPartnerRecordsByDate(next);
-      })
-      .catch(() => setPartnerRecordsByDate({}));
-  };
-
-  const loadPairEvents = (targetMonth: Date) => {
-    if (!pairInfo || pairInfo.status !== 'CONNECTED') {
-      setPairEventsByDate({});
-      return;
-    }
-    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
-    fetchPairEvents({ from, to })
-      .then((res) => {
-        const next: Record<string, PairEvent[]> = {};
-        (res.data ?? []).forEach((event) => {
-          const eventMonth = event.eventDate.substring(5, 7);
-          const eventDay = event.eventDate.substring(8, 10);
-          const year = dayjs(targetMonth).year();
-          const key = `${year}-${eventMonth}-${eventDay}`;
-          if (!next[key]) next[key] = [];
-          next[key].push(event);
-        });
-        setPairEventsByDate(next);
-      })
-      .catch(() => setPairEventsByDate({}));
-  };
-
-  useEffect(() => {
-    loadMonthRecords(month);
-    loadPartnerRecords(month);
-    loadPairEvents(month);
-  }, [month, pairInfo]);
 
   const isPaired = pairInfo?.status === 'CONNECTED';
 
-  const DayButton = (props: DayButtonProps) => {
-    const { day, modifiers, children, ...buttonProps } = props;
-    const key = dayjs(day.date).format('YYYY-MM-DD');
+  /* ---------- IntersectionObserver: visible month + lazy loading ---------- */
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const mk = entry.target.getAttribute('data-month');
+            if (mk) {
+              setVisibleMonth(mk);
+              const d = dayjs(mk + '-01');
+              loadMonthData(d.toDate());
+              loadMonthData(d.subtract(1, 'month').toDate());
+              loadMonthData(d.add(1, 'month').toDate());
+            }
+          }
+        }
+      },
+      { root: container, rootMargin: '0px 0px -80% 0px', threshold: 0 }
+    );
+
+    monthSentinelRefs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [months, loadMonthData]);
+
+  /* ---------- Initial scroll to current month ---------- */
+
+  useEffect(() => {
+    if (initialScrollDone.current) return;
+    const container = scrollContainerRef.current;
+    const todayKey = dayjs().format('YYYY-MM');
+    const el = monthSentinelRefs.current.get(todayKey);
+    if (container && el) {
+      container.scrollTop = el.offsetTop - container.offsetTop;
+      initialScrollDone.current = true;
+      // Also load initial data
+      const today = dayjs();
+      loadMonthData(today.toDate());
+      loadMonthData(today.subtract(1, 'month').toDate());
+      loadMonthData(today.add(1, 'month').toDate());
+    }
+  });
+
+  /* ---------- Scroll position restore after prepend ---------- */
+
+  useLayoutEffect(() => {
+    if (scrollRestoreRef.current && scrollContainerRef.current) {
+      const el = scrollContainerRef.current;
+      el.scrollTop += el.scrollHeight - scrollRestoreRef.current.prevHeight;
+      scrollRestoreRef.current = null;
+    }
+  }, [rangeStart]);
+
+  /* ---------- Infinite scroll ---------- */
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    if (el.scrollTop < 300) {
+      scrollRestoreRef.current = { prevHeight: el.scrollHeight };
+      setRangeStart((prev) => prev.subtract(6, 'month'));
+    }
+
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
+      setRangeEnd((prev) => prev.add(6, 'month'));
+    }
+  }, []);
+
+  /* ---------- Scroll to month ---------- */
+
+  const scrollToMonth = useCallback(
+    (target: dayjs.Dayjs) => {
+      const key = target.format('YYYY-MM');
+      // Extend range if needed
+      if (target.isBefore(rangeStart)) {
+        setRangeStart(target.subtract(6, 'month').startOf('month'));
+      }
+      if (target.isAfter(rangeEnd)) {
+        setRangeEnd(target.add(6, 'month').startOf('month'));
+      }
+      setTimeout(() => {
+        const el = monthSentinelRefs.current.get(key);
+        if (el && scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = el.offsetTop - scrollContainerRef.current.offsetTop;
+        }
+      }, 50);
+    },
+    [rangeStart, rangeEnd]
+  );
+
+  /* ---------- DayCell ---------- */
+
+  const DayCell = ({ date }: { date: dayjs.Dayjs }) => {
+    const key = date.format('YYYY-MM-DD');
     const items = recordsByDate[key] || [];
     const partnerItems = partnerRecordsByDate[key] || [];
     const dayEvents = pairEventsByDate[key] || [];
     const holidayNames = holidayMap[key];
-    const weekday = dayjs(day.date).day();
+    const weekday = date.day();
     const isSunday = weekday === 0;
     const isSaturday = weekday === 6;
-    const isToday = modifiers.today;
+    const isToday = date.isSame(dayjs(), 'day');
 
     let dateClass = 'text-slate-800';
     if (holidayNames || isSunday) dateClass = 'text-red-500';
     else if (isSaturday) dateClass = 'text-blue-500';
 
-    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.id)))
-      .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?');
+    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.id))).map(
+      (catId) => categories.find((c) => c.id === catId)?.emoji ?? '?'
+    );
     const allPartnerEmojis = isPaired
-      ? Array.from(new Set(partnerItems.map((item) => item.category.id)))
-          .map((catId) => categories.find((c) => c.id === catId)?.emoji ?? '?')
+      ? Array.from(new Set(partnerItems.map((item) => item.category.id))).map(
+          (catId) => categories.find((c) => c.id === catId)?.emoji ?? '?'
+        )
       : [];
     const HIGHLIGHT_EMOJI = '🐷';
-    const hasHighlight = allMyEmojis.includes(HIGHLIGHT_EMOJI) || allPartnerEmojis.includes(HIGHLIGHT_EMOJI);
+    const hasHighlight =
+      allMyEmojis.includes(HIGHLIGHT_EMOJI) || allPartnerEmojis.includes(HIGHLIGHT_EMOJI);
     const myEmojis = allMyEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
     const partnerEmojis = allPartnerEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
 
     return (
-      <button {...buttonProps} title={holidayNames?.join(', ') || undefined}>
+      <button
+        type="button"
+        className="cal-cell w-full bg-transparent focus:outline-none"
+        title={holidayNames?.join(', ') || undefined}
+        onClick={() => {
+          setSelectedDate(date.toDate());
+          setEditingRecordId(null);
+          setSelectedCategoryId(null);
+          setMemoInput('');
+          setSheetOpen(true);
+        }}
+      >
         <div className="flex h-full w-full flex-col items-center gap-0.5 overflow-hidden pt-1.5">
           <div className="flex items-center justify-center gap-0.5">
             {isToday ? (
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[13px] font-bold text-white">
-                {children}
+                {date.date()}
               </span>
             ) : (
-              <span className={`text-[13px] font-medium ${dateClass}`}>{children}</span>
+              <span className={`text-[13px] font-medium ${dateClass}`}>{date.date()}</span>
             )}
             {hasHighlight && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[12px] leading-none ring-1 ring-orange-200">{HIGHLIGHT_EMOJI}</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[12px] leading-none ring-1 ring-orange-200">
+                {HIGHLIGHT_EMOJI}
+              </span>
             )}
           </div>
           {holidayNames && (
@@ -285,7 +440,9 @@ export default function App() {
           {dayEvents.length > 0 && (
             <div className="flex flex-wrap justify-center gap-0.5">
               {dayEvents.map((event) => (
-                <span key={`ev-${event.id}`} className="text-[10px] leading-tight">{event.emoji}</span>
+                <span key={`ev-${event.id}`} className="text-[10px] leading-tight">
+                  {event.emoji}
+                </span>
               ))}
             </div>
           )}
@@ -294,15 +451,19 @@ export default function App() {
               <div className="flex w-full items-start justify-center gap-px">
                 <div className="flex flex-col items-center">
                   {myEmojis.map((emoji, i) => (
-                    <span key={`m-${i}`} className="text-[10px] leading-tight">{emoji}</span>
+                    <span key={`m-${i}`} className="text-[10px] leading-tight">
+                      {emoji}
+                    </span>
                   ))}
                 </div>
-                {(myEmojis.length > 0 && partnerEmojis.length > 0) && (
+                {myEmojis.length > 0 && partnerEmojis.length > 0 && (
                   <span className="text-[8px] leading-tight text-slate-300">|</span>
                 )}
                 <div className="flex flex-col items-center">
                   {partnerEmojis.map((emoji, i) => (
-                    <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">{emoji}</span>
+                    <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">
+                      {emoji}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -311,7 +472,9 @@ export default function App() {
             myEmojis.length > 0 && (
               <div className="flex flex-wrap justify-center gap-0.5">
                 {myEmojis.map((emoji, i) => (
-                  <span key={`${key}-${i}`} className="text-xs leading-none">{emoji}</span>
+                  <span key={`${key}-${i}`} className="text-xs leading-none">
+                    {emoji}
+                  </span>
                 ))}
               </div>
             )
@@ -320,6 +483,8 @@ export default function App() {
       </button>
     );
   };
+
+  /* ---------- JSX ---------- */
 
   return (
     <div className="flex h-dvh flex-col bg-white text-slate-900">
@@ -340,7 +505,7 @@ export default function App() {
               setPickerOpen((prev) => {
                 if (!prev) {
                   requestAnimationFrame(() => {
-                    const y = dayjs(month).year();
+                    const y = dayjs(visibleMonth + '-01').year();
                     const row = yearScrollRef.current?.querySelector(
                       `[data-year="${y}"]`
                     ) as HTMLElement | null;
@@ -357,7 +522,7 @@ export default function App() {
             }}
           >
             <span className="text-lg font-semibold tracking-tight text-slate-800">
-              {dayjs(month).format('YYYY. M')}
+              {dayjs(visibleMonth + '-01').format('YYYY. M')}
             </span>
             {pickerOpen ? (
               <ChevronUpIcon className="h-4 w-4 stroke-2 text-slate-500" />
@@ -374,13 +539,8 @@ export default function App() {
         </Link>
       </header>
 
-      {/* Calendar grid */}
-      <div
-        className="calendar-full relative flex min-h-0 flex-1 flex-col overflow-hidden touch-pan-y"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      {/* Calendar area */}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Year/Month picker overlay */}
         <div
           className={`absolute inset-x-0 top-0 z-30 flex justify-center gap-0 bg-white transition-all duration-300 ${
@@ -389,120 +549,124 @@ export default function App() {
               : '-translate-y-full border-b border-transparent shadow-none'
           }`}
         >
-            <div
-              ref={yearScrollRef}
-              className="flex h-48 w-28 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
-            >
-              {Array.from({ length: 20 }, (_, i) => 2018 + i).map((y) => {
-                const isSelected = dayjs(month).year() === y;
-                return (
-                  <button
-                    key={y}
-                    data-year={y}
-                    type="button"
-                    className={`snap-center px-3 py-2 text-center text-sm ${
-                      isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
-                    }`}
-                    onClick={() => {
-                      setMonth(dayjs(month).year(y).toDate());
-                    }}
-                  >
-                    {y}년
-                  </button>
-                );
-              })}
-            </div>
-            <div
-              ref={monthScrollRef}
-              className="flex h-48 w-20 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
-            >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
-                const isSelected = dayjs(month).month() + 1 === m;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`snap-center px-3 py-2 text-center text-sm ${
-                      isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
-                    }`}
-                    onClick={() => {
-                      setMonth(
-                        dayjs(month)
-                          .month(m - 1)
-                          .toDate()
-                      );
-                    }}
-                  >
-                    {m}월
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-        {/* Picker backdrop – closes picker on tap */}
-        {pickerOpen && (
           <div
-            className="absolute inset-0 z-20"
-            onClick={() => setPickerOpen(false)}
-          />
+            ref={yearScrollRef}
+            className="flex h-48 w-28 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
+          >
+            {Array.from({ length: 20 }, (_, i) => 2018 + i).map((y) => {
+              const isSelected = dayjs(visibleMonth + '-01').year() === y;
+              return (
+                <button
+                  key={y}
+                  data-year={y}
+                  type="button"
+                  className={`snap-center px-3 py-2 text-center text-sm ${
+                    isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
+                  }`}
+                  onClick={() => {
+                    const target = dayjs(visibleMonth + '-01').year(y);
+                    scrollToMonth(target);
+                    setPickerOpen(false);
+                  }}
+                >
+                  {y}년
+                </button>
+              );
+            })}
+          </div>
+          <div
+            ref={monthScrollRef}
+            className="flex h-48 w-20 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+              const isSelected = dayjs(visibleMonth + '-01').month() + 1 === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  className={`snap-center px-3 py-2 text-center text-sm ${
+                    isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
+                  }`}
+                  onClick={() => {
+                    const target = dayjs(visibleMonth + '-01').month(m - 1);
+                    scrollToMonth(target);
+                    setPickerOpen(false);
+                  }}
+                >
+                  {m}월
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Picker backdrop */}
+        {pickerOpen && (
+          <div className="absolute inset-0 z-20" onClick={() => setPickerOpen(false)} />
         )}
 
-        <DayPicker
-          mode="single"
-          selected={selectedDate ?? undefined}
-          month={month}
-          hideNavigation
-          showOutsideDays
-          onMonthChange={setMonth}
-          onDayClick={(day) => {
-            setSelectedDate(day);
-            setEditingRecordId(null);
-            setSelectedCategoryId(null);
-            setMemoInput('');
-            setSheetOpen(true);
-          }}
-          components={{ DayButton }}
-          formatters={{
-            formatWeekdayName: (date) =>
-              ['\uC77C', '\uC6D4', '\uD654', '\uC218', '\uBAA9', '\uAE08', '\uD1A0'][date.getDay()],
-          }}
-          classNames={{
-            root: 'flex-1 flex flex-col min-h-0',
-            months: 'flex-1 flex flex-col min-h-0',
-            month: 'flex-1 flex flex-col min-h-0',
-            month_caption: 'hidden',
-            nav: 'hidden',
-            caption_label: 'hidden',
-            button_previous: 'hidden',
-            button_next: 'hidden',
-            chevron: 'hidden',
-            month_grid: 'flex-1',
-            weekdays: '',
-            weekday: 'py-2 text-center text-xs font-semibold text-slate-400',
-            weeks: '',
-            week: '',
-            day: 'p-0 align-top',
-            day_button: 'w-full bg-transparent focus:outline-none',
-            selected: '',
-            outside: 'opacity-30',
-            today: '',
-          }}
-        />
+        {/* Weekday header */}
+        <div className="cal-grid flex-shrink-0 border-b border-slate-100 bg-white">
+          {WEEKDAYS.map((wd, i) => (
+            <div
+              key={wd}
+              className={`py-2 text-center text-xs font-semibold ${
+                i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-slate-400'
+              }`}
+            >
+              {wd}
+            </div>
+          ))}
+        </div>
+
+        {/* Scroll container */}
+        <div
+          ref={scrollContainerRef}
+          className="relative min-h-0 flex-1 overflow-y-auto"
+          onScroll={handleScroll}
+        >
+          {months.map((m) => {
+            const key = m.format('YYYY-MM');
+            const cells = getMonthCells(m);
+            return (
+              <div key={key}>
+                {/* Sentinel for IntersectionObserver */}
+                <div
+                  ref={(el) => {
+                    if (el) monthSentinelRefs.current.set(key, el);
+                    else monthSentinelRefs.current.delete(key);
+                  }}
+                  data-month={key}
+                  className="h-0"
+                />
+                {/* Month label */}
+                <div className="sticky top-0 z-10 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-500 backdrop-blur-sm">
+                  {m.format('YYYY년 M월')}
+                </div>
+                {/* Calendar grid */}
+                <div className="cal-grid">
+                  {cells.map((day, i) =>
+                    day ? (
+                      <DayCell key={day.format('YYYY-MM-DD')} date={day} />
+                    ) : (
+                      <div key={`empty-${key}-${i}`} className="cal-cell" />
+                    )
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Today button */}
-      {!dayjs(month).isSame(dayjs(), 'month') && (
+      {visibleMonth !== dayjs().format('YYYY-MM') && (
         <button
           type="button"
           className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-md active:bg-slate-50"
           onClick={() => {
-            const today = new Date();
-            setMonth(today);
-            setSelectedDate(today);
-            setEditingRecordId(null);
-            setSelectedCategoryId(null);
-            setMemoInput('');
+            setVisibleMonth(dayjs().format('YYYY-MM'));
+            scrollToMonth(dayjs());
           }}
         >
           &lsaquo; 오늘
@@ -524,7 +688,31 @@ export default function App() {
         }`}
         style={{ maxHeight: '70dvh' }}
       >
-        <div className="flex-shrink-0 px-5 pt-5">
+        <div
+          className="flex-shrink-0 px-5 pt-5 cursor-grab active:cursor-grabbing"
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            const startY = e.touches[0]?.clientY ?? 0;
+            const onMove = (ev: TouchEvent) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              const dy = (ev.touches[0]?.clientY ?? 0) - startY;
+              if (dy > 60) {
+                setSheetOpen(false);
+                document.removeEventListener('touchmove', onMove, true);
+                document.removeEventListener('touchend', onEnd, true);
+              }
+            };
+            const onEnd = (ev: TouchEvent) => {
+              ev.stopPropagation();
+              document.removeEventListener('touchmove', onMove, true);
+              document.removeEventListener('touchend', onEnd, true);
+            };
+            document.addEventListener('touchmove', onMove, { capture: true, passive: false });
+            document.addEventListener('touchend', onEnd, true);
+          }}
+          onClick={() => setSheetOpen(false)}
+        >
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
           <div className="mb-4 text-center text-base font-semibold text-slate-800">
             {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
@@ -585,7 +773,7 @@ export default function App() {
                 className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-600"
                 onClick={async () => {
                   await deleteDailyRecord(record.id);
-                  await loadMonthRecords(month);
+                  if (selectedDate) await reloadMonthRecords(selectedDate);
                 }}
                 type="button"
                 aria-label="삭제"
@@ -595,23 +783,27 @@ export default function App() {
               </Button>
             </div>
           ))}
-          {isPaired && selectedKey && (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
-            <>
-              <p className="mt-2 text-xs font-semibold text-slate-400">
-                {pairInfo?.partnerName ?? '상대방'}의 기록
-              </p>
-              {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
-                <div
-                  key={`p-${record.id}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
-                >
-                  <span className="text-lg">{record.category.emoji}</span>
-                  <span className="font-medium text-slate-800">{record.category.name}</span>
-                  {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
-                </div>
-              ))}
-            </>
-          )}
+          {isPaired &&
+            selectedKey &&
+            (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
+              <>
+                <p className="mt-2 text-xs font-semibold text-slate-400">
+                  {pairInfo?.partnerName ?? '상대방'}의 기록
+                </p>
+                {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
+                  <div
+                    key={`p-${record.id}`}
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  >
+                    <span className="text-lg">{record.category.emoji}</span>
+                    <span className="font-medium text-slate-800">{record.category.name}</span>
+                    {record.memo && (
+                      <span className="text-slate-500">&middot; {record.memo}</span>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
             {editingRecordId && (
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -671,7 +863,7 @@ export default function App() {
                     setEditingRecordId(null);
                     setSelectedCategoryId(null);
                     setMemoInput('');
-                    await loadMonthRecords(month);
+                    if (selectedDate) await reloadMonthRecords(selectedDate);
                   }}
                   type="button"
                 >
@@ -696,6 +888,7 @@ export default function App() {
           </div>
         </div>
       </div>
+
       {/* Side drawer overlay */}
       <div
         className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
