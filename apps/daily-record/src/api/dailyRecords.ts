@@ -8,12 +8,14 @@ export type DailyRecord = {
   date: string;
   memo: string | null;
   category: Category;
+  together: boolean;
 };
 
 export type DailyRecordRequest = {
   date: string;
   categoryId: number;
   memo: string | null;
+  together: boolean;
 };
 
 export type DataResponse<T> = {

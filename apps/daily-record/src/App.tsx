@@ -64,6 +64,7 @@ export default function App() {
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [memoInput, setMemoInput] = useState('');
+  const [togetherInput, setTogetherInput] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const yearScrollRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,8 @@ export default function App() {
   const monthSentinelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const initialScrollDone = useRef(false);
   const scrollRestoreRef = useRef<{ prevHeight: number } | null>(null);
+  const memoRef = useRef<HTMLInputElement>(null);
+  const sheetScrollRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const [pairInfo, setPairInfo] = useState<PairResponse | null>(null);
   const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>(
@@ -308,6 +311,16 @@ export default function App() {
 
   const isPaired = pairInfo?.status === 'CONNECTED';
 
+  // pairInfo 로드 후 현재 보이는 달의 파트너 데이터 로드
+  useEffect(() => {
+    if (!isPaired) return;
+    const current = dayjs(visibleMonth + '-01');
+    [current.subtract(1, 'month'), current, current.add(1, 'month')].forEach((m) => {
+      loadPartnerRecords(m.toDate());
+      loadPairEvents(m.toDate());
+    });
+  }, [isPaired, loadPartnerRecords, loadPairEvents]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const myGenderEmoji = user?.gender === 'MALE' ? '👨' : user?.gender === 'FEMALE' ? '👩' : null;
   const partnerGenderEmoji =
     pairInfo?.partnerGender === 'MALE' ? '👨' : pairInfo?.partnerGender === 'FEMALE' ? '👩' : null;
@@ -453,13 +466,9 @@ export default function App() {
     if (holidayNames || isSunday) dateClass = 'text-red-500';
     else if (isSaturday) dateClass = 'text-blue-500';
 
-    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.id))).map(
-      (catId) => categories.find((c) => c.id === catId)?.emoji ?? '?'
-    );
+    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.emoji)));
     const allPartnerEmojis = isPaired
-      ? Array.from(new Set(partnerItems.map((item) => item.category.id))).map(
-          (catId) => categories.find((c) => c.id === catId)?.emoji ?? '?'
-        )
+      ? Array.from(new Set(partnerItems.map((item) => item.category.emoji)))
       : [];
     const OVEREAT_LEVEL_NUM: Record<string, number> = { MILD: 1, MODERATE: 2, SEVERE: 3 };
     const highlightLevel = OVEREAT_LEVEL_NUM[overeatByDate[key] ?? ''] ?? 0;
@@ -481,6 +490,8 @@ export default function App() {
           setEditingRecordId(null);
           setSelectedCategoryId(null);
           setMemoInput('');
+          setTogetherInput(false);
+          sheetScrollRef.current?.scrollTo(0, 0);
           setSheetOpen(true);
         }}
       >
@@ -793,8 +804,28 @@ export default function App() {
           onClick={() => setSheetOpen(false)}
         >
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
-          <div className="mb-4 text-center text-base font-semibold text-slate-800">
-            {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-base font-semibold text-slate-800">
+              {selectedKey ? dayjs(selectedKey).format('M월 D일 dddd') : '날짜를 선택하세요'}
+            </span>
+            {selectedKey &&
+              (pairEventsByDate[selectedKey] ?? []).map((event) => (
+                <span
+                  key={`ev-${event.id}`}
+                  className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700"
+                >
+                  {event.emoji} {event.title}
+                </span>
+              ))}
+            {selectedKey &&
+              (birthdayMap[selectedKey] ?? []).map((b, i) => (
+                <span
+                  key={`bd-${i}`}
+                  className="rounded-full border border-pink-200 bg-pink-50 px-2 py-0.5 text-xs font-semibold text-pink-700"
+                >
+                  {b.emoji} {b.label}
+                </span>
+              ))}
           </div>
           {selectedKey && holidayMap[selectedKey] && holidayMap[selectedKey].length > 0 && (
             <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs">
@@ -809,84 +840,7 @@ export default function App() {
             </div>
           )}
         </div>
-        <div className="grid gap-3 overflow-y-auto px-5 pb-5">
-          {selectedKey &&
-            ((pairEventsByDate[selectedKey] ?? []).length > 0 ||
-              (birthdayMap[selectedKey] ?? []).length > 0) && (
-              <div className="flex flex-wrap gap-2">
-                {(pairEventsByDate[selectedKey] ?? []).map((event) => (
-                  <span
-                    key={`ev-${event.id}`}
-                    className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
-                  >
-                    {event.emoji} {event.title}
-                  </span>
-                ))}
-                {(birthdayMap[selectedKey] ?? []).map((b, i) => (
-                  <span
-                    key={`bd-${i}`}
-                    className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-700"
-                  >
-                    {b.emoji} {b.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          {isPaired && <p className="text-xs font-semibold text-slate-400">나의 기록</p>}
-          {(recordsByDate[selectedKey ?? ''] ?? []).length === 0 && (
-            <p className="text-center text-xs text-slate-400">기록이 없습니다</p>
-          )}
-          {(recordsByDate[selectedKey ?? ''] ?? []).map((record) => (
-            <div
-              key={record.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
-            >
-              <Button
-                variant="ghost"
-                className="flex flex-1 items-center gap-2 text-left"
-                onClick={() => {
-                  setEditingRecordId(record.id);
-                  setSelectedCategoryId(record.category.id);
-                  setMemoInput(record.memo ?? '');
-                }}
-                type="button"
-              >
-                <span className="text-lg">{record.category.emoji}</span>
-                <span className="font-medium text-slate-800">{record.category.name}</span>
-                {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
-              </Button>
-              <Button
-                variant="secondary"
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-600"
-                onClick={async () => {
-                  await deleteDailyRecord(record.id);
-                  if (selectedDate) await reloadMonthRecords(selectedDate);
-                }}
-                type="button"
-                aria-label="삭제"
-                title="삭제"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          {isPaired && selectedKey && (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
-            <>
-              <p className="mt-2 text-xs font-semibold text-slate-400">
-                {pairInfo?.partnerName ?? '상대방'}의 기록
-              </p>
-              {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
-                <div
-                  key={`p-${record.id}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
-                >
-                  <span className="text-lg">{record.category.emoji}</span>
-                  <span className="font-medium text-slate-800">{record.category.name}</span>
-                  {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
-                </div>
-              ))}
-            </>
-          )}
+        <div ref={sheetScrollRef} className="grid gap-3 overflow-y-auto px-5 pb-5">
           {/* 과식 단계 선택 */}
           {selectedKey && (
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -937,6 +891,111 @@ export default function App() {
               </div>
             </div>
           )}
+          {(() => {
+            const myRecords = recordsByDate[selectedKey ?? ''] ?? [];
+            const partnerRecords = partnerRecordsByDate[selectedKey ?? ''] ?? [];
+            const myTogether = myRecords.filter((r) => r.together);
+            const myNormal = myRecords.filter((r) => !r.together);
+            const partnerTogether = partnerRecords.filter((r) => r.together);
+            const partnerNormal = partnerRecords.filter((r) => !r.together);
+            const togetherAll = [...myTogether, ...partnerTogether];
+            return (
+              <>
+                {togetherAll.length > 0 && (
+                  <>
+                    <p className="text-xs font-semibold text-blue-500">👫 같이 한 것</p>
+                    {togetherAll.map((record) => {
+                      const isMine = myTogether.some((r) => r.id === record.id);
+                      return (
+                        <div
+                          key={`t-${record.id}`}
+                          className={`flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs${isMine ? ' cursor-pointer active:bg-blue-100' : ''}`}
+                          onClick={
+                            isMine
+                              ? () => {
+                                  setEditingRecordId(record.id);
+                                  setSelectedCategoryId(record.category.id);
+                                  setMemoInput(record.memo ?? '');
+                                  setTogetherInput(record.together);
+                                }
+                              : undefined
+                          }
+                        >
+                          <span className="text-sm">{record.category.emoji}</span>
+                          <span className="text-slate-800">{record.category.name}</span>
+                          {record.memo && <span className="text-slate-500">{record.memo}</span>}
+                          <span className="flex-1" />
+                          {isMine && (
+                            <button
+                              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await deleteDailyRecord(record.id);
+                                if (selectedDate) await reloadMonthRecords(selectedDate);
+                              }}
+                              type="button"
+                              aria-label="삭제"
+                            >
+                              <TrashIcon className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+                {isPaired && myNormal.length > 0 && (
+                  <p className="text-xs font-semibold text-slate-400">나의 기록</p>
+                )}
+                {myNormal.map((record) => (
+                  <div
+                    key={record.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs active:bg-slate-50"
+                    onClick={() => {
+                      setEditingRecordId(record.id);
+                      setSelectedCategoryId(record.category.id);
+                      setMemoInput(record.memo ?? '');
+                      setTogetherInput(record.together);
+                    }}
+                  >
+                    <span className="text-sm">{record.category.emoji}</span>
+                    <span className="text-slate-800">{record.category.name}</span>
+                    {record.memo && <span className="text-slate-500">{record.memo}</span>}
+                    <span className="flex-1" />
+                    <button
+                      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await deleteDailyRecord(record.id);
+                        if (selectedDate) await reloadMonthRecords(selectedDate);
+                      }}
+                      type="button"
+                      aria-label="삭제"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {isPaired && selectedKey && partnerNormal.length > 0 && (
+                  <>
+                    <p className="mt-2 text-xs font-semibold text-slate-400">
+                      {pairInfo?.partnerName ?? '상대방'}의 기록
+                    </p>
+                    {partnerNormal.map((record) => (
+                      <div
+                        key={`p-${record.id}`}
+                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs"
+                      >
+                        <span className="text-sm">{record.category.emoji}</span>
+                        <span className="text-slate-800">{record.category.name}</span>
+                        {record.memo && <span className="text-slate-500">{record.memo}</span>}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
+            );
+          })()}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
             {editingRecordId && (
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -971,13 +1030,32 @@ export default function App() {
                   })}
                 </div>
               )}
-              <Input
-                value={memoInput}
-                maxLength={20}
-                onChange={(event) => setMemoInput(event.target.value)}
-                placeholder="메모 (최대 20자)"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={memoRef}
+                  value={memoInput}
+                  maxLength={20}
+                  onChange={(event) => setMemoInput(event.target.value)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      memoRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }, 300);
+                  }}
+                  placeholder="메모 (최대 20자)"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
+                />
+                <button
+                  type="button"
+                  className={`flex-shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition-all ${
+                    togetherInput
+                      ? 'border-blue-300 bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                      : 'border-slate-200 bg-white text-slate-400'
+                  }`}
+                  onClick={() => setTogetherInput((v) => !v)}
+                >
+                  👫 같이
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   className="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
@@ -987,6 +1065,7 @@ export default function App() {
                       date: selectedKey,
                       categoryId: selectedCategoryId,
                       memo: memoInput.trim() || null,
+                      together: togetherInput,
                     };
                     if (editingRecordId) {
                       await updateDailyRecord(editingRecordId, payload);
@@ -996,6 +1075,7 @@ export default function App() {
                     setEditingRecordId(null);
                     setSelectedCategoryId(null);
                     setMemoInput('');
+                    setTogetherInput(false);
                     if (selectedDate) await reloadMonthRecords(selectedDate);
                   }}
                   type="button"
@@ -1010,6 +1090,7 @@ export default function App() {
                       setEditingRecordId(null);
                       setSelectedCategoryId(null);
                       setMemoInput('');
+                      setTogetherInput(false);
                     }}
                     type="button"
                   >
