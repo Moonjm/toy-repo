@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, FormField, Input } from '@repo/ui';
-import { updateMe } from '../api/users';
+import { updateMe, type Gender } from '../api/users';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import PageHeader from '../components/PageHeader';
@@ -17,6 +17,8 @@ function formatError(error: unknown): string {
 export default function ProfilePage() {
   const { user, refresh } = useAuth();
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<Gender | null>(null);
+  const [birthDate, setBirthDate] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,6 +27,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     setName(user?.name ?? '');
+    setGender(user?.gender ?? null);
+    setBirthDate(user?.birthDate ?? '');
   }, [user]);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -45,6 +49,8 @@ export default function ProfilePage() {
     try {
       await updateMe({
         name: nextName.length > 0 ? nextName : null,
+        gender: gender,
+        birthDate: birthDate || null,
         currentPassword: nextPassword ? nextCurrent : null,
         password: nextPassword || null,
       });
@@ -87,6 +93,31 @@ export default function ProfilePage() {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="이름을 입력하세요"
+              />
+            </FormField>
+            <FormField label="성별">
+              <div className="flex gap-3">
+                {([['MALE', '👨 남자'], ['FEMALE', '👩 여자']] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                      gender === value
+                        ? 'border-blue-300 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                    onClick={() => setGender(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="생년월일">
+              <Input
+                type="date"
+                value={birthDate}
+                onChange={(event) => setBirthDate(event.target.value)}
               />
             </FormField>
             <FormField label="기존 비밀번호">

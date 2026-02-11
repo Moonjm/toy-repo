@@ -1,10 +1,14 @@
 import { getJson, patchJson } from './client';
 
+export type Gender = 'MALE' | 'FEMALE';
+
 export type User = {
   id: number;
   username: string;
   name: string | null;
   authority: string;
+  gender: Gender | null;
+  birthDate: string | null;
 };
 
 export type DataResponse<T> = {
@@ -20,6 +24,8 @@ export function fetchMe(): Promise<DataResponse<User>> {
 
 export type UpdateMeRequest = {
   name?: string | null;
+  gender?: Gender | null;
+  birthDate?: string | null;
   currentPassword?: string | null;
   password?: string | null;
 };

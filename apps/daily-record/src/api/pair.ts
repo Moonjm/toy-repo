@@ -8,6 +8,8 @@ export type PairResponse = {
   status: PairStatus;
   partnerName: string | null;
   connectedAt: string | null;
+  partnerGender: 'MALE' | 'FEMALE' | null;
+  partnerBirthDate: string | null;
 };
 
 export type PairInviteResponse = {

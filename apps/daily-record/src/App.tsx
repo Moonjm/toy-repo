@@ -272,6 +272,30 @@ export default function App() {
 
   const isPaired = pairInfo?.status === 'CONNECTED';
 
+  const myGenderEmoji = user?.gender === 'MALE' ? '👨' : user?.gender === 'FEMALE' ? '👩' : null;
+  const partnerGenderEmoji = pairInfo?.partnerGender === 'MALE' ? '👨' : pairInfo?.partnerGender === 'FEMALE' ? '👩' : null;
+
+  const birthdayMap = useMemo(() => {
+    const map: Record<string, { emoji: string; label: string }[]> = {};
+    const addBirthday = (birthDate: string | null | undefined, genderEmoji: string | null, label: string) => {
+      if (!birthDate) return;
+      const md = birthDate.substring(5); // MM-DD
+      const emoji = genderEmoji ? `🎂${genderEmoji}` : '🎂';
+      months.forEach((m) => {
+        const key = `${m.year()}-${md}`;
+        if (dayjs(key, 'YYYY-MM-DD').isValid() && dayjs(key).month() === m.month()) {
+          if (!map[key]) map[key] = [];
+          map[key].push({ emoji, label });
+        }
+      });
+    };
+    addBirthday(user?.birthDate, myGenderEmoji, '내 생일');
+    if (isPaired) {
+      addBirthday(pairInfo?.partnerBirthDate, partnerGenderEmoji, `${pairInfo?.partnerName ?? '상대방'} 생일`);
+    }
+    return map;
+  }, [user?.birthDate, pairInfo, isPaired, months]);
+
   /* ---------- IntersectionObserver: visible month + lazy loading ---------- */
 
   useEffect(() => {
@@ -373,6 +397,7 @@ export default function App() {
     const items = recordsByDate[key] || [];
     const partnerItems = partnerRecordsByDate[key] || [];
     const dayEvents = pairEventsByDate[key] || [];
+    const birthdays = birthdayMap[key] || [];
     const holidayNames = holidayMap[key];
     const weekday = date.day();
     const isSunday = weekday === 0;
@@ -437,18 +462,23 @@ export default function App() {
               ))}
             </div>
           )}
-          {dayEvents.length > 0 && (
+          {(dayEvents.length > 0 || birthdays.length > 0) && (
             <div className="flex flex-wrap justify-center gap-0.5">
               {dayEvents.map((event) => (
                 <span key={`ev-${event.id}`} className="text-[10px] leading-tight">
                   {event.emoji}
                 </span>
               ))}
+              {birthdays.map((b, i) => (
+                <span key={`bd-${i}`} className="text-[10px] leading-tight">
+                  {b.emoji}
+                </span>
+              ))}
             </div>
           )}
           {isPaired ? (
             (myEmojis.length > 0 || partnerEmojis.length > 0) && (
-              <div className="flex w-full items-start justify-center gap-px">
+              <div className="flex w-full items-stretch justify-center gap-0.5">
                 <div className="flex flex-col items-center">
                   {myEmojis.map((emoji, i) => (
                     <span key={`m-${i}`} className="text-[10px] leading-tight">
@@ -457,7 +487,7 @@ export default function App() {
                   ))}
                 </div>
                 {myEmojis.length > 0 && partnerEmojis.length > 0 && (
-                  <span className="text-[8px] leading-tight text-slate-300">|</span>
+                  <div className="w-px self-stretch bg-slate-300" />
                 )}
                 <div className="flex flex-col items-center">
                   {partnerEmojis.map((emoji, i) => (
@@ -731,7 +761,7 @@ export default function App() {
           )}
         </div>
         <div className="grid gap-3 overflow-y-auto px-5 pb-5">
-          {selectedKey && (pairEventsByDate[selectedKey] ?? []).length > 0 && (
+          {selectedKey && ((pairEventsByDate[selectedKey] ?? []).length > 0 || (birthdayMap[selectedKey] ?? []).length > 0) && (
             <div className="flex flex-wrap gap-2">
               {(pairEventsByDate[selectedKey] ?? []).map((event) => (
                 <span
@@ -739,6 +769,14 @@ export default function App() {
                   className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
                 >
                   {event.emoji} {event.title}
+                </span>
+              ))}
+              {(birthdayMap[selectedKey] ?? []).map((b, i) => (
+                <span
+                  key={`bd-${i}`}
+                  className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-700"
+                >
+                  {b.emoji} {b.label}
                 </span>
               ))}
             </div>
