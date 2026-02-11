@@ -1,0 +1,25 @@
+REPO_DIR="$(git rev-parse --show-toplevel)"
+REMOTE="$1"
+
+CHANGED_APPS=$(git diff --name-only "${REMOTE}/main"...HEAD -- apps/ \
+  | cut -d'/' -f2 \
+  | sort -u)
+
+if [ -z "$CHANGED_APPS" ]; then
+  echo "변경된 앱이 없습니다. push만 실행합니다."
+  exit 0
+fi
+
+echo "변경 감지된 앱:"
+for app in $CHANGED_APPS; do
+  echo "  - $app"
+done
+echo ""
+
+for app in $CHANGED_APPS; do
+  echo ">>> ${app} 배포 시작"
+  bash "${REPO_DIR}/deploy.sh" "$app"
+  echo ""
+done
+
+echo "=== 배포 완료, push 진행 ==="
