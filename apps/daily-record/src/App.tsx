@@ -23,14 +23,13 @@ import {
   createDailyRecord,
   deleteDailyRecord,
   fetchDailyRecords,
+  fetchDailyOvereats,
   type DailyRecord,
+  type OvereatLevel,
   updateDailyRecord,
+  updateOvereatLevel,
 } from './api/dailyRecords';
-import {
-  getPairStatus,
-  fetchPartnerDailyRecords,
-  type PairResponse,
-} from './api/pair';
+import { getPairStatus, fetchPartnerDailyRecords, type PairResponse } from './api/pair';
 import { fetchPairEvents, type PairEvent } from './api/pairEvents';
 dayjs.locale('ko');
 
@@ -60,6 +59,7 @@ export default function App() {
     records: new Set<string>(),
     partner: new Set<string>(),
     events: new Set<string>(),
+    overeats: new Set<string>(),
   });
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -74,10 +74,11 @@ export default function App() {
   const scrollRestoreRef = useRef<{ prevHeight: number } | null>(null);
   const { user, logout } = useAuth();
   const [pairInfo, setPairInfo] = useState<PairResponse | null>(null);
-  const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<
-    Record<string, DailyRecord[]>
-  >({});
+  const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>(
+    {}
+  );
   const [pairEventsByDate, setPairEventsByDate] = useState<Record<string, PairEvent[]>>({});
+  const [overeatByDate, setOvereatByDate] = useState<Record<string, OvereatLevel>>({});
 
   const [rangeStart, setRangeStart] = useState(() =>
     dayjs().subtract(INITIAL_RANGE, 'month').startOf('month')
@@ -183,20 +184,45 @@ export default function App() {
     [pairInfo]
   );
 
+  const loadOvereats = useCallback((targetMonth: Date) => {
+    const mk = dayjs(targetMonth).format('YYYY-MM');
+    if (loadedMonthsRef.current.overeats.has(mk)) return;
+    loadedMonthsRef.current.overeats.add(mk);
+    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
+    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
+    fetchDailyOvereats(from, to)
+      .then((res) => {
+        setOvereatByDate((prev) => {
+          const next = { ...prev };
+          (res.data ?? []).forEach((item) => {
+            next[item.date] = item.overeatLevel;
+          });
+          return next;
+        });
+      })
+      .catch(() => {
+        loadedMonthsRef.current.overeats.delete(mk);
+      });
+  }, []);
+
   const loadMonthData = useCallback(
     (targetMonth: Date) => {
       loadMonthRecords(targetMonth);
       loadPartnerRecords(targetMonth);
       loadPairEvents(targetMonth);
+      loadOvereats(targetMonth);
     },
-    [loadMonthRecords, loadPartnerRecords, loadPairEvents]
+    [loadMonthRecords, loadPartnerRecords, loadPairEvents, loadOvereats]
   );
 
   const reloadMonthRecords = useCallback(async (targetDate: Date) => {
     const from = dayjs(targetDate).startOf('month').format('YYYY-MM-DD');
     const to = dayjs(targetDate).endOf('month').format('YYYY-MM-DD');
     try {
-      const res = await fetchDailyRecords({ from, to });
+      const [res, ovRes] = await Promise.all([
+        fetchDailyRecords({ from, to }),
+        fetchDailyOvereats(from, to),
+      ]);
       setRecordsByDate((prev) => {
         const next = { ...prev };
         Object.keys(next).forEach((key) => {
@@ -206,6 +232,16 @@ export default function App() {
           const key = dayjs(record.date).format('YYYY-MM-DD');
           if (!next[key]) next[key] = [];
           next[key].push(record);
+        });
+        return next;
+      });
+      setOvereatByDate((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((key) => {
+          if (key >= from && key <= to) delete next[key];
+        });
+        (ovRes.data ?? []).forEach((item) => {
+          next[item.date] = item.overeatLevel;
         });
         return next;
       });
@@ -273,11 +309,16 @@ export default function App() {
   const isPaired = pairInfo?.status === 'CONNECTED';
 
   const myGenderEmoji = user?.gender === 'MALE' ? '👨' : user?.gender === 'FEMALE' ? '👩' : null;
-  const partnerGenderEmoji = pairInfo?.partnerGender === 'MALE' ? '👨' : pairInfo?.partnerGender === 'FEMALE' ? '👩' : null;
+  const partnerGenderEmoji =
+    pairInfo?.partnerGender === 'MALE' ? '👨' : pairInfo?.partnerGender === 'FEMALE' ? '👩' : null;
 
   const birthdayMap = useMemo(() => {
     const map: Record<string, { emoji: string; label: string }[]> = {};
-    const addBirthday = (birthDate: string | null | undefined, genderEmoji: string | null, label: string) => {
+    const addBirthday = (
+      birthDate: string | null | undefined,
+      genderEmoji: string | null,
+      label: string
+    ) => {
       if (!birthDate) return;
       const md = birthDate.substring(5); // MM-DD
       const emoji = genderEmoji ? `🎂${genderEmoji}` : '🎂';
@@ -291,7 +332,11 @@ export default function App() {
     };
     addBirthday(user?.birthDate, myGenderEmoji, '내 생일');
     if (isPaired) {
-      addBirthday(pairInfo?.partnerBirthDate, partnerGenderEmoji, `${pairInfo?.partnerName ?? '상대방'} 생일`);
+      addBirthday(
+        pairInfo?.partnerBirthDate,
+        partnerGenderEmoji,
+        `${pairInfo?.partnerName ?? '상대방'} 생일`
+      );
     }
     return map;
   }, [user?.birthDate, pairInfo, isPaired, months]);
@@ -332,7 +377,7 @@ export default function App() {
     const todayKey = dayjs().format('YYYY-MM');
     const el = monthSentinelRefs.current.get(todayKey);
     if (container && el) {
-      container.scrollTop = el.offsetTop - container.offsetTop;
+      container.scrollTop = el.offsetTop + 1;
       initialScrollDone.current = true;
       // Also load initial data
       const today = dayjs();
@@ -383,7 +428,7 @@ export default function App() {
       setTimeout(() => {
         const el = monthSentinelRefs.current.get(key);
         if (el && scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = el.offsetTop - scrollContainerRef.current.offsetTop;
+          scrollContainerRef.current.scrollTop = el.offsetTop + 1;
         }
       }, 50);
     },
@@ -416,11 +461,15 @@ export default function App() {
           (catId) => categories.find((c) => c.id === catId)?.emoji ?? '?'
         )
       : [];
-    const HIGHLIGHT_EMOJI = '🐷';
-    const hasHighlight =
-      allMyEmojis.includes(HIGHLIGHT_EMOJI) || allPartnerEmojis.includes(HIGHLIGHT_EMOJI);
-    const myEmojis = allMyEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
-    const partnerEmojis = allPartnerEmojis.filter((e) => e !== HIGHLIGHT_EMOJI);
+    const OVEREAT_LEVEL_NUM: Record<string, number> = { MILD: 1, MODERATE: 2, SEVERE: 3 };
+    const highlightLevel = OVEREAT_LEVEL_NUM[overeatByDate[key] ?? ''] ?? 0;
+    const HIGHLIGHT_STYLE: Record<number, string> = {
+      1: 'bg-green-100 ring-green-200',
+      2: 'bg-orange-200 ring-orange-300',
+      3: 'bg-red-200 ring-red-300',
+    };
+    const myEmojis = allMyEmojis;
+    const partnerEmojis = allPartnerEmojis;
 
     return (
       <button
@@ -444,9 +493,11 @@ export default function App() {
             ) : (
               <span className={`text-[13px] font-medium ${dateClass}`}>{date.date()}</span>
             )}
-            {hasHighlight && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[12px] leading-none ring-1 ring-orange-200">
-                {HIGHLIGHT_EMOJI}
+            {highlightLevel > 0 && (
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-[12px] leading-none ring-1 ${HIGHLIGHT_STYLE[highlightLevel]}`}
+              >
+                🐷
               </span>
             )}
           </div>
@@ -476,39 +527,37 @@ export default function App() {
               ))}
             </div>
           )}
-          {isPaired ? (
-            (myEmojis.length > 0 || partnerEmojis.length > 0) && (
-              <div className="flex w-full items-stretch justify-center gap-0.5">
-                <div className="flex flex-col items-center">
+          {isPaired
+            ? (myEmojis.length > 0 || partnerEmojis.length > 0) && (
+                <div className="flex w-full items-stretch justify-center gap-0.5">
+                  <div className="flex flex-col items-center">
+                    {myEmojis.map((emoji, i) => (
+                      <span key={`m-${i}`} className="text-[10px] leading-tight">
+                        {emoji}
+                      </span>
+                    ))}
+                  </div>
+                  {myEmojis.length > 0 && partnerEmojis.length > 0 && (
+                    <div className="w-px self-stretch bg-slate-300" />
+                  )}
+                  <div className="flex flex-col items-center">
+                    {partnerEmojis.map((emoji, i) => (
+                      <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">
+                        {emoji}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            : myEmojis.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-0.5">
                   {myEmojis.map((emoji, i) => (
-                    <span key={`m-${i}`} className="text-[10px] leading-tight">
+                    <span key={`${key}-${i}`} className="text-xs leading-none">
                       {emoji}
                     </span>
                   ))}
                 </div>
-                {myEmojis.length > 0 && partnerEmojis.length > 0 && (
-                  <div className="w-px self-stretch bg-slate-300" />
-                )}
-                <div className="flex flex-col items-center">
-                  {partnerEmojis.map((emoji, i) => (
-                    <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">
-                      {emoji}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )
-          ) : (
-            myEmojis.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-0.5">
-                {myEmojis.map((emoji, i) => (
-                  <span key={`${key}-${i}`} className="text-xs leading-none">
-                    {emoji}
-                  </span>
-                ))}
-              </div>
-            )
-          )}
+              )}
         </div>
       </button>
     );
@@ -761,29 +810,29 @@ export default function App() {
           )}
         </div>
         <div className="grid gap-3 overflow-y-auto px-5 pb-5">
-          {selectedKey && ((pairEventsByDate[selectedKey] ?? []).length > 0 || (birthdayMap[selectedKey] ?? []).length > 0) && (
-            <div className="flex flex-wrap gap-2">
-              {(pairEventsByDate[selectedKey] ?? []).map((event) => (
-                <span
-                  key={`ev-${event.id}`}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
-                >
-                  {event.emoji} {event.title}
-                </span>
-              ))}
-              {(birthdayMap[selectedKey] ?? []).map((b, i) => (
-                <span
-                  key={`bd-${i}`}
-                  className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-700"
-                >
-                  {b.emoji} {b.label}
-                </span>
-              ))}
-            </div>
-          )}
-          {isPaired && (
-            <p className="text-xs font-semibold text-slate-400">나의 기록</p>
-          )}
+          {selectedKey &&
+            ((pairEventsByDate[selectedKey] ?? []).length > 0 ||
+              (birthdayMap[selectedKey] ?? []).length > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {(pairEventsByDate[selectedKey] ?? []).map((event) => (
+                  <span
+                    key={`ev-${event.id}`}
+                    className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                  >
+                    {event.emoji} {event.title}
+                  </span>
+                ))}
+                {(birthdayMap[selectedKey] ?? []).map((b, i) => (
+                  <span
+                    key={`bd-${i}`}
+                    className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-700"
+                  >
+                    {b.emoji} {b.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          {isPaired && <p className="text-xs font-semibold text-slate-400">나의 기록</p>}
           {(recordsByDate[selectedKey ?? ''] ?? []).length === 0 && (
             <p className="text-center text-xs text-slate-400">기록이 없습니다</p>
           )}
@@ -821,27 +870,73 @@ export default function App() {
               </Button>
             </div>
           ))}
-          {isPaired &&
-            selectedKey &&
-            (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
-              <>
-                <p className="mt-2 text-xs font-semibold text-slate-400">
-                  {pairInfo?.partnerName ?? '상대방'}의 기록
-                </p>
-                {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
-                  <div
-                    key={`p-${record.id}`}
-                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
-                  >
-                    <span className="text-lg">{record.category.emoji}</span>
-                    <span className="font-medium text-slate-800">{record.category.name}</span>
-                    {record.memo && (
-                      <span className="text-slate-500">&middot; {record.memo}</span>
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
+          {isPaired && selectedKey && (partnerRecordsByDate[selectedKey] ?? []).length > 0 && (
+            <>
+              <p className="mt-2 text-xs font-semibold text-slate-400">
+                {pairInfo?.partnerName ?? '상대방'}의 기록
+              </p>
+              {(partnerRecordsByDate[selectedKey] ?? []).map((record) => (
+                <div
+                  key={`p-${record.id}`}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <span className="text-lg">{record.category.emoji}</span>
+                  <span className="font-medium text-slate-800">{record.category.name}</span>
+                  {record.memo && <span className="text-slate-500">&middot; {record.memo}</span>}
+                </div>
+              ))}
+            </>
+          )}
+          {/* 과식 단계 선택 */}
+          {selectedKey && (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="text-sm font-medium text-slate-600">🐷 과식</span>
+              <div className="ml-auto flex gap-1">
+                {[
+                  {
+                    level: 'NONE' as OvereatLevel,
+                    label: '없음',
+                    style: 'border-slate-200 bg-white text-slate-500',
+                  },
+                  {
+                    level: 'MILD' as OvereatLevel,
+                    label: '소',
+                    style: 'border-green-300 bg-green-100 text-green-700',
+                  },
+                  {
+                    level: 'MODERATE' as OvereatLevel,
+                    label: '중',
+                    style: 'border-orange-300 bg-orange-200 text-orange-700',
+                  },
+                  {
+                    level: 'SEVERE' as OvereatLevel,
+                    label: '대',
+                    style: 'border-red-300 bg-red-200 text-red-700',
+                  },
+                ].map(({ level, label, style }) => {
+                  const current = overeatByDate[selectedKey] ?? 'NONE';
+                  const isActive = current === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition-all ${
+                        isActive
+                          ? style + ' ring-1 ring-offset-1'
+                          : 'border-slate-200 bg-white text-slate-400'
+                      }`}
+                      onClick={async () => {
+                        await updateOvereatLevel(selectedKey, level);
+                        if (selectedDate) await reloadMonthRecords(selectedDate);
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
             {editingRecordId && (
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -878,9 +973,9 @@ export default function App() {
               )}
               <Input
                 value={memoInput}
-                maxLength={10}
+                maxLength={20}
                 onChange={(event) => setMemoInput(event.target.value)}
-                placeholder="메모 (최대 10자)"
+                placeholder="메모 (최대 20자)"
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
               />
               <div className="flex items-center gap-2">

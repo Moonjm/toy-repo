@@ -1,6 +1,8 @@
 import { deleteJson, getJson, postJson, putJson } from './client';
 import type { Category } from './categories';
 
+export type OvereatLevel = 'NONE' | 'MILD' | 'MODERATE' | 'SEVERE';
+
 export type DailyRecord = {
   id: number;
   date: string;
@@ -48,4 +50,22 @@ export function updateDailyRecord(id: number, payload: DailyRecordRequest): Prom
 
 export function deleteDailyRecord(id: number): Promise<void> {
   return deleteJson<void>(`/daily-records/${id}`);
+}
+
+export type DailyOvereat = {
+  date: string;
+  overeatLevel: OvereatLevel;
+};
+
+export function fetchDailyOvereats(
+  from: string,
+  to: string
+): Promise<DataResponse<DailyOvereat[]>> {
+  return getJson<DataResponse<DailyOvereat[]>>(
+    `/daily-overeats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+  );
+}
+
+export function updateOvereatLevel(date: string, overeatLevel: OvereatLevel): Promise<void> {
+  return putJson<void>('/daily-overeats', { date, overeatLevel });
 }
