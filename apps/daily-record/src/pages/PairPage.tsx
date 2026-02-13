@@ -2,21 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { ClipboardDocumentIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
-import { ApiError } from '../api/client';
-import {
-  acceptInvite,
-  createInvite,
-  getPairStatus,
-  unpair,
-  type PairResponse,
-} from '../api/pair';
+import { acceptInvite, createInvite, getPairStatus, unpair, type PairResponse } from '../api/pair';
 import PageHeader from '../components/PageHeader';
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const message = (error.body as { message?: string }).message;
-    if (message) return message;
-  }
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }
@@ -203,9 +192,7 @@ export default function PairPage() {
             <div className="mb-6 text-center">
               <div className="mb-2 text-4xl">⏳</div>
               <h2 className="text-lg font-bold text-slate-900">초대 대기 중</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                상대방에게 아래 코드를 공유하세요
-              </p>
+              <p className="mt-1 text-sm text-slate-500">상대방에게 아래 코드를 공유하세요</p>
             </div>
             <div className="mx-auto mb-4 rounded-xl border border-slate-200 bg-slate-50 px-6 py-4 text-center">
               <span className="text-2xl font-bold tracking-[0.3em] text-slate-900">

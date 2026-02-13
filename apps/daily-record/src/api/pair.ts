@@ -1,5 +1,5 @@
-import { deleteJson, getJson, postJson } from './client';
-import type { DailyRecord, DataResponse } from './dailyRecords';
+import { getApiClient, type DataResponse } from '@repo/api';
+import type { DailyRecord } from './dailyRecords';
 
 export type PairStatus = 'PENDING' | 'CONNECTED';
 
@@ -17,19 +17,19 @@ export type PairInviteResponse = {
 };
 
 export function getPairStatus(): Promise<DataResponse<PairResponse | null>> {
-  return getJson<DataResponse<PairResponse | null>>('/pair');
+  return getApiClient().get<DataResponse<PairResponse | null>>('/pair');
 }
 
 export function createInvite(): Promise<DataResponse<PairInviteResponse>> {
-  return postJson<DataResponse<PairInviteResponse>>('/pair/invite');
+  return getApiClient().post<DataResponse<PairInviteResponse>>('/pair/invite');
 }
 
 export function acceptInvite(inviteCode: string): Promise<DataResponse<PairResponse>> {
-  return postJson<DataResponse<PairResponse>>('/pair/accept', { inviteCode });
+  return getApiClient().post<DataResponse<PairResponse>>('/pair/accept', { inviteCode });
 }
 
 export function unpair(): Promise<void> {
-  return deleteJson<void>('/pair');
+  return getApiClient().delete<void>('/pair');
 }
 
 type PartnerRecordQuery = {
@@ -46,5 +46,7 @@ export function fetchPartnerDailyRecords(
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
   const suffix = params.toString();
-  return getJson<DataResponse<DailyRecord[]>>(`/pair/daily-records${suffix ? `?${suffix}` : ''}`);
+  return getApiClient().get<DataResponse<DailyRecord[]>>(
+    `/pair/daily-records${suffix ? `?${suffix}` : ''}`
+  );
 }

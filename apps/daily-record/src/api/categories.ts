@@ -1,4 +1,4 @@
-import { deleteJson, getJson, postJson, putJson } from './client';
+import { getApiClient, type DataResponse } from '@repo/api';
 
 export type Category = {
   id: number;
@@ -23,29 +23,24 @@ type CategoryApi = {
   active?: boolean;
 };
 
-export type DataResponse<T> = {
-  data: T;
-  status: number;
-  message?: string | null;
-  timestamp: string;
-};
-
 export function fetchCategories(active?: boolean): Promise<DataResponse<Category[]>> {
   const query = active === undefined ? '' : `?active=${encodeURIComponent(String(active))}`;
-  return getJson<DataResponse<CategoryApi[]>>(`/categories${query}`).then((res) => ({
-    ...res,
-    data: (res.data ?? []).map((item) => ({
-      id: item.id,
-      emoji: item.emoji,
-      name: item.name,
-      sortOrder: item.sortOrder,
-      isActive: item.isActive ?? item.active ?? false,
-    })),
-  }));
+  return getApiClient()
+    .get<DataResponse<CategoryApi[]>>(`/categories${query}`)
+    .then((res) => ({
+      ...res,
+      data: (res.data ?? []).map((item) => ({
+        id: item.id,
+        emoji: item.emoji,
+        name: item.name,
+        sortOrder: item.sortOrder,
+        isActive: item.isActive ?? item.active ?? false,
+      })),
+    }));
 }
 
 export function createCategory(payload: CategoryRequest): Promise<number> {
-  return postJson<number>('/categories', {
+  return getApiClient().post<number>('/categories', {
     emoji: payload.emoji,
     name: payload.name,
     isActive: payload.isActive,
@@ -53,7 +48,7 @@ export function createCategory(payload: CategoryRequest): Promise<number> {
 }
 
 export function updateCategory(id: number, payload: CategoryRequest): Promise<void> {
-  return putJson<void>(`/categories/${id}`, {
+  return getApiClient().put<void>(`/categories/${id}`, {
     emoji: payload.emoji,
     name: payload.name,
     isActive: payload.isActive,
@@ -61,9 +56,9 @@ export function updateCategory(id: number, payload: CategoryRequest): Promise<vo
 }
 
 export function deleteCategory(id: number): Promise<void> {
-  return deleteJson<void>(`/categories/${id}`);
+  return getApiClient().delete<void>(`/categories/${id}`);
 }
 
 export function reorderCategory(targetId: number, beforeId: number | null): Promise<void> {
-  return putJson<void>('/categories/order', { targetId, beforeId });
+  return getApiClient().put<void>('/categories/order', { targetId, beforeId });
 }

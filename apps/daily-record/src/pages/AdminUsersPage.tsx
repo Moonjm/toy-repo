@@ -5,11 +5,10 @@ import {
   createAdminUser,
   deleteAdminUser,
   fetchAdminUsers,
+  updateAdminUser,
   type AdminUser,
   type Authority,
-  updateAdminUser,
 } from '../api/adminUsers';
-import { ApiError } from '../api/client';
 import PageHeader from '../components/PageHeader';
 
 const emptyCreateForm = {
@@ -25,10 +24,6 @@ type EditForm = {
 };
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const message = (error.body as { message?: string }).message;
-    if (message) return message;
-  }
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }

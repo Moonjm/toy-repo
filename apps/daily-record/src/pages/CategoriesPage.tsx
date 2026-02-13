@@ -10,11 +10,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   createCategory,
@@ -25,7 +21,6 @@ import {
   type CategoryRequest,
   updateCategory,
 } from '../api/categories';
-import { ApiError } from '../api/client';
 import PageHeader from '../components/PageHeader';
 
 const emptyForm: CategoryRequest = {
@@ -35,10 +30,6 @@ const emptyForm: CategoryRequest = {
 };
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const message = (error.body as { message?: string }).message;
-    if (message) return message;
-  }
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }
@@ -64,20 +55,15 @@ function SortableItem({
   onEditCancel: () => void;
   onDelete: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
-    position: isDragging ? 'relative' as const : undefined,
+    position: isDragging ? ('relative' as const) : undefined,
   };
 
   return (
@@ -108,9 +94,7 @@ function SortableItem({
         <div className="flex items-center gap-2">
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              item.isActive
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-200 text-slate-600'
+              item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
             }`}
           >
             {item.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -191,9 +175,7 @@ function SortableItem({
                   type="button"
                   variant={editForm.isActive ? 'primary' : 'secondary'}
                   className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                    editForm.isActive
-                      ? 'bg-emerald-500 text-white hover:bg-emerald-500'
-                      : ''
+                    editForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''
                   }`}
                   onClick={() =>
                     setEditForm((prev) => ({
@@ -208,9 +190,7 @@ function SortableItem({
                   type="button"
                   variant={!editForm.isActive ? 'primary' : 'secondary'}
                   className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                    !editForm.isActive
-                      ? 'bg-slate-900 text-white hover:bg-slate-900'
-                      : ''
+                    !editForm.isActive ? 'bg-slate-900 text-white hover:bg-slate-900' : ''
                   }`}
                   onClick={() =>
                     setEditForm((prev) => ({
@@ -261,7 +241,7 @@ export default function CategoriesPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
   const loadList = () => {
@@ -348,9 +328,7 @@ export default function CategoriesPage() {
 
     // Calculate beforeId for the API
     const targetId = Number(active.id);
-    const beforeId = newIndex < reordered.length - 1
-      ? reordered[newIndex + 1].id
-      : null;
+    const beforeId = newIndex < reordered.length - 1 ? reordered[newIndex + 1].id : null;
 
     // But wait - if the moved item IS at newIndex, the item after it is at newIndex+1
     // However we need beforeId to be the item that should come after the target

@@ -1,5 +1,7 @@
-import { deleteJson, getJson, postJson, putJson } from './client';
+import { getApiClient, type DataResponse } from '@repo/api';
 import type { Category } from './categories';
+
+export type { DataResponse };
 
 export type OvereatLevel = 'NONE' | 'MILD' | 'MODERATE' | 'SEVERE';
 
@@ -18,13 +20,6 @@ export type DailyRecordRequest = {
   together: boolean;
 };
 
-export type DataResponse<T> = {
-  data: T;
-  status: number;
-  message?: string | null;
-  timestamp: string;
-};
-
 type DailyRecordQuery = {
   date?: string;
   from?: string;
@@ -39,19 +34,21 @@ export function fetchDailyRecords(
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
   const suffix = params.toString();
-  return getJson<DataResponse<DailyRecord[]>>(`/daily-records${suffix ? `?${suffix}` : ''}`);
+  return getApiClient().get<DataResponse<DailyRecord[]>>(
+    `/daily-records${suffix ? `?${suffix}` : ''}`
+  );
 }
 
 export function createDailyRecord(payload: DailyRecordRequest): Promise<number> {
-  return postJson<number>('/daily-records', payload);
+  return getApiClient().post<number>('/daily-records', payload);
 }
 
 export function updateDailyRecord(id: number, payload: DailyRecordRequest): Promise<void> {
-  return putJson<void>(`/daily-records/${id}`, payload);
+  return getApiClient().put<void>(`/daily-records/${id}`, payload);
 }
 
 export function deleteDailyRecord(id: number): Promise<void> {
-  return deleteJson<void>(`/daily-records/${id}`);
+  return getApiClient().delete<void>(`/daily-records/${id}`);
 }
 
 export type DailyOvereat = {
@@ -63,11 +60,11 @@ export function fetchDailyOvereats(
   from: string,
   to: string
 ): Promise<DataResponse<DailyOvereat[]>> {
-  return getJson<DataResponse<DailyOvereat[]>>(
+  return getApiClient().get<DataResponse<DailyOvereat[]>>(
     `/daily-overeats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
   );
 }
 
 export function updateOvereatLevel(date: string, overeatLevel: OvereatLevel): Promise<void> {
-  return putJson<void>('/daily-overeats', { date, overeatLevel });
+  return getApiClient().put<void>('/daily-overeats', { date, overeatLevel });
 }

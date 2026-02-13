@@ -1,4 +1,4 @@
-import { postJson } from './client';
+import { getApiClient } from '@repo/api';
 
 export type AuthRequest = {
   username: string;
@@ -6,9 +6,9 @@ export type AuthRequest = {
 };
 
 export function login(payload: AuthRequest): Promise<void> {
-  return postJson<void>('/auth/login', payload);
+  return getApiClient().post<void>('/auth/login', payload);
 }
 
 export function logout(): Promise<void> {
-  return postJson<void>('/auth/logout');
+  return getApiClient().post<void>('/auth/logout');
 }
