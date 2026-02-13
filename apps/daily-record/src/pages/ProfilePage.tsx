@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button, FormField, Input } from '@repo/ui';
 import { updateMe, type Gender } from '../api/users';
-import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import PageHeader from '../components/PageHeader';
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const message = (error.body as { message?: string }).message;
-    if (message) return message;
-  }
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }
@@ -97,7 +92,12 @@ export default function ProfilePage() {
             </FormField>
             <FormField label="성별">
               <div className="flex gap-3">
-                {([['MALE', '👨 남자'], ['FEMALE', '👩 여자']] as const).map(([value, label]) => (
+                {(
+                  [
+                    ['MALE', '👨 남자'],
+                    ['FEMALE', '👩 여자'],
+                  ] as const
+                ).map(([value, label]) => (
                   <button
                     key={value}
                     type="button"

@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@heroicons/react": "^2.2.0",
     "@kyungseopk1m/holidays-kr": "^1.3.5",
+    "@repo/api": "workspace:*",
     "@repo/ui": "workspace:*",
     "dayjs": "^1.11.19",
     "react": "^19.2.0",

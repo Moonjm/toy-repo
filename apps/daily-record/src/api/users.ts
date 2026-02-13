@@ -1,4 +1,4 @@
-import { getJson, patchJson } from './client';
+import { getApiClient, type DataResponse } from '@repo/api';
 
 export type Gender = 'MALE' | 'FEMALE';
 
@@ -11,15 +11,8 @@ export type User = {
   birthDate: string | null;
 };
 
-export type DataResponse<T> = {
-  data: T;
-  status: number;
-  message?: string | null;
-  timestamp: string;
-};
-
 export function fetchMe(): Promise<DataResponse<User>> {
-  return getJson<DataResponse<User>>('/users/me');
+  return getApiClient().get<DataResponse<User>>('/users/me');
 }
 
 export type UpdateMeRequest = {
@@ -31,5 +24,5 @@ export type UpdateMeRequest = {
 };
 
 export function updateMe(payload: UpdateMeRequest): Promise<DataResponse<User>> {
-  return patchJson<DataResponse<User>>('/users/me', payload);
+  return getApiClient().patch<DataResponse<User>>('/users/me', payload);
 }

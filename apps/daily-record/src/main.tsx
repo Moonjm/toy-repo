@@ -1,3 +1,4 @@
+import { configureApi } from '@repo/api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -15,6 +16,10 @@ import PairPage from './pages/PairPage';
 import PairEventsPage from './pages/PairEventsPage';
 import RootRedirect from './pages/RootRedirect';
 import './index.css';
+
+configureApi({
+  baseURL: (import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, ''),
+});
 
 const rootElement = document.getElementById('root');
 

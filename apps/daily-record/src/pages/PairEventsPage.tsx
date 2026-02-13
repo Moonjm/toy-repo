@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { ApiError } from '../api/client';
 import {
   createPairEvent,
   deletePairEvent,
@@ -11,10 +10,6 @@ import {
 import PageHeader from '../components/PageHeader';
 
 function formatError(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const message = (error.body as { message?: string }).message;
-    if (message) return message;
-  }
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }

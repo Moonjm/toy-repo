@@ -1,5 +1,4 @@
-import { deleteJson, getJson, postJson } from './client';
-import type { DataResponse } from './dailyRecords';
+import { getApiClient, type DataResponse } from '@repo/api';
 
 export type PairEvent = {
   id: number;
@@ -21,20 +20,18 @@ type PairEventQuery = {
   to?: string;
 };
 
-export function fetchPairEvents(
-  query: PairEventQuery = {}
-): Promise<DataResponse<PairEvent[]>> {
+export function fetchPairEvents(query: PairEventQuery = {}): Promise<DataResponse<PairEvent[]>> {
   const params = new URLSearchParams();
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
   const suffix = params.toString();
-  return getJson<DataResponse<PairEvent[]>>(`/pair/events${suffix ? `?${suffix}` : ''}`);
+  return getApiClient().get<DataResponse<PairEvent[]>>(`/pair/events${suffix ? `?${suffix}` : ''}`);
 }
 
 export function createPairEvent(payload: PairEventRequest): Promise<DataResponse<number>> {
-  return postJson<DataResponse<number>>('/pair/events', payload);
+  return getApiClient().post<DataResponse<number>>('/pair/events', payload);
 }
 
 export function deletePairEvent(id: number): Promise<void> {
-  return deleteJson<void>(`/pair/events/${id}`);
+  return getApiClient().delete<void>(`/pair/events/${id}`);
 }

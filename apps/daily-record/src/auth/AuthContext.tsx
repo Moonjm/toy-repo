@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ApiError } from '@repo/api';
 import { logout as logoutRequest } from '../api/auth';
-import { ApiError } from '../api/client';
 import { fetchMe, type User } from '../api/users';
 
 type AuthContextValue = {
