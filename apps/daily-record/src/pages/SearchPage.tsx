@@ -77,60 +77,62 @@ export default function SearchPage() {
     <div className="min-h-screen bg-white text-slate-900">
       <PageHeader title="검색" />
       <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-6 pb-8">
-        <section className="sticky top-0 z-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="grid grid-cols-2 gap-3">
-            <FormField>
-              <Select value={year} onChange={(event) => setYear(Number(event.target.value))}>
-                {Array.from({ length: now.year() - 2017 + 2 }, (_, idx) => 2018 + idx).map(
-                  (value) => (
+        <div className="sticky top-[3.75rem] z-20 -mx-6 bg-white px-6 pb-1 pt-px">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField>
+                <Select value={year} onChange={(event) => setYear(Number(event.target.value))}>
+                  {Array.from({ length: now.year() - 2017 + 2 }, (_, idx) => 2018 + idx).map(
+                    (value) => (
+                      <option key={value} value={value}>
+                        {value}년
+                      </option>
+                    )
+                  )}
+                </Select>
+              </FormField>
+              <FormField>
+                <Select
+                  value={month}
+                  onChange={(event) =>
+                    setMonth(event.target.value === 'all' ? 'all' : Number(event.target.value))
+                  }
+                >
+                  <option value="all">전체</option>
+                  {Array.from({ length: 12 }, (_, idx) => idx + 1).map((value) => (
                     <option key={value} value={value}>
-                      {value}년
+                      {value}월
                     </option>
-                  )
-                )}
-              </Select>
-            </FormField>
-            <FormField>
-              <Select
-                value={month}
-                onChange={(event) =>
-                  setMonth(event.target.value === 'all' ? 'all' : Number(event.target.value))
-                }
-              >
-                <option value="all">전체</option>
-                {Array.from({ length: 12 }, (_, idx) => idx + 1).map((value) => (
-                  <option key={value} value={value}>
-                    {value}월
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <FormField>
-              <Select
-                value={categoryId}
-                onChange={(event) =>
-                  setCategoryId(event.target.value === 'all' ? 'all' : Number(event.target.value))
-                }
-              >
-                <option value="all">전체</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.emoji} {category.name}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField>
-              <Input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                placeholder="예: 운동, 회식"
-              />
-            </FormField>
-          </div>
-        </section>
+                  ))}
+                </Select>
+              </FormField>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <FormField>
+                <Select
+                  value={categoryId}
+                  onChange={(event) =>
+                    setCategoryId(event.target.value === 'all' ? 'all' : Number(event.target.value))
+                  }
+                >
+                  <option value="all">전체</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.emoji} {category.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField>
+                <Input
+                  value={keyword}
+                  onChange={(event) => setKeyword(event.target.value)}
+                  placeholder="예: 운동, 회식"
+                />
+              </FormField>
+            </div>
+          </section>
+        </div>
 
         <section className="grid gap-3">
           {loading ? (
@@ -154,6 +156,11 @@ export default function SearchPage() {
                   <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
                     <span className="text-lg">{record.category.emoji}</span>
                     {record.category.name}
+                    {record.together && (
+                      <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                        👫 같이
+                      </span>
+                    )}
                   </div>
                   {record.memo && <div className="mt-1 text-xs text-slate-500">{record.memo}</div>}
                 </div>
