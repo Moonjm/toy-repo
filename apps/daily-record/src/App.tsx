@@ -466,10 +466,6 @@ export default function App() {
     if (holidayNames || isSunday) dateClass = 'text-red-500';
     else if (isSaturday) dateClass = 'text-blue-500';
 
-    const allMyEmojis = Array.from(new Set(items.map((item) => item.category.emoji)));
-    const allPartnerEmojis = isPaired
-      ? Array.from(new Set(partnerItems.map((item) => item.category.emoji)))
-      : [];
     const OVEREAT_LEVEL_NUM: Record<string, number> = { MILD: 1, MODERATE: 2, SEVERE: 3 };
     const highlightLevel = OVEREAT_LEVEL_NUM[overeatByDate[key] ?? ''] ?? 0;
     const HIGHLIGHT_STYLE: Record<number, string> = {
@@ -477,8 +473,20 @@ export default function App() {
       2: 'bg-orange-200 ring-orange-300',
       3: 'bg-red-200 ring-red-300',
     };
-    const myEmojis = allMyEmojis;
-    const partnerEmojis = allPartnerEmojis;
+    const togetherEmojis = isPaired
+      ? Array.from(
+          new Set([
+            ...items.filter((r) => r.together).map((r) => r.category.emoji),
+            ...partnerItems.filter((r) => r.together).map((r) => r.category.emoji),
+          ])
+        )
+      : [];
+    const myEmojis = isPaired
+      ? Array.from(new Set(items.filter((r) => !r.together).map((r) => r.category.emoji)))
+      : Array.from(new Set(items.map((r) => r.category.emoji)));
+    const partnerEmojis = isPaired
+      ? Array.from(new Set(partnerItems.filter((r) => !r.together).map((r) => r.category.emoji)))
+      : [];
 
     return (
       <button
@@ -538,8 +546,21 @@ export default function App() {
               ))}
             </div>
           )}
-          {isPaired
-            ? (myEmojis.length > 0 || partnerEmojis.length > 0) && (
+          {isPaired ? (
+            <>
+              {togetherEmojis.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-0.5 rounded-full bg-blue-100 px-1">
+                  {togetherEmojis.map((emoji, i) => (
+                    <span key={`t-${i}`} className="text-[10px] leading-tight">
+                      {emoji}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {togetherEmojis.length > 0 && (myEmojis.length > 0 || partnerEmojis.length > 0) && (
+                <div className="w-3/4 border-t border-dashed border-slate-200" />
+              )}
+              {(myEmojis.length > 0 || partnerEmojis.length > 0) && (
                 <div className="flex w-full items-stretch justify-center gap-0.5">
                   <div className="flex flex-col items-center">
                     {myEmojis.map((emoji, i) => (
@@ -559,16 +580,17 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-              )
-            : myEmojis.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-0.5">
-                  {myEmojis.map((emoji, i) => (
-                    <span key={`${key}-${i}`} className="text-xs leading-none">
-                      {emoji}
-                    </span>
-                  ))}
-                </div>
               )}
+            </>
+          ) : myEmojis.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-0.5">
+              {myEmojis.map((emoji, i) => (
+                <span key={`${key}-${i}`} className="text-xs leading-none">
+                  {emoji}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
       </button>
     );
