@@ -46,9 +46,9 @@ export default function RecordList({
                 {isMine && (
                   <button
                     className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 disabled:opacity-50"
-                    onClick={async (e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
-                      await onDelete(record.id);
+                      onDelete(record.id);
                     }}
                     disabled={busy}
                     type="button"
