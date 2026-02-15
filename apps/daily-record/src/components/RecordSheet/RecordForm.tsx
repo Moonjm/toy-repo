@@ -11,7 +11,7 @@ type RecordFormProps = {
   togetherInput: boolean;
   onToggleTogether: () => void;
   editingRecordId: number | null;
-  onSave: () => Promise<void>;
+  onSave: () => void;
   onCancelEdit: () => void;
   busy: boolean;
 };

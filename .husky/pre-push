@@ -1,6 +1,11 @@
 REPO_DIR="$(git rev-parse --show-toplevel)"
 REMOTE="$1"
 
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  exit 0
+fi
+
 CHANGED_APPS=$(git diff --name-only "${REMOTE}/main"...HEAD -- apps/ \
   | cut -d'/' -f2 \
   | sort -u)

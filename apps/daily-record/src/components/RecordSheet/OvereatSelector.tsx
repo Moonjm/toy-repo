@@ -2,7 +2,7 @@ import type { OvereatLevel } from '../../api/dailyRecords';
 
 type OvereatSelectorProps = {
   currentLevel: OvereatLevel;
-  onSelect: (level: OvereatLevel) => Promise<void>;
+  onSelect: (level: OvereatLevel) => void;
   disabled: boolean;
 };
 
