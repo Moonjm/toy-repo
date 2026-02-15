@@ -60,7 +60,7 @@ export function useCalendarScroll({
       loadMonthData(today.subtract(1, 'month').toDate());
       loadMonthData(today.add(1, 'month').toDate());
     }
-  });
+  }, [months, loadMonthData, scrollContainerRef]);
 
   /* Scroll to a specific month */
   const scrollToMonth = useCallback(
