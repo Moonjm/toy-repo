@@ -11,6 +11,7 @@ const LEVELS: { level: OvereatLevel; label: string; style: string }[] = [
   { level: 'MILD', label: '소', style: 'border-green-300 bg-green-100 text-green-700' },
   { level: 'MODERATE', label: '중', style: 'border-orange-300 bg-orange-200 text-orange-700' },
   { level: 'SEVERE', label: '대', style: 'border-red-300 bg-red-200 text-red-700' },
+  { level: 'EXTREME', label: '대대', style: 'border-purple-400 bg-purple-200 text-purple-800' },
 ];
 
 export default function OvereatSelector({

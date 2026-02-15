@@ -3,7 +3,7 @@ import type { Category } from './categories';
 
 export type { DataResponse };
 
-export type OvereatLevel = 'NONE' | 'MILD' | 'MODERATE' | 'SEVERE';
+export type OvereatLevel = 'NONE' | 'MILD' | 'MODERATE' | 'SEVERE' | 'EXTREME';
 
 export type DailyRecord = {
   id: number;
