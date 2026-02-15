@@ -77,5 +77,4 @@ body {
   background: linear-gradient(90deg, #f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f472b6, #f87171);
   background-size: 200% 100%;
   animation: rainbow-sparkle 2s linear infinite;
-  --tw-ring-color: transparent;
 }
