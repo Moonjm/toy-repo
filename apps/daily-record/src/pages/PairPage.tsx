@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
@@ -15,25 +15,27 @@ function formatError(error: unknown): string {
 export default function PairPage() {
   const queryClient = useQueryClient();
   const [inputCode, setInputCode] = useState('');
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const { data, isLoading: loading } = useQuery({
+  const { data: pair = null, isLoading: loading } = useQuery({
     queryKey: queryKeys.pair.status(),
-    queryFn: async () => {
-      const res = await getPairStatus();
-      const pair = res.data ?? null;
-      let inviteCode: string | null = null;
-      if (pair?.status === 'PENDING') {
-        const inviteRes = await createInvite();
-        inviteCode = inviteRes.data.inviteCode;
-      }
-      return { pair, inviteCode };
+    queryFn: () => getPairStatus().then((res) => res.data ?? null),
+  });
+
+  const fetchInviteMutation = useMutation({
+    mutationFn: () => createInvite(),
+    onSuccess: (res) => {
+      setInviteCode(res.data.inviteCode);
     },
   });
 
-  const pair = data?.pair ?? null;
-  const inviteCode = data?.inviteCode ?? null;
+  useEffect(() => {
+    if (pair?.status === 'PENDING' && !inviteCode && !fetchInviteMutation.isPending) {
+      fetchInviteMutation.mutate();
+    }
+  }, [pair?.status]);
 
   const createInviteMutation = useMutation({
     mutationFn: () => createInvite(),
@@ -61,6 +63,7 @@ export default function PairPage() {
     mutationFn: () => unpair(),
     onSuccess: () => {
       setNotice('페어가 해제되었습니다.');
+      setInviteCode(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.pair.all });
     },
     onError: (err) => {
