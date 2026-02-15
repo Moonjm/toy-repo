@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { Button, FormField, Input } from '@repo/ui';
 import { login as loginRequest } from '../api/auth';
 import { useAuth } from '../auth/AuthContext';
@@ -9,7 +10,6 @@ export default function LoginPage() {
   const { user, loading, refresh } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,22 +18,29 @@ export default function LoginPage() {
     navigate('/calendar', { replace: true });
   }, [loading, user, navigate]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async () => {
       await loginRequest({ username, password });
       const nextUser = await refresh();
       if (!nextUser) {
         throw new Error('no-user');
       }
+      return nextUser;
+    },
+    onSuccess: () => {
       navigate('/calendar', { replace: true });
-    } catch (err) {
+    },
+    onError: () => {
       setError('로그인에 실패했어요.');
-    } finally {
-      setBusy(false);
-    }
+    },
+    onMutate: () => {
+      setError(null);
+    },
+  });
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    loginMutation.mutate();
   };
 
   return (
@@ -76,10 +83,10 @@ export default function LoginPage() {
             </FormField>
             <Button
               type="submit"
-              disabled={busy}
+              disabled={loginMutation.isPending}
               className="mt-2 rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {busy ? '로그인 중...' : '로그인'}
+              {loginMutation.isPending ? '로그인 중...' : '로그인'}
             </Button>
           </div>
         </form>
