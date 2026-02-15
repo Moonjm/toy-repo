@@ -14,7 +14,6 @@ const HIGHLIGHT_STYLE: Record<number, string> = {
   1: 'bg-green-100 ring-green-200',
   2: 'bg-orange-200 ring-orange-300',
   3: 'bg-red-200 ring-red-300',
-  4: 'bg-purple-200 ring-purple-400',
 };
 
 const DayCell = React.memo(function DayCell({ date, data, isPaired, onSelect }: DayCellProps) {
