@@ -158,26 +158,25 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
         fetchDailyOvereats(from, to),
       ]);
       setRecordsByDate((prev) => {
-        const next = { ...prev };
-        Object.keys(next).forEach((key) => {
-          if (key >= from && key <= to) delete next[key];
-        });
-        (res.data ?? []).forEach((record) => {
+        const otherMonths = Object.fromEntries(
+          Object.entries(prev).filter(([key]) => key < from || key > to)
+        );
+        const reloaded = (res.data ?? []).reduce<Record<string, DailyRecord[]>>((acc, record) => {
           const key = dayjs(record.date).format('YYYY-MM-DD');
-          if (!next[key]) next[key] = [];
-          next[key].push(record);
-        });
-        return next;
+          (acc[key] ||= []).push(record);
+          return acc;
+        }, {});
+        return { ...otherMonths, ...reloaded };
       });
       setOvereatByDate((prev) => {
-        const next = { ...prev };
-        Object.keys(next).forEach((key) => {
-          if (key >= from && key <= to) delete next[key];
-        });
-        (ovRes.data ?? []).forEach((item) => {
-          next[item.date] = item.overeatLevel;
-        });
-        return next;
+        const otherMonths = Object.fromEntries(
+          Object.entries(prev).filter(([key]) => key < from || key > to)
+        );
+        const reloaded = (ovRes.data ?? []).reduce<Record<string, OvereatLevel>>((acc, item) => {
+          acc[item.date] = item.overeatLevel;
+          return acc;
+        }, {});
+        return { ...otherMonths, ...reloaded };
       });
     } catch {
       /* ignore */
