@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Button, FormField, Input } from '@repo/ui';
 import { updateMe, type Gender } from '../api/users';
 import { useAuth } from '../auth/AuthContext';
@@ -16,7 +17,6 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -26,7 +26,27 @@ export default function ProfilePage() {
     setBirthDate(user?.birthDate ?? '');
   }, [user]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const updateMutation = useMutation({
+    mutationFn: (params: { nextName: string; nextPassword: string; nextCurrent: string }) =>
+      updateMe({
+        name: params.nextName.length > 0 ? params.nextName : null,
+        gender: gender,
+        birthDate: birthDate || null,
+        currentPassword: params.nextPassword ? params.nextCurrent : null,
+        password: params.nextPassword || null,
+      }),
+    onSuccess: async () => {
+      await refresh();
+      setNotice('내 정보가 업데이트됐어요.');
+      setCurrentPassword('');
+      setPassword('');
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
     setNotice(null);
@@ -40,24 +60,7 @@ export default function ProfilePage() {
       return;
     }
 
-    setBusy(true);
-    try {
-      await updateMe({
-        name: nextName.length > 0 ? nextName : null,
-        gender: gender,
-        birthDate: birthDate || null,
-        currentPassword: nextPassword ? nextCurrent : null,
-        password: nextPassword || null,
-      });
-      await refresh();
-      setNotice('내 정보가 업데이트됐어요.');
-      setCurrentPassword('');
-      setPassword('');
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusy(false);
-    }
+    updateMutation.mutate({ nextName, nextPassword, nextCurrent });
   };
 
   return (
@@ -137,10 +140,10 @@ export default function ProfilePage() {
             </FormField>
             <Button
               type="submit"
-              disabled={busy}
+              disabled={updateMutation.isPending}
               className="mt-2 rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-70"
             >
-              {busy ? '저장 중...' : '저장'}
+              {updateMutation.isPending ? '저장 중...' : '저장'}
             </Button>
           </div>
         </form>

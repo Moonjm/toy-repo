@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, FormField, Input, Select } from '@repo/ui';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
@@ -10,6 +11,7 @@ import {
   type Authority,
 } from '../api/adminUsers';
 import PageHeader from '../components/PageHeader';
+import { queryKeys } from '../queryKeys';
 
 const emptyCreateForm = {
   username: '',
@@ -29,8 +31,7 @@ function formatError(error: unknown): string {
 }
 
 export default function AdminUsersPage() {
-  const [items, setItems] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
@@ -40,39 +41,66 @@ export default function AdminUsersPage() {
     name: '',
     authority: 'USER',
   });
-  const [busyId, setBusyId] = useState<number | null>(null);
 
-  const loadList = () => {
-    setLoading(true);
-    setError(null);
-    return fetchAdminUsers()
-      .then((res) => setItems(res.data ?? []))
-      .catch((err) => setError(formatError(err)))
-      .finally(() => setLoading(false));
-  };
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: queryKeys.adminUsers.list(),
+    queryFn: () => fetchAdminUsers().then((res) => res.data ?? []),
+  });
 
-  useEffect(() => {
-    loadList();
-  }, []);
-
-  const sortedItems = useMemo(() => [...items].sort((a, b) => a.id - b.id), [items]);
-
-  const handleCreate = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
-    setNotice(null);
-    try {
-      await createAdminUser({
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createAdminUser({
         username: createForm.username.trim(),
         name: createForm.name.trim(),
         password: createForm.password.trim(),
-      });
+      }),
+    onSuccess: () => {
       setNotice('사용자를 추가했어요.');
       setCreateForm(emptyCreateForm);
-      await loadList();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers.all });
+    },
+    onError: (err) => {
       setError(formatError(err));
-    }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (id: number) =>
+      updateAdminUser(id, {
+        password: editForm.password.trim(),
+        name: editForm.name.trim(),
+        authority: editForm.authority,
+      }),
+    onSuccess: () => {
+      setNotice('사용자 정보를 저장했어요.');
+      setEditingId(null);
+      setEditForm({ password: '', name: '', authority: 'USER' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteAdminUser(id),
+    onSuccess: () => {
+      setNotice('삭제가 완료됐어요.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const sortedItems = useMemo(() => [...items].sort((a, b) => a.id - b.id), [items]);
+
+  const handleCreate = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (createMutation.isPending) return;
+    setError(null);
+    setNotice(null);
+    createMutation.mutate();
   };
 
   const handleEditStart = (item: AdminUser) => {
@@ -82,42 +110,22 @@ export default function AdminUsersPage() {
     setError(null);
   };
 
-  const handleEditSave = async () => {
+  const handleEditSave = () => {
     if (editingId == null) return;
-    setBusyId(editingId);
     setError(null);
     setNotice(null);
-    try {
-      await updateAdminUser(editingId, {
-        password: editForm.password.trim(),
-        name: editForm.name.trim(),
-        authority: editForm.authority,
-      });
-      setNotice('사용자 정보를 저장했어요.');
-      setEditingId(null);
-      setEditForm({ password: '', name: '', authority: 'USER' });
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusyId(null);
-    }
+    updateMutation.mutate(editingId);
   };
 
-  const handleDelete = async (item: AdminUser) => {
-    setBusyId(item.id);
+  const handleDelete = (item: AdminUser) => {
     setError(null);
     setNotice(null);
-    try {
-      await deleteAdminUser(item.id);
-      setNotice('삭제가 완료됐어요.');
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusyId(null);
-    }
+    deleteMutation.mutate(item.id);
   };
+
+  const isBusy = (id: number) =>
+    (updateMutation.isPending && updateMutation.variables === id) ||
+    (deleteMutation.isPending && deleteMutation.variables === id);
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -183,8 +191,12 @@ export default function AdminUsersPage() {
                   required
                 />
               </FormField>
-              <Button type="submit" className="rounded-2xl px-4 py-3 text-sm font-semibold">
-                사용자 추가
+              <Button
+                type="submit"
+                className="rounded-2xl px-4 py-3 text-sm font-semibold"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? '추가 중...' : '사용자 추가'}
               </Button>
             </form>
             <p className="mt-4 text-xs text-slate-500">
@@ -234,7 +246,7 @@ export default function AdminUsersPage() {
                             type="button"
                             aria-label="수정"
                             title="수정"
-                            disabled={isEditing || busyId === item.id}
+                            disabled={isEditing || isBusy(item.id)}
                           >
                             <PencilSquareIcon className="h-4 w-4" />
                           </Button>
@@ -248,7 +260,7 @@ export default function AdminUsersPage() {
                               <Button
                                 variant="secondary"
                                 className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-white/80 text-red-600"
-                                disabled={busyId === item.id}
+                                disabled={isBusy(item.id)}
                                 type="button"
                                 aria-label="삭제"
                                 title="삭제"
@@ -317,7 +329,7 @@ export default function AdminUsersPage() {
                               variant="primary"
                               className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
                               onClick={handleEditSave}
-                              disabled={busyId === item.id}
+                              disabled={isBusy(item.id)}
                               type="button"
                             >
                               저장

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
 import { Bars3Icon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
@@ -22,6 +23,7 @@ import {
   updateCategory,
 } from '../api/categories';
 import PageHeader from '../components/PageHeader';
+import { queryKeys } from '../queryKeys';
 
 const emptyForm: CategoryRequest = {
   emoji: '',
@@ -230,13 +232,11 @@ function SortableItem({
 }
 
 export default function CategoriesPage() {
-  const [items, setItems] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState<CategoryRequest>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<CategoryRequest>(emptyForm);
-  const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -244,40 +244,79 @@ export default function CategoriesPage() {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const loadList = () => {
-    setLoading(true);
-    setError(null);
-    return fetchCategories()
-      .then((res) => setItems(res.data ?? []))
-      .catch((err) => setError(formatError(err)))
-      .finally(() => setLoading(false));
-  };
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: queryKeys.categories.list(),
+    queryFn: () => fetchCategories().then((res) => res.data ?? []),
+  });
 
-  useEffect(() => {
-    loadList();
-  }, []);
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createCategory({
+        ...createForm,
+        emoji: createForm.emoji.trim(),
+        name: createForm.name.trim(),
+      }),
+    onSuccess: () => {
+      setNotice('새 카테고리를 추가했어요.');
+      setCreateForm(emptyForm);
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (id: number) =>
+      updateCategory(id, {
+        ...editForm,
+        emoji: editForm.emoji.trim(),
+        name: editForm.name.trim(),
+      }),
+    onSuccess: () => {
+      setNotice('카테고리를 저장했어요.');
+      setEditingId(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteCategory(id),
+    onSuccess: () => {
+      setNotice('삭제가 완료됐어요.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: ({ targetId, beforeId }: { targetId: number; beforeId: number | null }) =>
+      reorderCategory(targetId, beforeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
 
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
     [items]
   );
 
-  const handleCreate = async (event: React.FormEvent) => {
+  const handleCreate = (event: React.FormEvent) => {
     event.preventDefault();
+    if (createMutation.isPending) return;
     setError(null);
     setNotice(null);
-    try {
-      await createCategory({
-        ...createForm,
-        emoji: createForm.emoji.trim(),
-        name: createForm.name.trim(),
-      });
-      setNotice('새 카테고리를 추가했어요.');
-      setCreateForm(emptyForm);
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-    }
+    createMutation.mutate();
   };
 
   const handleEditStart = (item: Category) => {
@@ -291,28 +330,14 @@ export default function CategoriesPage() {
     setError(null);
   };
 
-  const handleEditSave = async () => {
+  const handleEditSave = () => {
     if (editingId == null) return;
-    setBusyId(editingId);
     setError(null);
     setNotice(null);
-    try {
-      await updateCategory(editingId, {
-        ...editForm,
-        emoji: editForm.emoji.trim(),
-        name: editForm.name.trim(),
-      });
-      setNotice('카테고리를 저장했어요.');
-      setEditingId(null);
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusyId(null);
-    }
+    updateMutation.mutate(editingId);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -324,40 +349,28 @@ export default function CategoriesPage() {
     const reordered = [...sortedItems];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
-    setItems(reordered.map((item, i) => ({ ...item, sortOrder: i + 1 })));
+    queryClient.setQueryData(
+      queryKeys.categories.list(),
+      reordered.map((item, i) => ({ ...item, sortOrder: i + 1 }))
+    );
 
-    // Calculate beforeId for the API
     const targetId = Number(active.id);
     const beforeId = newIndex < reordered.length - 1 ? reordered[newIndex + 1].id : null;
 
-    // But wait - if the moved item IS at newIndex, the item after it is at newIndex+1
-    // However we need beforeId to be the item that should come after the target
-    // Since we already spliced, reordered[newIndex] === moved, reordered[newIndex+1] is the next item
     setError(null);
     setNotice(null);
-    try {
-      await reorderCategory(targetId, beforeId);
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-      await loadList(); // Revert on failure
-    }
+    reorderMutation.mutate({ targetId, beforeId });
   };
 
-  const handleDelete = async (item: Category) => {
-    setBusyId(item.id);
+  const handleDelete = (item: Category) => {
     setError(null);
     setNotice(null);
-    try {
-      await deleteCategory(item.id);
-      setNotice('삭제가 완료됐어요.');
-      await loadList();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusyId(null);
-    }
+    deleteMutation.mutate(item.id);
   };
+
+  const isBusy = (id: number) =>
+    (updateMutation.isPending && updateMutation.variables === id) ||
+    (deleteMutation.isPending && deleteMutation.variables === id);
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -439,8 +452,9 @@ export default function CategoriesPage() {
               <Button
                 className="mt-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:translate-y-[-1px]"
                 type="submit"
+                disabled={createMutation.isPending}
               >
-                추가하기
+                {createMutation.isPending ? '추가 중...' : '추가하기'}
               </Button>
             </form>
           </section>
@@ -488,7 +502,7 @@ export default function CategoriesPage() {
                         key={item.id}
                         item={item}
                         isEditing={editingId === item.id}
-                        busy={busyId === item.id}
+                        busy={isBusy(item.id)}
                         editForm={editForm}
                         setEditForm={setEditForm}
                         onEditStart={() => handleEditStart(item)}

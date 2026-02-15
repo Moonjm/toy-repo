@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { ClipboardDocumentIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { acceptInvite, createInvite, getPairStatus, unpair, type PairResponse } from '../api/pair';
 import PageHeader from '../components/PageHeader';
+import { queryKeys } from '../queryKeys';
 
 function formatError(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -11,53 +13,71 @@ function formatError(error: unknown): string {
 }
 
 export default function PairPage() {
-  const [pair, setPair] = useState<PairResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [inputCode, setInputCode] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const loadStatus = async () => {
-    setLoading(true);
-    try {
+  const { data, isLoading: loading } = useQuery({
+    queryKey: queryKeys.pair.status(),
+    queryFn: async () => {
       const res = await getPairStatus();
-      const data = res.data ?? null;
-      setPair(data);
-      if (data?.status === 'PENDING') {
+      const pair = res.data ?? null;
+      let inviteCode: string | null = null;
+      if (pair?.status === 'PENDING') {
         const inviteRes = await createInvite();
-        setInviteCode(inviteRes.data.inviteCode);
-      } else {
-        setInviteCode(null);
+        inviteCode = inviteRes.data.inviteCode;
       }
-    } catch {
-      setPair(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { pair, inviteCode };
+    },
+  });
 
-  useEffect(() => {
-    loadStatus();
-  }, []);
+  const pair = data?.pair ?? null;
+  const inviteCode = data?.inviteCode ?? null;
 
-  const handleCreateInvite = async () => {
+  const createInviteMutation = useMutation({
+    mutationFn: () => createInvite(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pair.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: (code: string) => acceptInvite(code),
+    onSuccess: () => {
+      setNotice('페어가 연결되었습니다!');
+      setInputCode('');
+      queryClient.invalidateQueries({ queryKey: queryKeys.pair.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const unpairMutation = useMutation({
+    mutationFn: () => unpair(),
+    onSuccess: () => {
+      setNotice('페어가 해제되었습니다.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.pair.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const busy =
+    createInviteMutation.isPending || acceptInviteMutation.isPending || unpairMutation.isPending;
+
+  const handleCreateInvite = () => {
     setError(null);
     setNotice(null);
-    setBusy(true);
-    try {
-      const res = await createInvite();
-      setInviteCode(res.data.inviteCode);
-      await loadStatus();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusy(false);
-    }
+    createInviteMutation.mutate();
   };
 
-  const handleAcceptInvite = async () => {
+  const handleAcceptInvite = () => {
     const code = inputCode.trim().toUpperCase();
     if (code.length !== 6) {
       setError('초대 코드는 6자리입니다.');
@@ -65,34 +85,13 @@ export default function PairPage() {
     }
     setError(null);
     setNotice(null);
-    setBusy(true);
-    try {
-      await acceptInvite(code);
-      setNotice('페어가 연결되었습니다!');
-      setInputCode('');
-      setInviteCode(null);
-      await loadStatus();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusy(false);
-    }
+    acceptInviteMutation.mutate(code);
   };
 
-  const handleUnpair = async () => {
+  const handleUnpair = () => {
     setError(null);
     setNotice(null);
-    setBusy(true);
-    try {
-      await unpair();
-      setPair(null);
-      setInviteCode(null);
-      setNotice('페어가 해제되었습니다.');
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusy(false);
-    }
+    unpairMutation.mutate();
   };
 
   const handleCopy = (code: string) => {

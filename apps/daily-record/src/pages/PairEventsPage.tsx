@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import {
-  createPairEvent,
-  deletePairEvent,
-  fetchPairEvents,
-  type PairEvent,
-} from '../api/pairEvents';
+import { createPairEvent, deletePairEvent, fetchPairEvents } from '../api/pairEvents';
 import PageHeader from '../components/PageHeader';
+import { queryKeys } from '../queryKeys';
 
 function formatError(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -15,66 +12,66 @@ function formatError(error: unknown): string {
 }
 
 export default function PairEventsPage() {
-  const [events, setEvents] = useState<PairEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [recurring, setRecurring] = useState(true);
-  const [busy, setBusy] = useState(false);
 
-  const loadEvents = () => {
-    setLoading(true);
-    fetchPairEvents()
-      .then((res) => setEvents(res.data ?? []))
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
-  };
+  const { data: events = [], isLoading: loading } = useQuery({
+    queryKey: queryKeys.pairEvents.list(),
+    queryFn: () => fetchPairEvents().then((res) => res.data ?? []),
+  });
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createPairEvent({
+        title: title.trim(),
+        emoji: emoji.trim(),
+        eventDate,
+        recurring,
+      }),
+    onSuccess: () => {
+      setTitle('');
+      setEmoji('');
+      setEventDate('');
+      setRecurring(true);
+      setNotice('기념일이 등록되었습니다.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.pairEvents.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
 
-  const handleCreate = async () => {
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deletePairEvent(id),
+    onSuccess: () => {
+      setNotice('기념일이 삭제되었습니다.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.pairEvents.all });
+    },
+    onError: (err) => {
+      setError(formatError(err));
+    },
+  });
+
+  const handleCreate = () => {
     if (!title.trim() || !emoji.trim() || !eventDate) {
       setError('모든 항목을 입력해주세요.');
       return;
     }
     setError(null);
     setNotice(null);
-    setBusy(true);
-    try {
-      await createPairEvent({
-        title: title.trim(),
-        emoji: emoji.trim(),
-        eventDate,
-        recurring,
-      });
-      setTitle('');
-      setEmoji('');
-      setEventDate('');
-      setRecurring(true);
-      setNotice('기념일이 등록되었습니다.');
-      loadEvents();
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setBusy(false);
-    }
+    createMutation.mutate();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
+    if (deleteMutation.isPending) return;
     setError(null);
     setNotice(null);
-    try {
-      await deletePairEvent(id);
-      setNotice('기념일이 삭제되었습니다.');
-      loadEvents();
-    } catch (err) {
-      setError(formatError(err));
-    }
+    deleteMutation.mutate(id);
   };
 
   return (
@@ -129,10 +126,10 @@ export default function PairEventsPage() {
             <Button
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
               onClick={handleCreate}
-              disabled={busy}
+              disabled={createMutation.isPending}
               type="button"
             >
-              {busy ? '등록 중...' : '등록'}
+              {createMutation.isPending ? '등록 중...' : '등록'}
             </Button>
           </div>
         </div>
@@ -170,6 +167,7 @@ export default function PairEventsPage() {
                       <Button
                         variant="secondary"
                         className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-600"
+                        disabled={deleteMutation.isPending && deleteMutation.variables === event.id}
                         type="button"
                         aria-label="삭제"
                       >

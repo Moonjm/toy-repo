@@ -1,17 +1,32 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { fetchDailyRecords } from '../api/dailyRecords';
+import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
+import { getPairStatus, fetchPartnerDailyRecords } from '../api/pair';
 import PageHeader from '../components/PageHeader';
 import { FormField, Select } from '@repo/ui';
+
+type Filter = 'all' | 'together' | 'solo';
 
 export default function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(dayjs().year());
   const [month, setMonth] = useState<number | 'all'>(dayjs().month() + 1);
-  const [stats, setStats] = useState<
-    { id: number; name: string; emoji: string; count: number; ratio: number }[]
-  >([]);
-  const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [myRecords, setMyRecords] = useState<DailyRecord[]>([]);
+  const [partnerRecords, setPartnerRecords] = useState<DailyRecord[]>([]);
+  const [isPaired, setIsPaired] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPairStatus()
+      .then((res) => {
+        if (!cancelled) setIsPaired(res.data?.status === 'CONNECTED');
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const target = dayjs(`${year}-${String(month === 'all' ? 1 : month).padStart(2, '0')}-01`);
@@ -26,37 +41,20 @@ export default function StatsPage() {
 
     let cancelled = false;
     setLoading(true);
-    fetchDailyRecords({ from, to })
-      .then((res) => {
+
+    const promises: [
+      Promise<{ data?: DailyRecord[] | null }>,
+      Promise<{ data?: DailyRecord[] | null }>,
+    ] = [
+      fetchDailyRecords({ from, to }),
+      isPaired ? fetchPartnerDailyRecords({ from, to }) : Promise.resolve({ data: [] }),
+    ];
+
+    Promise.all(promises)
+      .then(([myRes, partnerRes]) => {
         if (cancelled) return;
-        const counts = new Map<
-          number,
-          { id: number; name: string; emoji: string; count: number }
-        >();
-        (res.data ?? []).forEach((record) => {
-          const category = record.category;
-          const existing = counts.get(category.id);
-          if (existing) {
-            existing.count += 1;
-          } else {
-            counts.set(category.id, {
-              id: category.id,
-              name: category.name,
-              emoji: category.emoji,
-              count: 1,
-            });
-          }
-        });
-
-        const list = Array.from(counts.values()).sort((a, b) => b.count - a.count);
-        const totalCount = list.reduce((sum, item) => sum + item.count, 0);
-        const withRatio = list.map((item) => ({
-          ...item,
-          ratio: totalCount === 0 ? 0 : Math.round((item.count / totalCount) * 100),
-        }));
-
-        setStats(withRatio);
-        setTotal(totalCount);
+        setMyRecords(myRes.data ?? []);
+        setPartnerRecords(partnerRes.data ?? []);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -65,7 +63,48 @@ export default function StatsPage() {
     return () => {
       cancelled = true;
     };
-  }, [year, month]);
+  }, [year, month, isPaired]);
+
+  const { stats, total } = useMemo(() => {
+    let filtered: DailyRecord[];
+    if (filter === 'together') {
+      // 같이: 내 together 기록 + 파트너 together 기록 (카테고리 기준 합산)
+      const myTogether = myRecords.filter((r) => r.together);
+      const partnerTogether = partnerRecords.filter((r) => r.together);
+      filtered = [...myTogether, ...partnerTogether];
+    } else if (filter === 'solo') {
+      filtered = myRecords.filter((r) => !r.together);
+    } else {
+      // 전체: 내 모든 기록 + 파트너 together 기록
+      const partnerTogether = partnerRecords.filter((r) => r.together);
+      filtered = [...myRecords, ...partnerTogether];
+    }
+
+    const counts = new Map<number, { id: number; name: string; emoji: string; count: number }>();
+    filtered.forEach((record) => {
+      const category = record.category;
+      const existing = counts.get(category.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(category.id, {
+          id: category.id,
+          name: category.name,
+          emoji: category.emoji,
+          count: 1,
+        });
+      }
+    });
+
+    const list = Array.from(counts.values()).sort((a, b) => b.count - a.count);
+    const totalCount = list.reduce((sum, item) => sum + item.count, 0);
+    const withRatio = list.map((item) => ({
+      ...item,
+      ratio: totalCount === 0 ? 0 : Math.round((item.count / totalCount) * 100),
+    }));
+
+    return { stats: withRatio, total: totalCount };
+  }, [myRecords, partnerRecords, filter]);
 
   const periodLabel = useMemo(() => {
     const base = dayjs(`${year}-${String(month === 'all' ? 1 : month).padStart(2, '0')}-01`);
@@ -109,6 +148,32 @@ export default function StatsPage() {
               </Select>
             </FormField>
           </div>
+
+          {isPaired && (
+            <div className="mb-4 flex gap-1">
+              {(
+                [
+                  { value: 'all', label: '전체' },
+                  { value: 'together', label: '👫 같이' },
+                  { value: 'solo', label: '개인' },
+                ] as const
+              ).map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                    filter === value
+                      ? 'border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-500'
+                  }`}
+                  onClick={() => setFilter(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
               통계를 불러오는 중입니다...
