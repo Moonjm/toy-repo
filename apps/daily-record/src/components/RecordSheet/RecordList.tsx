@@ -7,7 +7,7 @@ type RecordListProps = {
   isPaired: boolean;
   partnerName: string;
   onEdit: (record: DailyRecord) => void;
-  onDelete: (recordId: number) => Promise<void>;
+  onDelete: (recordId: number) => void;
   busy: boolean;
 };
 
