@@ -1,16 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { configureApi } from '@repo/api';
+import { AuthProvider, RequireAuth, LoginPage, ProfilePage, AdminUsersPage } from '@repo/auth';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import App from './App';
-import { AuthProvider } from './auth/AuthContext';
-import RequireAuth from './auth/RequireAuth';
-import CategoriesPage from './pages/CategoriesPage';
-import AdminUsersPage from './pages/AdminUsersPage';
 import AdminHomePage from './pages/AdminHomePage';
-import LoginPage from './pages/LoginPage';
-import ProfilePage from './pages/ProfilePage';
+import CategoriesPage from './pages/CategoriesPage';
 import StatsPage from './pages/StatsPage';
 import SearchPage from './pages/SearchPage';
 import PairPage from './pages/PairPage';
@@ -41,7 +37,7 @@ root.render(
       <AuthProvider>
         <Routes>
           <Route path="/" element={<RootRedirect />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage redirectTo="/calendar" />} />
           <Route
             path="/calendar"
             element={
@@ -54,7 +50,7 @@ root.render(
             path="/me"
             element={
               <RequireAuth allow={['USER', 'ADMIN']}>
-                <ProfilePage />
+                <ProfilePage backTo="/calendar" />
               </RequireAuth>
             }
           />
@@ -110,7 +106,7 @@ root.render(
             path="/admin/users"
             element={
               <RequireAuth allow={['ADMIN']}>
-                <AdminUsersPage />
+                <AdminUsersPage backTo="/admin" />
               </RequireAuth>
             }
           />

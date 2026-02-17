@@ -22,7 +22,7 @@ import {
   type CategoryRequest,
   updateCategory,
 } from '../api/categories';
-import PageHeader from '../components/PageHeader';
+import { PageHeader } from '@repo/auth';
 import { queryKeys } from '../queryKeys';
 
 const emptyForm: CategoryRequest = {

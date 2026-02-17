@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '@repo/api';
-import { logout as logoutRequest } from '../api/auth';
-import { fetchMe, type User } from '../api/users';
+import { logout as logoutRequest } from './api/auth';
+import { fetchMe, type User } from './api/users';
 
 type AuthContextValue = {
   user: User | null;
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const value = useMemo(

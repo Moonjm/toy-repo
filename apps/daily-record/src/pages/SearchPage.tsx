@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import PageHeader from '../components/PageHeader';
+import { PageHeader } from '@repo/auth';
 import { FormField, Input, Select } from '@repo/ui';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { fetchCategories, type Category } from '../api/categories';

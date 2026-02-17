@@ -12,3 +12,6 @@ export type { InputProps } from './input';
 
 export { Select } from './select';
 export type { SelectProps } from './select';
+
+export { FullPageLoader } from './full-page-loader';
+export type { FullPageLoaderProps } from './full-page-loader';

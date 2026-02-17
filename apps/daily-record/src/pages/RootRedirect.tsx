@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import FullPageLoader from '../components/FullPageLoader';
-import { useAuth } from '../auth/AuthContext';
+import { FullPageLoader } from '@repo/ui';
+import { useAuth } from '@repo/auth';
 
 export default function RootRedirect() {
   const { user, loading } = useAuth();

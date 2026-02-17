@@ -4,6 +4,7 @@ export default {
     './index.html',
     './src/**/*.{js,jsx,ts,tsx}',
     '../../packages/ui/src/**/*.{js,jsx,ts,tsx}',
+    '../../packages/auth/src/**/*.{js,jsx,ts,tsx}',
   ],
   theme: {
     extend: {},

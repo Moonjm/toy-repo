@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { createPairEvent, deletePairEvent, fetchPairEvents } from '../api/pairEvents';
-import PageHeader from '../components/PageHeader';
+import { PageHeader } from '@repo/auth';
 import { queryKeys } from '../queryKeys';
 
 function formatError(error: unknown): string {

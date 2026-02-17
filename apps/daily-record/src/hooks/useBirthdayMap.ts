@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import dayjs from 'dayjs';
-import type { User } from '../api/users';
+import type { User } from '@repo/auth';
 import type { PairResponse } from '../api/pair';
 
 export function useBirthdayMap(
