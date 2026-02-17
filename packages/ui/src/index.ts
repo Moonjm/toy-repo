@@ -1,6 +1,9 @@
 export { Button } from './button';
 export type { ButtonProps } from './button';
 
+export { DatePicker } from './date-picker';
+export type { DatePickerProps } from './date-picker';
+
 export { ConfirmDialog } from './confirm-dialog';
 export type { ConfirmDialogProps } from './confirm-dialog';
 
