@@ -1,14 +1,21 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import FullPageLoader from '../components/FullPageLoader';
+import { FullPageLoader } from '@repo/ui';
 import { useAuth } from './AuthContext';
 
 type RequireAuthProps = {
   allow?: string[];
+  loginPath?: string;
+  homePath?: string;
   children: React.ReactNode;
 };
 
-export default function RequireAuth({ allow, children }: RequireAuthProps) {
+export default function RequireAuth({
+  allow,
+  loginPath = '/login',
+  homePath = '/',
+  children,
+}: RequireAuthProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -16,11 +23,11 @@ export default function RequireAuth({ allow, children }: RequireAuthProps) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allow && !allow.includes(user.authority)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={homePath} replace />;
   }
 
   return <>{children}</>;

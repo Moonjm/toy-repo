@@ -7,7 +7,7 @@ import {
   WrenchScrewdriverIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '@repo/auth';
 
 export default function BottomTabs() {
   const location = useLocation();

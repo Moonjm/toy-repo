@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Button, FormField, Input } from '@repo/ui';
-import { updateMe, type Gender } from '../api/users';
-import { useAuth } from '../auth/AuthContext';
-import PageHeader from '../components/PageHeader';
+import { updateMe, type Gender } from './api/users';
+import { useAuth } from './AuthContext';
+import PageHeader from './PageHeader';
 
 function formatError(error: unknown): string {
   if (error instanceof Error) return error.message;
   return '요청 처리 중 문제가 발생했습니다.';
 }
 
-export default function ProfilePage() {
+type ProfilePageProps = {
+  backTo?: string;
+};
+
+export default function ProfilePage({ backTo = '/' }: ProfilePageProps) {
   const { user, refresh } = useAuth();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Gender | null>(null);
@@ -65,7 +69,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <PageHeader title="내 정보" />
+      <PageHeader title="내 정보" backTo={backTo} />
       <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-6 pb-8">
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

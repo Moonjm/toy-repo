@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import { PageHeader } from '@repo/auth';
 import { FolderIcon, UsersIcon } from '@heroicons/react/24/outline';
 
 export default function AdminHomePage() {

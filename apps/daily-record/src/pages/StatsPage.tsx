@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { getPairStatus, fetchPartnerDailyRecords } from '../api/pair';
-import PageHeader from '../components/PageHeader';
+import { PageHeader } from '@repo/auth';
 import { FormField, Select } from '@repo/ui';
 
 type Filter = 'all' | 'together' | 'solo';

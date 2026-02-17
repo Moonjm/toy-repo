@@ -2,10 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Button, FormField, Input } from '@repo/ui';
-import { login as loginRequest } from '../api/auth';
-import { useAuth } from '../auth/AuthContext';
+import { login as loginRequest } from './api/auth';
+import { useAuth } from './AuthContext';
 
-export default function LoginPage() {
+type LoginPageProps = {
+  redirectTo?: string;
+};
+
+export default function LoginPage({ redirectTo = '/' }: LoginPageProps) {
   const navigate = useNavigate();
   const { user, loading, refresh } = useAuth();
   const [username, setUsername] = useState('');
@@ -15,8 +19,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) return;
-    navigate('/calendar', { replace: true });
-  }, [loading, user, navigate]);
+    navigate(redirectTo, { replace: true });
+  }, [loading, user, navigate, redirectTo]);
 
   const loginMutation = useMutation({
     mutationFn: async () => {
@@ -28,7 +32,7 @@ export default function LoginPage() {
       return nextUser;
     },
     onSuccess: () => {
-      navigate('/calendar', { replace: true });
+      navigate(redirectTo, { replace: true });
     },
     onError: () => {
       setError('로그인에 실패했어요.');

@@ -9,9 +9,9 @@ import {
   updateAdminUser,
   type AdminUser,
   type Authority,
-} from '../api/adminUsers';
-import PageHeader from '../components/PageHeader';
-import { queryKeys } from '../queryKeys';
+} from './api/admin-users';
+import PageHeader from './PageHeader';
+import { queryKeys } from './query-keys';
 
 const emptyCreateForm = {
   username: '',
@@ -30,7 +30,11 @@ function formatError(error: unknown): string {
   return '요청 처리 중 문제가 발생했습니다.';
 }
 
-export default function AdminUsersPage() {
+type AdminUsersPageProps = {
+  backTo?: string;
+};
+
+export default function AdminUsersPage({ backTo = '/' }: AdminUsersPageProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -129,7 +133,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <PageHeader title="사용자 관리" backTo="/admin" />
+      <PageHeader title="사용자 관리" backTo={backTo} />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-8">
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

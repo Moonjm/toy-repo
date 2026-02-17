@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
-import { useAuth } from './auth/AuthContext';
+import { useAuth } from '@repo/auth';
 import { useCalendarRange } from './hooks/useCalendarRange';
 import { useCalendarData } from './hooks/useCalendarData';
 import { useCalendarScroll } from './hooks/useCalendarScroll';

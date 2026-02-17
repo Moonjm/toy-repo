@@ -1,13 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-export default function PageHeader({
-  title,
-  backTo = '/calendar',
-}: {
-  title: string;
-  backTo?: string;
-}) {
+export default function PageHeader({ title, backTo = '/' }: { title: string; backTo?: string }) {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 bg-white px-4 py-3">
       <Link
