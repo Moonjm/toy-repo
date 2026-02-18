@@ -290,11 +290,7 @@ function ChooseDialog({
         >
           기존 인물에서 선택
         </Button>
-        <Button
-          variant="primary"
-          onClick={onNew}
-          className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm"
-        >
+        <Button variant="accent" onClick={onNew} className="w-full py-2.5 rounded-lg text-sm">
           새로 만들기
         </Button>
       </div>

@@ -9,7 +9,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
-import { Button, ConfirmDialog, FormField, Input, Modal } from '@repo/ui';
+import { Button, ConfirmDialog, FormField, Input, Modal, Textarea } from '@repo/ui';
 import {
   fetchFamilyTrees,
   createFamilyTree,
@@ -97,9 +97,9 @@ export default function TreeListPage() {
               </Button>
             )}
             <Button
-              variant="primary"
+              variant="accent"
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 text-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
             >
               <PlusIcon className="w-4 h-4" />새 가계도
             </Button>
@@ -190,10 +190,9 @@ export default function TreeListPage() {
             />
           </FormField>
           <FormField label="설명">
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -209,9 +208,9 @@ export default function TreeListPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="accent"
               disabled={!name.trim() || createMutation.isPending}
-              className="flex-1 py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm"
+              className="flex-1 py-2.5 rounded-lg text-sm"
             >
               {createMutation.isPending ? '생성 중...' : '생성'}
             </Button>
@@ -232,12 +231,11 @@ export default function TreeListPage() {
             />
           </FormField>
           <FormField label="설명">
-            <textarea
+            <Textarea
               value={editTarget?.description ?? ''}
               onChange={(e) =>
                 setEditTarget((prev) => prev && { ...prev, description: e.target.value })
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -253,9 +251,9 @@ export default function TreeListPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="accent"
               disabled={!editTarget?.name.trim() || updateMutation.isPending}
-              className="flex-1 py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm"
+              className="flex-1 py-2.5 rounded-lg text-sm"
             >
               {updateMutation.isPending ? '수정 중...' : '수정'}
             </Button>

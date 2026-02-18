@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, DatePicker, FormField, Input, Modal, Select } from '@repo/ui';
+import { Button, DatePicker, FormField, Input, Modal, Select, Textarea } from '@repo/ui';
 import type { Person, PersonRequest, Gender } from '../types';
 import { uploadFile } from '../api/files';
 
@@ -115,19 +115,18 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
           />
         </FormField>
         <FormField label="메모">
-          <textarea
+          <Textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
             rows={3}
             maxLength={500}
           />
         </FormField>
         <Button
           type="submit"
-          variant="primary"
+          variant="accent"
           disabled={!name.trim() || submitting}
-          className="w-full py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-2.5 rounded-lg"
         >
           {submitting ? '저장 중...' : initial ? '수정' : '추가'}
         </Button>
