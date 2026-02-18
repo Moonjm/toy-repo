@@ -8,7 +8,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
-import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
+import { Button, ConfirmDialog, FormField, Input, Modal } from '@repo/ui';
 import { fetchFamilyTrees, createFamilyTree, deleteFamilyTree } from '../api/familyTrees';
 import { queryKeys } from '../queryKeys';
 import type { FamilyTreeRequest } from '../types';
@@ -133,51 +133,46 @@ export default function TreeListPage() {
       </div>
 
       {/* Create Dialog */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-4">새 가계도</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <FormField label="이름" required>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={100}
-                  required
-                  autoFocus
-                />
-              </FormField>
-              <FormField label="설명">
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
-                  rows={3}
-                  maxLength={500}
-                />
-              </FormField>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowCreate(false)}
-                  className="flex-1 py-2.5 rounded-lg text-sm"
-                >
-                  취소
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={!name.trim() || createMutation.isPending}
-                  className="flex-1 py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm"
-                >
-                  {createMutation.isPending ? '생성 중...' : '생성'}
-                </Button>
-              </div>
-            </form>
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="새 가계도">
+        <form onSubmit={handleCreate} className="space-y-4">
+          <FormField label="이름" required>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              required
+              autoFocus
+            />
+          </FormField>
+          <FormField label="설명">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
+              rows={3}
+              maxLength={500}
+            />
+          </FormField>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowCreate(false)}
+              className="flex-1 py-2.5 rounded-lg text-sm"
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!name.trim() || createMutation.isPending}
+              className="flex-1 py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm"
+            >
+              {createMutation.isPending ? '생성 중...' : '생성'}
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 }

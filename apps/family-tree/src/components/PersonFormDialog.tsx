@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Button, DatePicker, FormField, Input, Select } from '@repo/ui';
+import { Button, DatePicker, FormField, Input, Modal, Select } from '@repo/ui';
 import type { Person, PersonRequest, Gender } from '../types';
 import { uploadFile } from '../api/files';
 
@@ -56,69 +55,59 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-800">
-            {title ?? (initial ? '인물 수정' : '인물 추가')}
-          </h2>
-          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
-            <XMarkIcon className="w-5 h-5 text-slate-500" />
-          </Button>
+    <Modal open onClose={onClose} title={title ?? (initial ? '인물 수정' : '인물 추가')}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormField label="이름" required>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+            required
+            autoFocus
+          />
+        </FormField>
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="생년월일">
+            <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
+          </FormField>
+          <FormField label="사망일">
+            <DatePicker value={deathDate} onChange={setDeathDate} placeholder="사망일" />
+          </FormField>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <FormField label="이름" required>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={50}
-              required
-              autoFocus
-            />
-          </FormField>
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="생년월일">
-              <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
-            </FormField>
-            <FormField label="사망일">
-              <DatePicker value={deathDate} onChange={setDeathDate} placeholder="사망일" />
-            </FormField>
-          </div>
-          <FormField label="성별">
-            <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | '')}>
-              <option value="">선택 안함</option>
-              <option value="MALE">남성</option>
-              <option value="FEMALE">여성</option>
-            </Select>
-          </FormField>
-          <FormField label="프로필 사진" hint={uploading ? '업로드 중...' : undefined}>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              disabled={uploading}
-              className="w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
-          </FormField>
-          <FormField label="메모">
-            <textarea
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
-              rows={3}
-              maxLength={500}
-            />
-          </FormField>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={!name.trim() || submitting}
-            className="w-full py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {submitting ? '저장 중...' : initial ? '수정' : '추가'}
-          </Button>
-        </form>
-      </div>
-    </div>
+        <FormField label="성별">
+          <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | '')}>
+            <option value="">선택 안함</option>
+            <option value="MALE">남성</option>
+            <option value="FEMALE">여성</option>
+          </Select>
+        </FormField>
+        <FormField label="프로필 사진" hint={uploading ? '업로드 중...' : undefined}>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={uploading}
+            className="w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+          />
+        </FormField>
+        <FormField label="메모">
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
+            rows={3}
+            maxLength={500}
+          />
+        </FormField>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!name.trim() || submitting}
+          className="w-full py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {submitting ? '저장 중...' : initial ? '수정' : '추가'}
+        </Button>
+      </form>
+    </Modal>
   );
 }

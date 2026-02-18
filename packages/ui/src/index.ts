@@ -18,3 +18,6 @@ export type { SelectProps } from './select';
 
 export { FullPageLoader } from './full-page-loader';
 export type { FullPageLoaderProps } from './full-page-loader';
+
+export { Modal } from './modal';
+export type { ModalProps } from './modal';
