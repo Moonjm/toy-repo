@@ -8,6 +8,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
+import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
 import { fetchFamilyTrees, createFamilyTree, deleteFamilyTree } from '../api/familyTrees';
 import { queryKeys } from '../queryKeys';
 import type { FamilyTreeRequest } from '../types';
@@ -57,27 +58,30 @@ export default function TreeListPage() {
           <h1 className="text-2xl font-bold text-slate-800">가계도</h1>
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => navigate('/admin/users')}
-                className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
               >
                 <UsersIcon className="w-4 h-4" />
                 사용자 관리
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="primary"
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 text-sm"
             >
               <PlusIcon className="w-4 h-4" />새 가계도
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => logout()}
-              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
             >
               <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
               로그아웃
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -106,17 +110,22 @@ export default function TreeListPage() {
                 </span>
               </div>
               {tree.myRole === 'OWNER' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm(`"${tree.name}" 가계도를 삭제하시겠습니까?`)) {
-                      deleteMutation.mutate(tree.id);
-                    }
-                  }}
-                  className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+                <ConfirmDialog
+                  title="가계도 삭제"
+                  description={`"${tree.name}" 가계도를 삭제하시겠습니까?`}
+                  confirmLabel="삭제"
+                  cancelLabel="취소"
+                  onConfirm={() => deleteMutation.mutate(tree.id)}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
+                  }
+                />
               )}
             </div>
           ))}
@@ -129,42 +138,41 @@ export default function TreeListPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">새 가계도</h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">이름 *</label>
-                <input
+              <FormField label="이름" required>
+                <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   maxLength={100}
                   required
                   autoFocus
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">설명</label>
+              </FormField>
+              <FormField label="설명">
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
                   rows={3}
                   maxLength={500}
                 />
-              </div>
+              </FormField>
               <div className="flex gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setShowCreate(false)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm"
+                  className="flex-1 py-2.5 rounded-lg text-sm"
                 >
                   취소
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
                   disabled={!name.trim() || createMutation.isPending}
-                  className="flex-1 py-2.5 bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-600 disabled:opacity-50 text-sm"
+                  className="flex-1 py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm"
                 >
                   {createMutation.isPending ? '생성 중...' : '생성'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

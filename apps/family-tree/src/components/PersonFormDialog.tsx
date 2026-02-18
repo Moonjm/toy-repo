@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { DatePicker } from '@repo/ui';
+import { Button, DatePicker, FormField, Input, Select } from '@repo/ui';
 import type { Person, PersonRequest, Gender } from '../types';
 import { uploadFile } from '../api/files';
 
@@ -62,46 +62,36 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
           <h2 className="text-lg font-bold text-slate-800">
             {title ?? (initial ? '인물 수정' : '인물 추가')}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100">
+          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
             <XMarkIcon className="w-5 h-5 text-slate-500" />
-          </button>
+          </Button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">이름 *</label>
-            <input
+          <FormField label="이름" required>
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
               maxLength={50}
               required
               autoFocus
             />
-          </div>
+          </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">생년월일</label>
+            <FormField label="생년월일">
               <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">사망일</label>
+            </FormField>
+            <FormField label="사망일">
               <DatePicker value={deathDate} onChange={setDeathDate} placeholder="사망일" />
-            </div>
+            </FormField>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">성별</label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value as Gender | '')}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
+          <FormField label="성별">
+            <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | '')}>
               <option value="">선택 안함</option>
               <option value="MALE">남성</option>
               <option value="FEMALE">여성</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">프로필 사진</label>
+            </Select>
+          </FormField>
+          <FormField label="프로필 사진" hint={uploading ? '업로드 중...' : undefined}>
             <input
               type="file"
               accept="image/*"
@@ -109,25 +99,24 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
               disabled={uploading}
               className="w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
-            {uploading && <p className="text-xs text-indigo-500 mt-1">업로드 중...</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">메모</label>
+          </FormField>
+          <FormField label="메모">
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none"
               rows={3}
               maxLength={500}
             />
-          </div>
-          <button
+          </FormField>
+          <Button
             type="submit"
+            variant="primary"
             disabled={!name.trim() || submitting}
-            className="w-full py-2.5 bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-2.5 bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? '저장 중...' : initial ? '수정' : '추가'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

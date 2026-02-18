@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Button, FullPageLoader } from '@repo/ui';
 import { fetchFamilyTree } from '../api/familyTrees';
 import { createPerson } from '../api/persons';
 import { queryKeys } from '../queryKeys';
@@ -54,9 +55,7 @@ export default function TreeDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-slate-400">불러오는 중...</div>
-    );
+    return <FullPageLoader label="불러오는 중..." />;
   }
 
   if (!tree) {
@@ -71,9 +70,9 @@ export default function TreeDetailPage() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 shadow-sm">
-        <button onClick={() => navigate('/trees')} className="p-1.5 rounded-lg hover:bg-slate-100">
+        <Button variant="ghost" onClick={() => navigate('/trees')} className="p-1.5 rounded-lg">
           <ArrowLeftIcon className="w-5 h-5 text-slate-500" />
-        </button>
+        </Button>
         <div>
           <h1 className="font-bold text-slate-800">{tree.name}</h1>
           {tree.description && <p className="text-xs text-slate-400">{tree.description}</p>}
