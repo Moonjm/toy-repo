@@ -16,9 +16,12 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
   const [deathDate, setDeathDate] = useState(initial?.deathDate ?? '');
   const [gender, setGender] = useState<Gender | ''>(initial?.gender ?? '');
   const [memo, setMemo] = useState(initial?.memo ?? '');
-  const [profileImageId, setProfileImageId] = useState<number | null>(null);
+  // undefined = unchanged, null = explicitly removed, number = new image
+  const [profileImageId, setProfileImageId] = useState<number | null | undefined>(undefined);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const hasExistingImage = initial?.profileImageUrl && profileImageId === undefined;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,7 +48,7 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
         gender: gender || null,
         memo: memo || null,
       };
-      if (profileImageId !== null) {
+      if (profileImageId !== undefined) {
         data.profileImageId = profileImageId;
       }
       await onSubmit(data);
@@ -82,6 +85,27 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
           </Select>
         </FormField>
         <FormField label="프로필 사진" hint={uploading ? '업로드 중...' : undefined}>
+          {hasExistingImage && (
+            <div className="flex items-center gap-2 mb-2">
+              <img
+                src={initial.profileImageUrl!}
+                alt="프로필"
+                className="w-10 h-10 rounded-full object-cover border border-slate-200"
+              />
+              <span className="text-xs text-slate-500 flex-1">기존 사진</span>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setProfileImageId(null)}
+                className="text-xs text-rose-500 hover:text-rose-600 px-2 py-1"
+              >
+                삭제
+              </Button>
+            </div>
+          )}
+          {profileImageId === null && initial?.profileImageUrl && (
+            <p className="text-xs text-slate-400 mb-2">사진이 삭제됩니다</p>
+          )}
           <input
             type="file"
             accept="image/*"

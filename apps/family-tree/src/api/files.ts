@@ -1,7 +1,7 @@
-import { postForLocationId } from './postForLocationId';
+import { getApiClient } from '@repo/api';
 
 export function uploadFile(file: File): Promise<number> {
   const formData = new FormData();
   formData.append('file', file);
-  return postForLocationId('/files', formData);
+  return getApiClient().postForLocationId('/files', formData);
 }
