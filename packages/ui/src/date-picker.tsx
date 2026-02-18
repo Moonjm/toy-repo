@@ -37,7 +37,8 @@ export function DatePicker({
   disabled,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
-  const selected = value ? parseDate(value) : undefined;
+  const parsedDate = value ? parseDate(value) : undefined;
+  const selected = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : undefined;
 
   const handleSelect = (date: Date | undefined) => {
     if (date) {
@@ -57,7 +58,7 @@ export function DatePicker({
           className={cn(
             'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-base',
             'focus:outline-none focus:ring-2 focus:ring-slate-200',
-            'disabled:cursor-not-allowed disabled:opacity-50',
+            'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
             value ? 'text-slate-800' : 'text-slate-400',
             className
           )}

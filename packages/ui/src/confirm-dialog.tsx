@@ -34,13 +34,17 @@ export function ConfirmDialog({
         </Dialog.Trigger>
       )}
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[3px]" />
+        <Dialog.Overlay
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[3px]"
+          onClick={(e) => e.stopPropagation()}
+        />
         <Dialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2',
             'rounded-2xl border border-white/70 bg-white/95 px-6 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.2)]',
             className
           )}
+          onClick={(e) => e.stopPropagation()}
         >
           <Dialog.Title className="text-center text-[17px] font-semibold text-slate-900">
             {title}
