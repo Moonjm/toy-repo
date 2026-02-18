@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Person, FamilyTreeDetail } from '../types';
 import { usePersonMutations, getPersonRelations } from '../hooks/usePersonMutations';
+import { Button, ConfirmDialog } from '@repo/ui';
 import PersonFormDialog from './PersonFormDialog';
 
 type Props = {
@@ -55,9 +56,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
       <div className="w-80 bg-white border-l border-slate-200 h-full overflow-y-auto p-5 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg text-slate-800">인물 정보</h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100">
+          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
             <XMarkIcon className="w-5 h-5 text-slate-400" />
-          </button>
+          </Button>
         </div>
 
         {/* Profile */}
@@ -130,48 +131,57 @@ export default function SidePanel({ person, tree, onClose }: Props) {
 
         {/* Actions */}
         <div className="space-y-2">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setDialog('add-parent-choose')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-slate-700 border border-slate-200"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
           >
             <UserPlusIcon className="w-4 h-4" />
             부모 추가
-          </button>
+          </Button>
           {!spouse && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setDialog('add-spouse-choose')}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-slate-700 border border-slate-200"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
             >
               <HeartIcon className="w-4 h-4" />
               배우자 추가
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setDialog('add-child')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-slate-700 border border-slate-200"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
           >
             <UserPlusIcon className="w-4 h-4" />
             자녀 추가
-          </button>
+          </Button>
           <hr className="my-2" />
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setDialog('edit')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-slate-700 border border-slate-200"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
           >
             <PencilSquareIcon className="w-4 h-4" />
             수정
-          </button>
-          <button
-            onClick={() => {
-              if (confirm(`"${person.name}" 인물을 삭제하시겠습니까?`)) {
-                deleteMutation.mutate();
-              }
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200"
-          >
-            <TrashIcon className="w-4 h-4" />
-            삭제
-          </button>
+          </Button>
+          <ConfirmDialog
+            title="인물 삭제"
+            description={`"${person.name}" 인물을 삭제하시겠습니까?`}
+            confirmLabel="삭제"
+            cancelLabel="취소"
+            onConfirm={() => deleteMutation.mutate()}
+            trigger={
+              <Button
+                variant="ghost"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200"
+              >
+                <TrashIcon className="w-4 h-4" />
+                삭제
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -237,22 +247,23 @@ export default function SidePanel({ person, tree, onClose }: Props) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">인물 선택</h3>
-              <button onClick={closeDialog} className="p-1 rounded-lg hover:bg-slate-100">
+              <Button variant="ghost" onClick={closeDialog} className="p-1 rounded-lg">
                 <XMarkIcon className="w-5 h-5 text-slate-400" />
-              </button>
+              </Button>
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {existingCandidates.map((p) => (
-                <button
+                <Button
                   key={p.id}
+                  variant="ghost"
                   onClick={() => handleSelectExisting(p.id)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-700"
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700"
                 >
                   {p.name}
                   {p.birthDate && (
                     <span className="text-xs text-slate-400 ml-2">{p.birthDate}</span>
                   )}
-                </button>
+                </Button>
               ))}
               {existingCandidates.length === 0 && (
                 <p className="text-sm text-slate-400 text-center py-4">
@@ -283,23 +294,25 @@ function ChooseDialog({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100">
+          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
             <XMarkIcon className="w-5 h-5 text-slate-400" />
-          </button>
+          </Button>
         </div>
         <div className="space-y-2">
-          <button
+          <Button
+            variant="secondary"
             onClick={onExisting}
-            className="w-full py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm"
+            className="w-full py-2.5 rounded-lg text-sm"
           >
             기존 인물에서 선택
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={onNew}
-            className="w-full py-2.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-medium"
+            className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm"
           >
             새로 만들기
-          </button>
+          </Button>
         </div>
       </div>
     </div>
