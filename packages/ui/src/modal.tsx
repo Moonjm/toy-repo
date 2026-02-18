@@ -32,7 +32,7 @@ export function Modal({ open, onClose, title, maxWidth = 'md', children, classNa
           {title ? (
             <div className="flex items-center justify-between mb-4">
               <Dialog.Title className="text-lg font-bold text-slate-800">{title}</Dialog.Title>
-              <Dialog.Close className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+              <Dialog.Close className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
                 <svg
                   className="w-5 h-5"
                   fill="none"

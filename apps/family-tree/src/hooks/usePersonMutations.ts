@@ -65,30 +65,26 @@ export function usePersonMutations({
       }
 
       // Auto-connect: my children → new spouse becomes parent too
-      const myChildren = tree.parentChild
+      const myChildConnections = tree.parentChild
         .filter((pc) => pc.parentId === person.id)
-        .map((pc) => pc.childId);
-      for (const childId of myChildren) {
-        const alreadyParent = tree.parentChild.some(
-          (pc) => pc.parentId === spouseId && pc.childId === childId
-        );
-        if (!alreadyParent) {
-          await addParentChild(treeId, spouseId, childId);
-        }
-      }
+        .map((pc) => pc.childId)
+        .filter(
+          (childId) =>
+            !tree.parentChild.some((pc) => pc.parentId === spouseId && pc.childId === childId)
+        )
+        .map((childId) => addParentChild(treeId, spouseId, childId));
 
       // Auto-connect: spouse's children → I become parent too
-      const spouseChildren = tree.parentChild
+      const spouseChildConnections = tree.parentChild
         .filter((pc) => pc.parentId === spouseId)
-        .map((pc) => pc.childId);
-      for (const childId of spouseChildren) {
-        const alreadyParent = tree.parentChild.some(
-          (pc) => pc.parentId === person.id && pc.childId === childId
-        );
-        if (!alreadyParent) {
-          await addParentChild(treeId, person.id, childId);
-        }
-      }
+        .map((pc) => pc.childId)
+        .filter(
+          (childId) =>
+            !tree.parentChild.some((pc) => pc.parentId === person.id && pc.childId === childId)
+        )
+        .map((childId) => addParentChild(treeId, person.id, childId));
+
+      await Promise.all([...myChildConnections, ...spouseChildConnections]);
     },
     onSuccess: () => {
       invalidate();
