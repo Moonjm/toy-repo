@@ -1,11 +1,14 @@
 export type Gender = 'MALE' | 'FEMALE';
 
+export type CalendarType = 'SOLAR' | 'LUNAR';
+
 export type FamilyTreeRole = 'OWNER' | 'EDITOR' | 'VIEWER';
 
 export type Person = {
   id: number;
   name: string;
   birthDate: string | null;
+  birthDateType: CalendarType | null;
   deathDate: string | null;
   gender: Gender | null;
   profileImageUrl: string | null;
@@ -15,6 +18,7 @@ export type Person = {
 export type PersonRequest = {
   name: string;
   birthDate?: string | null;
+  birthDateType?: CalendarType | null;
   deathDate?: string | null;
   gender?: Gender | null;
   profileImageId?: number | null;
