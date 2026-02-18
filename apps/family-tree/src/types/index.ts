@@ -54,3 +54,25 @@ export type FamilyTreeRequest = {
   name: string;
   description?: string | null;
 };
+
+export type Member = {
+  id: number;
+  userId: number;
+  userName: string;
+  role: FamilyTreeRole;
+};
+
+export type MemberRequest = {
+  userId: number;
+  role: FamilyTreeRole;
+};
+
+export type MemberRoleRequest = {
+  role: FamilyTreeRole;
+};
+
+export type UserItem = {
+  id: number;
+  username: string;
+  name: string;
+};

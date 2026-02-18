@@ -105,7 +105,7 @@ export default function TreeListPage() {
             </Button>
             <Button
               variant="secondary"
-              onClick={() => logout()}
+              onClick={() => logout().then(() => queryClient.clear())}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
             >
               <ArrowRightStartOnRectangleIcon className="w-4 h-4" />

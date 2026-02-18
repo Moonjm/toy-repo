@@ -31,6 +31,7 @@ type DialogMode =
 export default function SidePanel({ person, tree, onClose }: Props) {
   const [dialog, setDialog] = useState<DialogMode>(null);
   const closeDialog = () => setDialog(null);
+  const canEdit = tree.myRole === 'OWNER' || tree.myRole === 'EDITOR';
 
   const { editMutation, deleteMutation, addParentMutation, addSpouseMutation, addChildMutation } =
     usePersonMutations({
@@ -53,7 +54,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
 
   return (
     <>
-      <div className="w-80 bg-white border-l border-slate-200 h-full overflow-y-auto p-5 shadow-lg">
+      <div className="relative z-20 w-80 bg-white border-l border-slate-200 h-full overflow-y-auto p-5 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg text-slate-800">인물 정보</h3>
           <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
@@ -130,59 +131,61 @@ export default function SidePanel({ person, tree, onClose }: Props) {
         </div>
 
         {/* Actions */}
-        <div className="space-y-2">
-          <Button
-            variant="ghost"
-            onClick={() => setDialog('add-parent-choose')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
-          >
-            <UserPlusIcon className="w-4 h-4" />
-            부모 추가
-          </Button>
-          {!spouse && (
+        {canEdit && (
+          <div className="space-y-2">
             <Button
               variant="ghost"
-              onClick={() => setDialog('add-spouse-choose')}
+              onClick={() => setDialog('add-parent-choose')}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
             >
-              <HeartIcon className="w-4 h-4" />
-              배우자 추가
+              <UserPlusIcon className="w-4 h-4" />
+              부모 추가
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            onClick={() => setDialog('add-child')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
-          >
-            <UserPlusIcon className="w-4 h-4" />
-            자녀 추가
-          </Button>
-          <hr className="my-2" />
-          <Button
-            variant="ghost"
-            onClick={() => setDialog('edit')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
-          >
-            <PencilSquareIcon className="w-4 h-4" />
-            수정
-          </Button>
-          <ConfirmDialog
-            title="인물 삭제"
-            description={`"${person.name}" 인물을 삭제하시겠습니까?`}
-            confirmLabel="삭제"
-            cancelLabel="취소"
-            onConfirm={() => deleteMutation.mutate()}
-            trigger={
+            {!spouse && (
               <Button
                 variant="ghost"
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200"
+                onClick={() => setDialog('add-spouse-choose')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
               >
-                <TrashIcon className="w-4 h-4" />
-                삭제
+                <HeartIcon className="w-4 h-4" />
+                배우자 추가
               </Button>
-            }
-          />
-        </div>
+            )}
+            <Button
+              variant="ghost"
+              onClick={() => setDialog('add-child')}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+            >
+              <UserPlusIcon className="w-4 h-4" />
+              자녀 추가
+            </Button>
+            <hr className="my-2" />
+            <Button
+              variant="ghost"
+              onClick={() => setDialog('edit')}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+            >
+              <PencilSquareIcon className="w-4 h-4" />
+              수정
+            </Button>
+            <ConfirmDialog
+              title="인물 삭제"
+              description={`"${person.name}" 인물을 삭제하시겠습니까?`}
+              confirmLabel="삭제"
+              cancelLabel="취소"
+              onConfirm={() => deleteMutation.mutate()}
+              trigger={
+                <Button
+                  variant="ghost"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  삭제
+                </Button>
+              }
+            />
+          </div>
+        )}
       </div>
 
       {/* Edit Dialog */}
