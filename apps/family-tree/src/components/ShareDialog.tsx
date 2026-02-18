@@ -50,7 +50,7 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
   };
 
   const addMut = useMutation({
-    mutationFn: () => addMember(treeId, { userId: selectedUser!.id, role }),
+    mutationFn: (vars: { userId: number; role: FamilyTreeRole }) => addMember(treeId, vars),
     onSuccess: () => {
       invalidate();
       setSelectedUser(null);
@@ -131,7 +131,7 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
           variant="primary"
           className="px-4 py-2"
           disabled={!selectedUser || addMut.isPending}
-          onClick={() => addMut.mutate()}
+          onClick={() => selectedUser && addMut.mutate({ userId: selectedUser.id, role })}
         >
           추가
         </Button>

@@ -120,12 +120,12 @@ export function getPersonRelations(person: Person, tree: FamilyTreeDetail) {
   const parents = tree.parentChild
     .filter((pc) => pc.childId === person.id)
     .map((pc) => tree.persons.find((p) => p.id === pc.parentId))
-    .filter(Boolean) as Person[];
+    .filter((p): p is Person => Boolean(p));
 
   const children = tree.parentChild
     .filter((pc) => pc.parentId === person.id)
     .map((pc) => tree.persons.find((p) => p.id === pc.childId))
-    .filter(Boolean) as Person[];
+    .filter((p): p is Person => Boolean(p));
 
   const spouseRel = tree.spouses.find(
     (s) => s.personAId === person.id || s.personBId === person.id
