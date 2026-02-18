@@ -16,6 +16,9 @@ export type { InputProps } from './input';
 export { Select } from './select';
 export type { SelectProps } from './select';
 
+export { Textarea } from './textarea';
+export type { TextareaProps } from './textarea';
+
 export { FullPageLoader } from './full-page-loader';
 export type { FullPageLoaderProps } from './full-page-loader';
 

@@ -4,7 +4,7 @@ import { cn } from './utils';
 
 export type ButtonProps = React.ComponentPropsWithoutRef<'button'> & {
   asChild?: boolean;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'accent' | 'secondary' | 'ghost';
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -19,6 +19,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
           'disabled:pointer-events-none disabled:opacity-50',
           variant === 'primary' && 'bg-slate-900 text-white hover:bg-slate-800',
+          variant === 'accent' && 'bg-indigo-500 text-white hover:bg-indigo-600',
           variant === 'secondary' && 'bg-slate-100 text-slate-900 hover:bg-slate-200',
           variant === 'ghost' && 'text-slate-900 hover:bg-slate-100',
           className
