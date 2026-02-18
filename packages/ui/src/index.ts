@@ -13,6 +13,9 @@ export type { FormFieldProps } from './form-field';
 export { Input } from './input';
 export type { InputProps } from './input';
 
+export { RadioGroup } from './radio-group';
+export type { RadioGroupProps, RadioOption } from './radio-group';
+
 export { Select } from './select';
 export type { SelectProps } from './select';
 

@@ -92,7 +92,12 @@ export default function SidePanel({ person, tree, onClose }: Props) {
           {person.birthDate && (
             <div className="flex justify-between">
               <span className="text-slate-500">생년월일</span>
-              <span className="text-slate-700">{person.birthDate}</span>
+              <span className="text-slate-700">
+                {person.birthDate}
+                {person.birthDateType === 'LUNAR' && (
+                  <span className="ml-1 text-xs text-slate-400">(음력)</span>
+                )}
+              </span>
             </div>
           )}
           {person.deathDate && (

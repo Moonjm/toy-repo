@@ -1,6 +1,15 @@
 import { useState } from 'react';
-import { Button, DatePicker, FormField, Input, Modal, Select, Textarea } from '@repo/ui';
-import type { Person, PersonRequest, Gender } from '../types';
+import {
+  Button,
+  DatePicker,
+  FormField,
+  Input,
+  Modal,
+  RadioGroup,
+  Select,
+  Textarea,
+} from '@repo/ui';
+import type { Person, PersonRequest, Gender, CalendarType } from '../types';
 import { uploadFile } from '../api/files';
 
 type Props = {
@@ -13,6 +22,9 @@ type Props = {
 export default function PersonFormDialog({ initial, onSubmit, onClose, title }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [birthDate, setBirthDate] = useState(initial?.birthDate ?? '');
+  const [birthDateType, setBirthDateType] = useState<CalendarType>(
+    initial?.birthDateType ?? 'SOLAR'
+  );
   const [deathDate, setDeathDate] = useState(initial?.deathDate ?? '');
   const [gender, setGender] = useState<Gender | ''>(initial?.gender ?? '');
   const [memo, setMemo] = useState(initial?.memo ?? '');
@@ -44,6 +56,7 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
       const data: PersonRequest = {
         name: name.trim(),
         birthDate: birthDate || null,
+        birthDateType: birthDate ? birthDateType : null,
         deathDate: deathDate || null,
         gender: gender || null,
         memo: memo || null,
@@ -69,13 +82,27 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
             autoFocus
           />
         </FormField>
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="생년월일">
-            <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
-          </FormField>
-          <FormField label="사망일">
-            <DatePicker value={deathDate} onChange={setDeathDate} placeholder="사망일" />
-          </FormField>
+        <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="생년월일">
+              <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
+            </FormField>
+            <FormField label="사망일">
+              <DatePicker value={deathDate} onChange={setDeathDate} placeholder="사망일" />
+            </FormField>
+          </div>
+          {birthDate && (
+            <RadioGroup
+              name="birthDateType"
+              value={birthDateType}
+              onChange={setBirthDateType}
+              options={[
+                { value: 'SOLAR', label: '양력' },
+                { value: 'LUNAR', label: '음력' },
+              ]}
+              className="pl-1"
+            />
+          )}
         </div>
         <FormField label="성별">
           <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | '')}>

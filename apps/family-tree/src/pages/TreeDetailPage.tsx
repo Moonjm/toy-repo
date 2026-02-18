@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlusIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { Button, FullPageLoader } from '@repo/ui';
 import { fetchFamilyTree } from '../api/familyTrees';
 import { createPerson } from '../api/persons';
@@ -95,7 +95,21 @@ export default function TreeDetailPage() {
       {/* Content */}
       <div className="relative flex flex-1 overflow-hidden">
         <div className="flex-1">
-          <TreeFlow tree={tree} onSelectPerson={setSelectedPerson} />
+          {tree.persons.length === 0 && canEdit ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+              <p>인물이 없습니다</p>
+              <Button
+                variant="accent"
+                onClick={() => setShowInitialForm(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
+              >
+                <PlusIcon className="w-4 h-4" />
+                인물 추가
+              </Button>
+            </div>
+          ) : (
+            <TreeFlow tree={tree} onSelectPerson={setSelectedPerson} />
+          )}
         </div>
         {selectedPerson && (
           <>
