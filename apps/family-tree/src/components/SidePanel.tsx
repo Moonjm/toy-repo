@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Person, FamilyTreeDetail } from '../types';
 import { usePersonMutations, getPersonRelations } from '../hooks/usePersonMutations';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, ConfirmDialog, Modal } from '@repo/ui';
 import PersonFormDialog from './PersonFormDialog';
 
 type Props = {
@@ -243,36 +243,24 @@ export default function SidePanel({ person, tree, onClose }: Props) {
 
       {/* Select Existing Person */}
       {(dialog === 'add-parent-existing' || dialog === 'add-spouse-existing') && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">인물 선택</h3>
-              <Button variant="ghost" onClick={closeDialog} className="p-1 rounded-lg">
-                <XMarkIcon className="w-5 h-5 text-slate-400" />
+        <Modal open onClose={closeDialog} title="인물 선택" maxWidth="sm">
+          <div className="space-y-1 max-h-64 overflow-y-auto">
+            {existingCandidates.map((p) => (
+              <Button
+                key={p.id}
+                variant="ghost"
+                onClick={() => handleSelectExisting(p.id)}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700"
+              >
+                {p.name}
+                {p.birthDate && <span className="text-xs text-slate-400 ml-2">{p.birthDate}</span>}
               </Button>
-            </div>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {existingCandidates.map((p) => (
-                <Button
-                  key={p.id}
-                  variant="ghost"
-                  onClick={() => handleSelectExisting(p.id)}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700"
-                >
-                  {p.name}
-                  {p.birthDate && (
-                    <span className="text-xs text-slate-400 ml-2">{p.birthDate}</span>
-                  )}
-                </Button>
-              ))}
-              {existingCandidates.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-4">
-                  선택 가능한 인물이 없습니다
-                </p>
-              )}
-            </div>
+            ))}
+            {existingCandidates.length === 0 && (
+              <p className="text-sm text-slate-400 text-center py-4">선택 가능한 인물이 없습니다</p>
+            )}
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
@@ -290,31 +278,23 @@ function ChooseDialog({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold">{title}</h3>
-          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
-            <XMarkIcon className="w-5 h-5 text-slate-400" />
-          </Button>
-        </div>
-        <div className="space-y-2">
-          <Button
-            variant="secondary"
-            onClick={onExisting}
-            className="w-full py-2.5 rounded-lg text-sm"
-          >
-            기존 인물에서 선택
-          </Button>
-          <Button
-            variant="primary"
-            onClick={onNew}
-            className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm"
-          >
-            새로 만들기
-          </Button>
-        </div>
+    <Modal open onClose={onClose} title={title} maxWidth="sm">
+      <div className="space-y-2">
+        <Button
+          variant="secondary"
+          onClick={onExisting}
+          className="w-full py-2.5 rounded-lg text-sm"
+        >
+          기존 인물에서 선택
+        </Button>
+        <Button
+          variant="primary"
+          onClick={onNew}
+          className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm"
+        >
+          새로 만들기
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 }
