@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   XMarkIcon,
   PencilSquareIcon,
@@ -7,10 +6,8 @@ import {
   UserPlusIcon,
   HeartIcon,
 } from '@heroicons/react/24/outline';
-import type { Person, PersonRequest, FamilyTreeDetail } from '../types';
-import { createPerson, updatePerson, deletePerson } from '../api/persons';
-import { addSpouse, addParentChild } from '../api/relationships';
-import { queryKeys } from '../queryKeys';
+import type { Person, FamilyTreeDetail } from '../types';
+import { usePersonMutations, getPersonRelations } from '../hooks/usePersonMutations';
 import PersonFormDialog from './PersonFormDialog';
 
 type Props = {
@@ -32,129 +29,18 @@ type DialogMode =
 
 export default function SidePanel({ person, tree, onClose }: Props) {
   const [dialog, setDialog] = useState<DialogMode>(null);
-  const queryClient = useQueryClient();
-  const treeId = tree.id;
-
-  const invalidate = () => void queryClient.invalidateQueries({ queryKey: queryKeys.tree(treeId) });
   const closeDialog = () => setDialog(null);
 
-  const editMutation = useMutation({
-    mutationFn: (data: PersonRequest) => updatePerson(treeId, person.id, data),
-    onSuccess: () => {
-      invalidate();
-      closeDialog();
-    },
-  });
+  const { editMutation, deleteMutation, addParentMutation, addSpouseMutation, addChildMutation } =
+    usePersonMutations({
+      treeId: tree.id,
+      person,
+      tree,
+      onDeleted: onClose,
+      onDone: closeDialog,
+    });
 
-  const deleteMutation = useMutation({
-    mutationFn: () => deletePerson(treeId, person.id),
-    onSuccess: () => {
-      invalidate();
-      onClose();
-    },
-  });
-
-  const addParentMutation = useMutation({
-    mutationFn: async (data: PersonRequest | { existingId: number }) => {
-      if ('existingId' in data) {
-        await addParentChild(treeId, data.existingId, person.id);
-      } else {
-        const personId = await createPerson(treeId, data);
-        await addParentChild(treeId, personId, person.id);
-      }
-    },
-    onSuccess: () => {
-      invalidate();
-      closeDialog();
-    },
-  });
-
-  const addSpouseMutation = useMutation({
-    mutationFn: async (data: PersonRequest | { existingId: number }) => {
-      let spouseId: number;
-      if ('existingId' in data) {
-        spouseId = data.existingId;
-        await addSpouse(treeId, person.id, spouseId);
-      } else {
-        spouseId = await createPerson(treeId, data);
-        await addSpouse(treeId, person.id, spouseId);
-      }
-
-      // Auto-connect: my children → new spouse becomes parent too
-      const myChildren = tree.parentChild
-        .filter((pc) => pc.parentId === person.id)
-        .map((pc) => pc.childId);
-      for (const childId of myChildren) {
-        const alreadyParent = tree.parentChild.some(
-          (pc) => pc.parentId === spouseId && pc.childId === childId
-        );
-        if (!alreadyParent) {
-          await addParentChild(treeId, spouseId, childId);
-        }
-      }
-
-      // Auto-connect: spouse's children → I become parent too
-      const spouseChildren = tree.parentChild
-        .filter((pc) => pc.parentId === spouseId)
-        .map((pc) => pc.childId);
-      for (const childId of spouseChildren) {
-        const alreadyParent = tree.parentChild.some(
-          (pc) => pc.parentId === person.id && pc.childId === childId
-        );
-        if (!alreadyParent) {
-          await addParentChild(treeId, person.id, childId);
-        }
-      }
-    },
-    onSuccess: () => {
-      invalidate();
-      closeDialog();
-    },
-  });
-
-  const addChildMutation = useMutation({
-    mutationFn: async (data: PersonRequest) => {
-      const childId = await createPerson(treeId, data);
-      await addParentChild(treeId, person.id, childId);
-
-      // Auto-connect spouse as parent too
-      const currentSpouse = tree.spouses.find(
-        (s) => s.personAId === person.id || s.personBId === person.id
-      );
-      if (currentSpouse) {
-        const spouseId =
-          currentSpouse.personAId === person.id ? currentSpouse.personBId : currentSpouse.personAId;
-        await addParentChild(treeId, spouseId, childId);
-      }
-    },
-    onSuccess: () => {
-      invalidate();
-      closeDialog();
-    },
-  });
-
-  // Find relations
-  const parents = tree.parentChild
-    .filter((pc) => pc.childId === person.id)
-    .map((pc) => tree.persons.find((p) => p.id === pc.parentId))
-    .filter(Boolean) as Person[];
-
-  const children = tree.parentChild
-    .filter((pc) => pc.parentId === person.id)
-    .map((pc) => tree.persons.find((p) => p.id === pc.childId))
-    .filter(Boolean) as Person[];
-
-  const spouseRel = tree.spouses.find(
-    (s) => s.personAId === person.id || s.personBId === person.id
-  );
-  const spouse = spouseRel
-    ? tree.persons.find(
-        (p) =>
-          p.id === (spouseRel.personAId === person.id ? spouseRel.personBId : spouseRel.personAId)
-      )
-    : null;
-
-  const existingCandidates = tree.persons.filter((p) => p.id !== person.id);
+  const { parents, children, spouse, existingCandidates } = getPersonRelations(person, tree);
 
   const handleSelectExisting = (targetId: number) => {
     if (dialog === 'add-parent-existing') {
