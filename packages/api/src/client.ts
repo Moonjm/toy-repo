@@ -58,13 +58,13 @@ export function createApiClient(config: ApiClientConfig) {
     return success;
   }
 
-  async function request<T>(
+  async function rawFetch(
     method: string,
     path: string,
     body?: unknown,
     options: RequestOptions = {},
     isRetry = false
-  ): Promise<T> {
+  ): Promise<Response> {
     const { params, headers: customHeaders, ...restOptions } = options;
 
     const url = buildURL(path, params);
@@ -86,13 +86,24 @@ export function createApiClient(config: ApiClientConfig) {
     if (response.status === 401 && !isRetry) {
       const refreshed = await handleUnauthorized();
       if (refreshed) {
-        return request<T>(method, path, body, options, true);
+        return rawFetch(method, path, body, options, true);
       }
     }
 
     if (!response.ok) {
       throw await ApiError.fromResponse(response);
     }
+
+    return response;
+  }
+
+  async function request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    options: RequestOptions = {}
+  ): Promise<T> {
+    const response = await rawFetch(method, path, body, options);
 
     const contentType = response.headers.get('content-type');
     if (contentType?.includes('application/json')) {
@@ -121,6 +132,20 @@ export function createApiClient(config: ApiClientConfig) {
 
     delete<T>(path: string, options?: RequestOptions): Promise<T> {
       return request<T>('DELETE', path, undefined, options);
+    },
+
+    async postForLocationId(
+      path: string,
+      body?: unknown,
+      options?: RequestOptions
+    ): Promise<number> {
+      const response = await rawFetch('POST', path, body, options);
+      const location = response.headers.get('Location') ?? '';
+      const match = location.match(/\/(\d+)$/);
+      if (!match) {
+        throw new Error(`ID not found in Location header: ${location}`);
+      }
+      return Number(match[1]);
     },
   };
 }
