@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { Button, FullPageLoader } from '@repo/ui';
 import { fetchFamilyTree } from '../api/familyTrees';
 import { createPerson } from '../api/persons';
@@ -10,6 +10,7 @@ import type { Person, PersonRequest } from '../types';
 import TreeFlow from '../components/TreeFlow';
 import SidePanel from '../components/SidePanel';
 import PersonFormDialog from '../components/PersonFormDialog';
+import ShareDialog from '../components/ShareDialog';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function TreeDetailPage() {
@@ -20,6 +21,7 @@ export default function TreeDetailPage() {
 
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [showInitialForm, setShowInitialForm] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.tree(treeId),
@@ -29,9 +31,15 @@ export default function TreeDetailPage() {
 
   const tree = data?.data;
 
-  // Force initial person form when tree has no persons
+  const canEdit = tree?.myRole === 'OWNER' || tree?.myRole === 'EDITOR';
+
+  // Force initial person form when tree has no persons (only for editors/owners)
   useEffect(() => {
-    if (tree && tree.persons.length === 0) {
+    if (
+      tree &&
+      tree.persons.length === 0 &&
+      (tree.myRole === 'OWNER' || tree.myRole === 'EDITOR')
+    ) {
       setShowInitialForm(true);
     }
   }, [tree]);
@@ -73,30 +81,48 @@ export default function TreeDetailPage() {
         <Button variant="ghost" onClick={() => navigate('/trees')} className="p-1.5 rounded-lg">
           <ArrowLeftIcon className="w-5 h-5 text-slate-500" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="font-bold text-slate-800">{tree.name}</h1>
           {tree.description && <p className="text-xs text-slate-400">{tree.description}</p>}
         </div>
+        {tree.myRole === 'OWNER' && (
+          <Button variant="ghost" onClick={() => setShowShare(true)} className="p-1.5 rounded-lg">
+            <ShareIcon className="w-5 h-5 text-slate-500" />
+          </Button>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         <div className="flex-1">
           <TreeFlow tree={tree} onSelectPerson={setSelectedPerson} />
         </div>
         {selectedPerson && (
-          <SidePanel person={selectedPerson} tree={tree} onClose={() => setSelectedPerson(null)} />
+          <>
+            <div
+              className="absolute inset-0 z-10 sm:hidden"
+              onClick={() => setSelectedPerson(null)}
+            />
+            <SidePanel
+              person={selectedPerson}
+              tree={tree}
+              onClose={() => setSelectedPerson(null)}
+            />
+          </>
         )}
       </div>
 
       {/* Initial Person Form */}
-      {showInitialForm && (
+      {canEdit && showInitialForm && (
         <PersonFormDialog
           title="첫 번째 인물 추가"
           onSubmit={handleCreateInitial}
           onClose={() => setShowInitialForm(false)}
         />
       )}
+
+      {/* Share Dialog */}
+      <ShareDialog treeId={treeId} open={showShare} onClose={() => setShowShare(false)} />
     </div>
   );
 }

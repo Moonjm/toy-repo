@@ -23,9 +23,9 @@ export function Modal({ open, onClose, title, maxWidth = 'md', children, classNa
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
+            'fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2',
             maxWidthClass[maxWidth],
-            'mx-4 rounded-2xl bg-white p-6 shadow-xl',
+            'rounded-2xl bg-white p-6 shadow-xl',
             className
           )}
         >
