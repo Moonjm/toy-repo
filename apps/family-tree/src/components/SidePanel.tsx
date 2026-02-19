@@ -37,7 +37,6 @@ export default function SidePanel({ person, tree, onClose }: Props) {
     usePersonMutations({
       treeId: tree.id,
       person,
-      tree,
       onDeleted: onClose,
       onDone: closeDialog,
     });

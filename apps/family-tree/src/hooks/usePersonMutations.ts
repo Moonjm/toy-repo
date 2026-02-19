@@ -7,7 +7,6 @@ import { queryKeys } from '../queryKeys';
 type UsePersonMutationsParams = {
   treeId: number;
   person: Person;
-  tree: FamilyTreeDetail;
   onDeleted: () => void;
   onDone: () => void;
 };
@@ -15,7 +14,6 @@ type UsePersonMutationsParams = {
 export function usePersonMutations({
   treeId,
   person,
-  tree,
   onDeleted,
   onDone,
 }: UsePersonMutationsParams) {
@@ -53,28 +51,6 @@ export function usePersonMutations({
     mutationFn: async (data: PersonRequest | { existingId: number }) => {
       const spouseId = 'existingId' in data ? data.existingId : await createPerson(treeId, data);
       await addSpouse(treeId, person.id, spouseId);
-
-      // Auto-connect: my children → new spouse becomes parent too
-      const myChildConnections = tree.parentChild
-        .filter((pc) => pc.parentId === person.id)
-        .map((pc) => pc.childId)
-        .filter(
-          (childId) =>
-            !tree.parentChild.some((pc) => pc.parentId === spouseId && pc.childId === childId)
-        )
-        .map((childId) => addParentChild(treeId, spouseId, childId));
-
-      // Auto-connect: spouse's children → I become parent too
-      const spouseChildConnections = tree.parentChild
-        .filter((pc) => pc.parentId === spouseId)
-        .map((pc) => pc.childId)
-        .filter(
-          (childId) =>
-            !tree.parentChild.some((pc) => pc.parentId === person.id && pc.childId === childId)
-        )
-        .map((childId) => addParentChild(treeId, person.id, childId));
-
-      await Promise.all([...myChildConnections, ...spouseChildConnections]);
     },
     onSuccess: () => {
       invalidate();
@@ -86,16 +62,6 @@ export function usePersonMutations({
     mutationFn: async (data: PersonRequest) => {
       const childId = await createPerson(treeId, data);
       await addParentChild(treeId, person.id, childId);
-
-      // Auto-connect spouse as parent too
-      const currentSpouse = tree.spouses.find(
-        (s) => s.personAId === person.id || s.personBId === person.id
-      );
-      if (currentSpouse) {
-        const spouseId =
-          currentSpouse.personAId === person.id ? currentSpouse.personBId : currentSpouse.personAId;
-        await addParentChild(treeId, spouseId, childId);
-      }
     },
     onSuccess: () => {
       invalidate();
