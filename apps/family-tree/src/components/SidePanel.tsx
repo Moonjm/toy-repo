@@ -42,7 +42,10 @@ export default function SidePanel({ person, tree, onClose }: Props) {
       onDone: closeDialog,
     });
 
-  const { parents, children, spouse, existingCandidates } = getPersonRelations(person, tree);
+  const { parents, children, spouse, parentCandidates, spouseCandidates } = getPersonRelations(
+    person,
+    tree
+  );
 
   const handleSelectExisting = (targetId: number) => {
     if (dialog === 'add-parent-existing') {
@@ -253,7 +256,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
       {(dialog === 'add-parent-existing' || dialog === 'add-spouse-existing') && (
         <Modal open onClose={closeDialog} title="인물 선택" maxWidth="sm">
           <div className="space-y-1 max-h-64 overflow-y-auto">
-            {existingCandidates.map((p) => (
+            {(dialog === 'add-parent-existing' ? parentCandidates : spouseCandidates).map((p) => (
               <Button
                 key={p.id}
                 variant="ghost"
@@ -264,7 +267,8 @@ export default function SidePanel({ person, tree, onClose }: Props) {
                 {p.birthDate && <span className="text-xs text-slate-400 ml-2">{p.birthDate}</span>}
               </Button>
             ))}
-            {existingCandidates.length === 0 && (
+            {(dialog === 'add-parent-existing' ? parentCandidates : spouseCandidates).length ===
+              0 && (
               <p className="text-sm text-slate-400 text-center py-4">선택 가능한 인물이 없습니다</p>
             )}
           </div>
