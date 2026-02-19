@@ -9,6 +9,18 @@ const COUPLE_SIZE = 16;
 const COUPLE_GAP = 40;
 const COUPLE_BLOCK_WIDTH = PERSON_WIDTH * 2 + COUPLE_GAP + COUPLE_SIZE;
 
+function compareBirthDate(
+  a: { birthDate?: string | null; fallback: string | number },
+  b: { birthDate?: string | null; fallback: string | number }
+): number {
+  const dateA = a.birthDate ?? '';
+  const dateB = b.birthDate ?? '';
+  if (!dateA && !dateB) return String(a.fallback).localeCompare(String(b.fallback));
+  if (!dateA) return 1;
+  if (!dateB) return -1;
+  return dateA.localeCompare(dateB);
+}
+
 type LayoutInput = {
   persons: Person[];
   spouses: Spouse[];
@@ -92,16 +104,12 @@ export function useTreeLayout({ persons, spouses, parentChild }: LayoutInput) {
     }
 
     // Sort parentChild by child's birthDate (nulls last) for left-to-right sibling order
-    const sortedParentChild = [...parentChild].sort((a, b) => {
-      const personA = personMap.get(a.childId);
-      const personB = personMap.get(b.childId);
-      const dateA = personA?.birthDate ?? '';
-      const dateB = personB?.birthDate ?? '';
-      if (!dateA && !dateB) return a.childId - b.childId;
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return dateA.localeCompare(dateB);
-    });
+    const sortedParentChild = [...parentChild].sort((a, b) =>
+      compareBirthDate(
+        { birthDate: personMap.get(a.childId)?.birthDate, fallback: a.childId },
+        { birthDate: personMap.get(b.childId)?.birthDate, fallback: b.childId }
+      )
+    );
 
     // Add parent-child edges to dagre (order determines left-to-right placement)
     const addedDagreEdges = new Set<string>();
@@ -168,12 +176,12 @@ export function useTreeLayout({ persons, spouses, parentChild }: LayoutInput) {
       });
 
       // Sort by birthDate (earlier = left), nulls last, tie-break by node ID
-      childInfo.sort((a, b) => {
-        if (!a.birthDate && !b.birthDate) return a.nodeId.localeCompare(b.nodeId);
-        if (!a.birthDate) return 1;
-        if (!b.birthDate) return -1;
-        return a.birthDate.localeCompare(b.birthDate);
-      });
+      childInfo.sort((a, b) =>
+        compareBirthDate(
+          { birthDate: a.birthDate, fallback: a.nodeId },
+          { birthDate: b.birthDate, fallback: b.nodeId }
+        )
+      );
 
       // Compute current group center
       const groupCenter =

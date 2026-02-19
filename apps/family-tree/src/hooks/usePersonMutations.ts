@@ -40,12 +40,8 @@ export function usePersonMutations({
 
   const addParentMutation = useMutation({
     mutationFn: async (data: PersonRequest | { existingId: number }) => {
-      if ('existingId' in data) {
-        await addParentChild(treeId, data.existingId, person.id);
-      } else {
-        const personId = await createPerson(treeId, data);
-        await addParentChild(treeId, personId, person.id);
-      }
+      const parentId = 'existingId' in data ? data.existingId : await createPerson(treeId, data);
+      await addParentChild(treeId, parentId, person.id);
     },
     onSuccess: () => {
       invalidate();
@@ -55,14 +51,8 @@ export function usePersonMutations({
 
   const addSpouseMutation = useMutation({
     mutationFn: async (data: PersonRequest | { existingId: number }) => {
-      let spouseId: number;
-      if ('existingId' in data) {
-        spouseId = data.existingId;
-        await addSpouse(treeId, person.id, spouseId);
-      } else {
-        spouseId = await createPerson(treeId, data);
-        await addSpouse(treeId, person.id, spouseId);
-      }
+      const spouseId = 'existingId' in data ? data.existingId : await createPerson(treeId, data);
+      await addSpouse(treeId, person.id, spouseId);
 
       // Auto-connect: my children → new spouse becomes parent too
       const myChildConnections = tree.parentChild
@@ -137,7 +127,43 @@ export function getPersonRelations(person: Person, tree: FamilyTreeDetail) {
       ) ?? null)
     : null;
 
-  const existingCandidates = tree.persons.filter((p) => p.id !== person.id);
+  // 모든 자손 ID 수집 (순환 관계 방지)
+  const descendantIds = new Set<number>();
+  const collectDescendants = (id: number) => {
+    for (const pc of tree.parentChild) {
+      if (pc.parentId === id && !descendantIds.has(pc.childId)) {
+        descendantIds.add(pc.childId);
+        collectDescendants(pc.childId);
+      }
+    }
+  };
+  collectDescendants(person.id);
 
-  return { parents, children, spouse, existingCandidates };
+  // 모든 조상 ID 수집
+  const ancestorIds = new Set<number>();
+  const collectAncestors = (id: number) => {
+    for (const pc of tree.parentChild) {
+      if (pc.childId === id && !ancestorIds.has(pc.parentId)) {
+        ancestorIds.add(pc.parentId);
+        collectAncestors(pc.parentId);
+      }
+    }
+  };
+  collectAncestors(person.id);
+
+  // 부모 후보: 자기 자신, 이미 부모인 사람, 모든 자손 제외
+  const parentExcludeIds = new Set([person.id, ...parents.map((p) => p.id), ...descendantIds]);
+  const parentCandidates = tree.persons.filter((p) => !parentExcludeIds.has(p.id));
+
+  // 배우자 후보: 자기 자신, 모든 조상/자손, 이미 배우자가 있는 사람 제외
+  const peopleWithSpouse = new Set(tree.spouses.flatMap((s) => [s.personAId, s.personBId]));
+  const spouseExcludeIds = new Set([
+    person.id,
+    ...ancestorIds,
+    ...descendantIds,
+    ...peopleWithSpouse,
+  ]);
+  const spouseCandidates = tree.persons.filter((p) => !spouseExcludeIds.has(p.id));
+
+  return { parents, children, spouse, parentCandidates, spouseCandidates };
 }

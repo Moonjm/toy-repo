@@ -131,7 +131,7 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
           variant="primary"
           className="px-4 py-2"
           disabled={!selectedUser || addMut.isPending}
-          onClick={() => selectedUser && addMut.mutate({ userId: selectedUser.id, role })}
+          onClick={() => addMut.mutate({ userId: selectedUser!.id, role })}
         >
           추가
         </Button>
