@@ -9,7 +9,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
-import { Button, ConfirmDialog, FormField, Input, Modal, Textarea } from '@repo/ui';
+import { Button, ConfirmDialog } from '@repo/ui';
 import {
   fetchFamilyTrees,
   createFamilyTree,
@@ -18,6 +18,7 @@ import {
 } from '../api/familyTrees';
 import { queryKeys } from '../queryKeys';
 import type { FamilyTreeRequest } from '../types';
+import TreeFormDialog from '../components/TreeFormDialog';
 
 export default function TreeListPage() {
   const navigate = useNavigate();
@@ -25,8 +26,6 @@ export default function TreeListPage() {
   const { user, logout } = useAuth();
   const isAdmin = user?.authority === 'ADMIN';
   const [showCreate, setShowCreate] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [editTarget, setEditTarget] = useState<{
     id: number;
     name: string;
@@ -43,8 +42,6 @@ export default function TreeListPage() {
     onSuccess: (treeId) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.trees });
       setShowCreate(false);
-      setName('');
-      setDescription('');
       navigate(`/trees/${treeId}`);
     },
   });
@@ -62,21 +59,6 @@ export default function TreeListPage() {
     mutationFn: (id: number) => deleteFamilyTree(id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.trees }),
   });
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    createMutation.mutate({ name: name.trim(), description: description.trim() || null });
-  };
-
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editTarget || !editTarget.name.trim()) return;
-    updateMutation.mutate({
-      id: editTarget.id,
-      payload: { name: editTarget.name.trim(), description: editTarget.description.trim() || null },
-    });
-  };
 
   const trees = data?.data ?? [];
 
@@ -177,89 +159,28 @@ export default function TreeListPage() {
         </div>
       </div>
 
-      {/* Create Dialog */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="새 가계도">
-        <form onSubmit={handleCreate} className="space-y-4">
-          <FormField label="이름" required>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={100}
-              required
-              autoFocus
-            />
-          </FormField>
-          <FormField label="설명">
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
-          </FormField>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowCreate(false)}
-              className="flex-1 py-2.5 rounded-lg text-sm"
-            >
-              취소
-            </Button>
-            <Button
-              type="submit"
-              variant="accent"
-              disabled={!name.trim() || createMutation.isPending}
-              className="flex-1 py-2.5 rounded-lg text-sm"
-            >
-              {createMutation.isPending ? '생성 중...' : '생성'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {showCreate && (
+        <TreeFormDialog
+          title="새 가계도"
+          submitLabel="생성"
+          pendingLabel="생성 중..."
+          isPending={createMutation.isPending}
+          onSubmit={(data) => createMutation.mutate(data)}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
 
-      {/* Edit Dialog */}
-      <Modal open={editTarget !== null} onClose={() => setEditTarget(null)} title="가계도 수정">
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <FormField label="이름" required>
-            <Input
-              value={editTarget?.name ?? ''}
-              onChange={(e) => setEditTarget((prev) => prev && { ...prev, name: e.target.value })}
-              maxLength={100}
-              required
-              autoFocus
-            />
-          </FormField>
-          <FormField label="설명">
-            <Textarea
-              value={editTarget?.description ?? ''}
-              onChange={(e) =>
-                setEditTarget((prev) => prev && { ...prev, description: e.target.value })
-              }
-              rows={3}
-              maxLength={500}
-            />
-          </FormField>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setEditTarget(null)}
-              className="flex-1 py-2.5 rounded-lg text-sm"
-            >
-              취소
-            </Button>
-            <Button
-              type="submit"
-              variant="accent"
-              disabled={!editTarget?.name.trim() || updateMutation.isPending}
-              className="flex-1 py-2.5 rounded-lg text-sm"
-            >
-              {updateMutation.isPending ? '수정 중...' : '수정'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {editTarget && (
+        <TreeFormDialog
+          title="가계도 수정"
+          initial={editTarget}
+          submitLabel="수정"
+          pendingLabel="수정 중..."
+          isPending={updateMutation.isPending}
+          onSubmit={(data) => updateMutation.mutate({ id: editTarget.id, payload: data })}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
     </div>
   );
 }
