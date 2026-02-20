@@ -38,11 +38,12 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
   const users = usersData?.data ?? [];
 
   const memberUserIds = new Set(members.map((m) => m.userId));
+  const lowerCaseSearch = search.toLowerCase();
   const filteredUsers = users.filter(
     (u) =>
       !memberUserIds.has(u.id) &&
-      (u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.username.toLowerCase().includes(search.toLowerCase()))
+      (u.name.toLowerCase().includes(lowerCaseSearch) ||
+        u.username.toLowerCase().includes(lowerCaseSearch))
   );
 
   const invalidate = () => {
