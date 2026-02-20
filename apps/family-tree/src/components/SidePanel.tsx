@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   XMarkIcon,
   PencilSquareIcon,
@@ -7,9 +6,9 @@ import {
   HeartIcon,
 } from '@heroicons/react/24/outline';
 import type { Person, FamilyTreeDetail } from '../types';
-import { usePersonMutations, getPersonRelations } from '../hooks/usePersonMutations';
-import { Button, ConfirmDialog, Modal } from '@repo/ui';
-import PersonFormDialog from './PersonFormDialog';
+import { getPersonRelations } from '../hooks/usePersonMutations';
+import { useSidePanelDialogs } from '../hooks/useSidePanelDialogs';
+import { Button, ConfirmDialog } from '@repo/ui';
 
 type Props = {
   person: Person;
@@ -17,42 +16,10 @@ type Props = {
   onClose: () => void;
 };
 
-type DialogMode =
-  | null
-  | 'edit'
-  | 'add-parent-choose'
-  | 'add-parent-new'
-  | 'add-parent-existing'
-  | 'add-spouse-choose'
-  | 'add-spouse-new'
-  | 'add-spouse-existing'
-  | 'add-child';
-
 export default function SidePanel({ person, tree, onClose }: Props) {
-  const [dialog, setDialog] = useState<DialogMode>(null);
-  const closeDialog = () => setDialog(null);
   const canEdit = tree.myRole === 'OWNER' || tree.myRole === 'EDITOR';
-
-  const { editMutation, deleteMutation, addParentMutation, addSpouseMutation, addChildMutation } =
-    usePersonMutations({
-      treeId: tree.id,
-      person,
-      onDeleted: onClose,
-      onDone: closeDialog,
-    });
-
-  const { parents, children, spouse, parentCandidates, spouseCandidates } = getPersonRelations(
-    person,
-    tree
-  );
-
-  const handleSelectExisting = (targetId: number) => {
-    if (dialog === 'add-parent-existing') {
-      addParentMutation.mutate({ existingId: targetId });
-    } else if (dialog === 'add-spouse-existing') {
-      addSpouseMutation.mutate({ existingId: targetId });
-    }
-  };
+  const { parents, children, spouse } = getPersonRelations(person, tree);
+  const { actions, dialogs } = useSidePanelDialogs({ person, tree, onDeleted: onClose });
 
   return (
     <>
@@ -142,7 +109,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
           <div className="space-y-2">
             <Button
               variant="ghost"
-              onClick={() => setDialog('add-parent-choose')}
+              onClick={actions.openAddParent}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
             >
               <UserPlusIcon className="w-4 h-4" />
@@ -151,7 +118,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             {!spouse && (
               <Button
                 variant="ghost"
-                onClick={() => setDialog('add-spouse-choose')}
+                onClick={actions.openAddSpouse}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
               >
                 <HeartIcon className="w-4 h-4" />
@@ -160,7 +127,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             )}
             <Button
               variant="ghost"
-              onClick={() => setDialog('add-child')}
+              onClick={actions.openAddChild}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
             >
               <UserPlusIcon className="w-4 h-4" />
@@ -169,7 +136,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             <hr className="my-2" />
             <Button
               variant="ghost"
-              onClick={() => setDialog('edit')}
+              onClick={actions.openEdit}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
             >
               <PencilSquareIcon className="w-4 h-4" />
@@ -180,7 +147,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
               description={`"${person.name}" 인물을 삭제하시겠습니까?`}
               confirmLabel="삭제"
               cancelLabel="취소"
-              onConfirm={() => deleteMutation.mutate()}
+              onConfirm={() => actions.deleteMutation.mutate()}
               trigger={
                 <Button
                   variant="ghost"
@@ -195,113 +162,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
         )}
       </div>
 
-      {/* Edit Dialog */}
-      {dialog === 'edit' && (
-        <PersonFormDialog
-          initial={person}
-          onSubmit={(data) => editMutation.mutate(data)}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Add Parent - Choose */}
-      {dialog === 'add-parent-choose' && (
-        <ChooseDialog
-          title="부모 추가"
-          onNew={() => setDialog('add-parent-new')}
-          onExisting={() => setDialog('add-parent-existing')}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Add Parent - New */}
-      {dialog === 'add-parent-new' && (
-        <PersonFormDialog
-          title="새 부모 추가"
-          onSubmit={(data) => addParentMutation.mutate(data)}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Add Spouse - Choose */}
-      {dialog === 'add-spouse-choose' && (
-        <ChooseDialog
-          title="배우자 추가"
-          onNew={() => setDialog('add-spouse-new')}
-          onExisting={() => setDialog('add-spouse-existing')}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Add Spouse - New */}
-      {dialog === 'add-spouse-new' && (
-        <PersonFormDialog
-          title="새 배우자 추가"
-          onSubmit={(data) => addSpouseMutation.mutate(data)}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Add Child */}
-      {dialog === 'add-child' && (
-        <PersonFormDialog
-          title="자녀 추가"
-          onSubmit={(data) => addChildMutation.mutate(data)}
-          onClose={closeDialog}
-        />
-      )}
-
-      {/* Select Existing Person */}
-      {(dialog === 'add-parent-existing' || dialog === 'add-spouse-existing') && (
-        <Modal open onClose={closeDialog} title="인물 선택" maxWidth="sm">
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            {(dialog === 'add-parent-existing' ? parentCandidates : spouseCandidates).map((p) => (
-              <Button
-                key={p.id}
-                variant="ghost"
-                onClick={() => handleSelectExisting(p.id)}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700"
-              >
-                {p.name}
-                {p.birthDate && <span className="text-xs text-slate-400 ml-2">{p.birthDate}</span>}
-              </Button>
-            ))}
-            {(dialog === 'add-parent-existing' ? parentCandidates : spouseCandidates).length ===
-              0 && (
-              <p className="text-sm text-slate-400 text-center py-4">선택 가능한 인물이 없습니다</p>
-            )}
-          </div>
-        </Modal>
-      )}
+      {dialogs}
     </>
-  );
-}
-
-function ChooseDialog({
-  title,
-  onNew,
-  onExisting,
-  onClose,
-}: {
-  title: string;
-  onNew: () => void;
-  onExisting: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <Modal open onClose={onClose} title={title} maxWidth="sm">
-      <div className="space-y-2">
-        <Button
-          variant="secondary"
-          onClick={onExisting}
-          className="w-full py-2.5 rounded-lg text-sm"
-        >
-          기존 인물에서 선택
-        </Button>
-        <Button variant="accent" onClick={onNew} className="w-full py-2.5 rounded-lg text-sm">
-          새로 만들기
-        </Button>
-      </div>
-    </Modal>
   );
 }
