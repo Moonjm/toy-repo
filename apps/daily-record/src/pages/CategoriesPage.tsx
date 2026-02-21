@@ -108,7 +108,7 @@ function SortableItem({
             type="button"
             aria-label="편집"
             title="편집"
-            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            radius="full"
             className="bg-slate-100 hover:bg-slate-200 text-slate-600"
           >
             <PencilSquareIcon />
@@ -127,7 +127,7 @@ function SortableItem({
                 type="button"
                 aria-label="삭제"
                 title="삭제"
-                style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+                radius="full"
                 className="bg-slate-100 hover:bg-slate-200 border border-red-200 text-red-600 hover:border-red-300"
               >
                 <TrashIcon />

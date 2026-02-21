@@ -54,17 +54,14 @@ export function ConfirmDialog({
               {description}
             </Dialog.Description>
           ) : null}
-          <div
-            className="mt-5 grid grid-cols-2 gap-2"
-            style={{ '--btn-radius': 'var(--radius-xl)' } as React.CSSProperties}
-          >
+          <div className="mt-5 grid grid-cols-2 gap-2">
             <Dialog.Close asChild>
-              <Button variant="secondary" size="md">
+              <Button variant="secondary" size="md" radius="xl">
                 {cancelLabel}
               </Button>
             </Dialog.Close>
             <Dialog.Close asChild>
-              <Button variant="primary" size="md" onClick={onConfirm}>
+              <Button variant="primary" size="md" radius="xl" onClick={onConfirm}>
                 {confirmLabel}
               </Button>
             </Dialog.Close>

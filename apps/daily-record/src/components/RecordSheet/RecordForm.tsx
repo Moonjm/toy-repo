@@ -50,9 +50,9 @@ export default function RecordForm({
               return (
                 <Button
                   key={category.id}
-                  variant={isSelected ? 'secondary' : 'ghost'}
+                  variant="none"
                   size="md"
-                  style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+                  radius="full"
                   className={`border ${
                     isSelected
                       ? 'border-blue-300 bg-blue-50 text-blue-700'
@@ -83,10 +83,10 @@ export default function RecordForm({
             className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
           />
           <Button
-            variant={togetherInput ? 'secondary' : 'ghost'}
+            variant="none"
             size="sm"
             type="button"
-            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            radius="full"
             className={`flex-shrink-0 border ${
               togetherInput
                 ? 'border-blue-300 bg-blue-50 text-blue-700 ring-1 ring-blue-200'

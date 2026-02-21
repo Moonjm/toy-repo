@@ -26,10 +26,10 @@ export default function CalendarHeader({
       <div className="flex items-center gap-2">
         <IconButton
           variant="none"
-          size="md"
+          size="lg"
+          radius="full"
           onClick={onOpenDrawer}
-          style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-          className="hover:bg-slate-100 text-slate-700 [&>svg]:h-6 [&>svg]:w-6"
+          className="hover:bg-slate-100 text-slate-700"
         >
           <Bars3Icon />
         </IconButton>

@@ -31,8 +31,8 @@ export default function OvereatSelector({
               key={level}
               variant="none"
               size="xs"
+              radius="full"
               type="button"
-              style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
               className={
                 isActive
                   ? style + ' ring-1 ring-offset-1'

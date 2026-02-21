@@ -35,8 +35,8 @@ export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDra
           <IconButton
             variant="none"
             size="md"
+            radius="full"
             onClick={onClose}
-            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
             className="hover:bg-slate-100 text-slate-500"
           >
             <XMarkIcon />

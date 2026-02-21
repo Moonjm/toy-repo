@@ -150,10 +150,7 @@ export default function StatsPage() {
           </div>
 
           {isPaired && (
-            <div
-              className="mb-4 flex gap-1"
-              style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-            >
+            <div className="mb-4 flex gap-1">
               {(
                 [
                   { value: 'all', label: '전체' },
@@ -163,8 +160,9 @@ export default function StatsPage() {
               ).map(({ value, label }) => (
                 <Button
                   key={value}
-                  variant={filter === value ? 'primary' : 'secondary'}
+                  variant={filter === value ? 'primary' : 'none'}
                   size="xs"
+                  radius="full"
                   type="button"
                   className={
                     filter === value ? '' : 'border border-slate-200 bg-white text-slate-500'
