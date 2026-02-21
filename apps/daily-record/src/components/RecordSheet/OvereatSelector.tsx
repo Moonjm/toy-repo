@@ -1,3 +1,4 @@
+import { Button } from '@repo/ui';
 import type { OvereatLevel } from '../../api/dailyRecords';
 
 type OvereatSelectorProps = {
@@ -26,19 +27,22 @@ export default function OvereatSelector({
         {LEVELS.map(({ level, label, style }) => {
           const isActive = currentLevel === level;
           return (
-            <button
+            <Button
               key={level}
+              variant="secondary"
+              size="xs"
               type="button"
-              className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition-all ${
+              style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+              className={
                 isActive
                   ? style + ' ring-1 ring-offset-1'
                   : 'border-slate-200 bg-white text-slate-400'
-              }`}
+              }
               onClick={() => onSelect(level)}
               disabled={disabled}
             >
               {label}
-            </button>
+            </Button>
           );
         })}
       </div>

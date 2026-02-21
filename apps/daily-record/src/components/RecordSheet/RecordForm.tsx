@@ -82,9 +82,12 @@ export default function RecordForm({
             placeholder="메모 (최대 20자)"
             className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
           />
-          <button
+          <Button
+            variant={togetherInput ? 'secondary' : 'ghost'}
+            size="sm"
             type="button"
-            className={`flex-shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition-all ${
+            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            className={`flex-shrink-0 border ${
               togetherInput
                 ? 'border-blue-300 bg-blue-50 text-blue-700 ring-1 ring-blue-200'
                 : 'border-slate-200 bg-white text-slate-400'
@@ -92,7 +95,7 @@ export default function RecordForm({
             onClick={onToggleTogether}
           >
             👫 같이
-          </button>
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button

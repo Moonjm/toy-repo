@@ -21,6 +21,7 @@ export const iconButtonVariants = cva(
         danger: 'bg-red-600 text-white hover:bg-red-700',
       },
       size: {
+        xs: 'h-6 w-6 [&>svg]:h-3 [&>svg]:w-3',
         sm: 'h-7 w-7 [&>svg]:h-3.5 [&>svg]:w-3.5',
         md: 'h-9 w-9 [&>svg]:h-4 [&>svg]:w-4',
         lg: 'h-11 w-11 [&>svg]:h-5 [&>svg]:w-5',

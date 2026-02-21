@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { getPairStatus, fetchPartnerDailyRecords } from '../api/pair';
 import { PageHeader } from '@repo/auth';
-import { FormField, Select } from '@repo/ui';
+import { Button, FormField, Select } from '@repo/ui';
 
 type Filter = 'all' | 'together' | 'solo';
 
@@ -150,7 +150,10 @@ export default function StatsPage() {
           </div>
 
           {isPaired && (
-            <div className="mb-4 flex gap-1">
+            <div
+              className="mb-4 flex gap-1"
+              style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            >
               {(
                 [
                   { value: 'all', label: '전체' },
@@ -158,18 +161,18 @@ export default function StatsPage() {
                   { value: 'solo', label: '개인' },
                 ] as const
               ).map(({ value, label }) => (
-                <button
+                <Button
                   key={value}
+                  variant={filter === value ? 'primary' : 'secondary'}
+                  size="xs"
                   type="button"
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    filter === value
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-200 bg-white text-slate-500'
-                  }`}
+                  className={
+                    filter === value ? '' : 'border border-slate-200 bg-white text-slate-500'
+                  }
                   onClick={() => setFilter(value)}
                 >
                   {label}
-                </button>
+                </Button>
               ))}
             </div>
           )}
