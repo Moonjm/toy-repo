@@ -1,4 +1,5 @@
 import { TrashIcon } from '@heroicons/react/24/outline';
+import { IconButton } from '@repo/ui';
 import type { DailyRecord } from '../../api/dailyRecords';
 
 type RecordListProps = {
@@ -44,8 +45,10 @@ export default function RecordList({
                 {record.memo && <span className="text-slate-500">{record.memo}</span>}
                 <span className="flex-1" />
                 {isMine && (
-                  <button
-                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 disabled:opacity-50"
+                  <IconButton
+                    variant="ghost"
+                    size="xs"
+                    className="flex-shrink-0 border border-red-200 bg-white text-red-500"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(record.id);
@@ -54,8 +57,8 @@ export default function RecordList({
                     type="button"
                     aria-label="삭제"
                   >
-                    <TrashIcon className="h-3.5 w-3.5" />
-                  </button>
+                    <TrashIcon />
+                  </IconButton>
                 )}
               </div>
             );
@@ -75,8 +78,10 @@ export default function RecordList({
           <span className="text-slate-800">{record.category.name}</span>
           {record.memo && <span className="text-slate-500">{record.memo}</span>}
           <span className="flex-1" />
-          <button
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 disabled:opacity-50"
+          <IconButton
+            variant="ghost"
+            size="xs"
+            className="flex-shrink-0 border border-red-200 bg-white text-red-500"
             onClick={async (e) => {
               e.stopPropagation();
               await onDelete(record.id);
@@ -85,8 +90,8 @@ export default function RecordList({
             type="button"
             aria-label="삭제"
           >
-            <TrashIcon className="h-3.5 w-3.5" />
-          </button>
+            <TrashIcon />
+          </IconButton>
         </div>
       ))}
       {isPaired && partnerNormal.length > 0 && (

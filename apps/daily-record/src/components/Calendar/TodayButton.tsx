@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { Button } from '@repo/ui';
 
 type TodayButtonProps = {
   visibleMonth: string;
@@ -8,12 +9,15 @@ type TodayButtonProps = {
 export default function TodayButton({ visibleMonth, onGoToday }: TodayButtonProps) {
   if (visibleMonth === dayjs().format('YYYY-MM')) return null;
   return (
-    <button
+    <Button
+      variant="secondary"
+      size="md"
       type="button"
-      className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-md active:bg-slate-50"
       onClick={onGoToday}
+      style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+      className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 border border-slate-200 bg-white text-slate-700 shadow-md active:bg-slate-50"
     >
       &lsaquo; 오늘
-    </button>
+    </Button>
   );
 }

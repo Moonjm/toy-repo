@@ -21,6 +21,7 @@ export const buttonVariants = cva(
         danger: 'bg-red-600 text-white hover:bg-red-700',
       },
       size: {
+        xs: 'h-7 px-2 text-xs gap-0.5',
         sm: 'h-8 px-3 text-xs gap-1',
         md: 'h-9 px-4 text-sm gap-1.5',
         lg: 'h-11 px-5 text-base gap-2',

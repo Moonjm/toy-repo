@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ConfirmDialog } from '@repo/ui';
+import { Button, IconButton, ConfirmDialog } from '@repo/ui';
 import {
   XMarkIcon,
   ChartBarIcon,
@@ -32,13 +32,15 @@ export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDra
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <span className="text-base font-semibold text-slate-800">메뉴</span>
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100"
+          <IconButton
+            variant="ghost"
+            size="md"
             onClick={onClose}
+            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            className="text-slate-500"
           >
-            <XMarkIcon className="h-5 w-5 text-slate-500" />
-          </button>
+            <XMarkIcon />
+          </IconButton>
         </div>
         <nav className="flex flex-col py-2">
           {[
@@ -66,13 +68,15 @@ export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDra
             cancelLabel="취소"
             onConfirm={onLogout}
             trigger={
-              <button
+              <Button
+                variant="ghost"
+                size="md"
                 type="button"
-                className="flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium text-slate-500 hover:text-slate-700"
+                className="w-full justify-start text-slate-500 hover:text-slate-700"
               >
                 <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
                 로그아웃
-              </button>
+              </Button>
             }
           />
         </div>
