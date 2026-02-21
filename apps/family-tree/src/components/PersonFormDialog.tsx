@@ -123,8 +123,9 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 onClick={() => setProfileImageId(null)}
-                className="text-xs text-rose-500 hover:text-rose-600 px-2 py-1"
+                className="text-rose-500 hover:text-rose-600"
               >
                 삭제
               </Button>
@@ -152,8 +153,9 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
         <Button
           type="submit"
           variant="accent"
+          size="lg"
           disabled={!name.trim() || submitting}
-          className="w-full py-2.5 rounded-lg"
+          className="w-full"
         >
           {submitting ? '저장 중...' : initial ? '수정' : '추가'}
         </Button>

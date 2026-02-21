@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, ConfirmDialog, Input } from '@repo/ui';
+import { Button, IconButton, ConfirmDialog, Input } from '@repo/ui';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { createPairEvent, deletePairEvent, fetchPairEvents } from '../api/pairEvents';
 import { PageHeader } from '@repo/auth';
@@ -124,7 +124,8 @@ export default function PairEventsPage() {
               매년 반복
             </label>
             <Button
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              variant="primary"
+              size="md"
               onClick={handleCreate}
               disabled={createMutation.isPending}
               type="button"
@@ -164,15 +165,16 @@ export default function PairEventsPage() {
                     cancelLabel="취소"
                     onConfirm={() => handleDelete(event.id)}
                     trigger={
-                      <Button
+                      <IconButton
                         variant="secondary"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-600"
+                        size="sm"
                         disabled={deleteMutation.isPending && deleteMutation.variables === event.id}
                         type="button"
                         aria-label="삭제"
+                        className="border border-red-200 text-red-600"
                       >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
+                        <TrashIcon />
+                      </IconButton>
                     }
                   />
                 </div>

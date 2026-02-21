@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeftIcon, PlusIcon, ShareIcon } from '@heroicons/react/24/outline';
-import { Button, FullPageLoader } from '@repo/ui';
+import { Button, IconButton, FullPageLoader } from '@repo/ui';
 import { fetchFamilyTree } from '../api/familyTrees';
 import { createPerson } from '../api/persons';
 import { queryKeys } from '../queryKeys';
@@ -78,17 +78,27 @@ export default function TreeDetailPage() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 shadow-sm">
-        <Button variant="ghost" onClick={() => navigate('/trees')} className="p-1.5 rounded-lg">
-          <ArrowLeftIcon className="w-5 h-5 text-slate-500" />
-        </Button>
+        <IconButton
+          variant="ghost"
+          size="md"
+          onClick={() => navigate('/trees')}
+          className="text-slate-500"
+        >
+          <ArrowLeftIcon />
+        </IconButton>
         <div className="flex-1">
           <h1 className="font-bold text-slate-800">{tree.name}</h1>
           {tree.description && <p className="text-xs text-slate-400">{tree.description}</p>}
         </div>
         {tree.myRole === 'OWNER' && (
-          <Button variant="ghost" onClick={() => setShowShare(true)} className="p-1.5 rounded-lg">
-            <ShareIcon className="w-5 h-5 text-slate-500" />
-          </Button>
+          <IconButton
+            variant="ghost"
+            size="md"
+            onClick={() => setShowShare(true)}
+            className="text-slate-500"
+          >
+            <ShareIcon />
+          </IconButton>
         )}
       </div>
 
@@ -98,11 +108,7 @@ export default function TreeDetailPage() {
           {tree.persons.length === 0 && canEdit ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
               <p>인물이 없습니다</p>
-              <Button
-                variant="accent"
-                onClick={() => setShowInitialForm(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
-              >
+              <Button variant="accent" size="md" onClick={() => setShowInitialForm(true)}>
                 <PlusIcon className="w-4 h-4" />
                 인물 추가
               </Button>

@@ -179,7 +179,8 @@ export default function PairPage() {
                 trigger={
                   <Button
                     variant="secondary"
-                    className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600"
+                    size="lg"
+                    className="w-full border border-red-200 text-red-600"
                     disabled={busy}
                     type="button"
                   >
@@ -203,7 +204,8 @@ export default function PairPage() {
             </div>
             <Button
               variant="secondary"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700"
+              size="lg"
+              className="w-full border border-slate-200 text-slate-700"
               onClick={() => handleCopy(inviteCode)}
               type="button"
             >
@@ -220,7 +222,8 @@ export default function PairPage() {
                 trigger={
                   <Button
                     variant="secondary"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                    size="lg"
+                    className="w-full border border-slate-200 text-slate-600"
                     disabled={busy}
                     type="button"
                   >
@@ -241,7 +244,9 @@ export default function PairPage() {
                 </p>
               </div>
               <Button
-                className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+                variant="primary"
+                size="lg"
+                className="w-full"
                 onClick={handleCreateInvite}
                 disabled={busy}
                 type="button"
@@ -263,7 +268,8 @@ export default function PairPage() {
                   className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-lg font-bold tracking-[0.2em] text-slate-800 uppercase"
                 />
                 <Button
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                  variant="primary"
+                  size="md"
                   onClick={handleAcceptInvite}
                   disabled={busy || inputCode.trim().length !== 6}
                   type="button"

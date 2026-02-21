@@ -51,7 +51,9 @@ export default function RecordForm({
                 <Button
                   key={category.id}
                   variant={isSelected ? 'secondary' : 'ghost'}
-                  className={`rounded-full border px-3 py-2 text-sm font-medium ${
+                  size="md"
+                  style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+                  className={`border ${
                     isSelected
                       ? 'border-blue-300 bg-blue-50 text-blue-700'
                       : 'border-slate-200 bg-white text-slate-700'
@@ -94,7 +96,9 @@ export default function RecordForm({
         </div>
         <div className="flex items-center gap-2">
           <Button
-            className="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            variant="primary"
+            size="md"
+            className="flex-1"
             onClick={onSave}
             disabled={busy}
             type="button"
@@ -104,7 +108,8 @@ export default function RecordForm({
           {editingRecordId && (
             <Button
               variant="secondary"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600"
+              size="md"
+              className="border border-slate-200 text-slate-600"
               onClick={onCancelEdit}
               type="button"
             >

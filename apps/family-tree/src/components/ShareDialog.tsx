@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { Modal, Button, Input, Select } from '@repo/ui';
+import { Modal, Button, IconButton, Input, Select } from '@repo/ui';
 import { fetchMembers, addMember, updateMemberRole, removeMember } from '../api/members';
 import { fetchUsers } from '../api/users';
 import { queryKeys } from '../queryKeys';
@@ -130,7 +130,7 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
         </div>
         <Button
           variant="primary"
-          className="px-4 py-2"
+          size="md"
           disabled={!selectedUser || addMut.isPending}
           onClick={() => addMut.mutate({ userId: selectedUser!.id, role })}
         >
@@ -165,13 +165,14 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
                       <option value="EDITOR">편집자</option>
                       <option value="VIEWER">뷰어</option>
                     </Select>
-                    <Button
+                    <IconButton
                       variant="ghost"
-                      className="p-1 text-slate-400 hover:text-rose-500"
+                      size="sm"
+                      className="text-slate-400 hover:text-rose-500"
                       onClick={() => removeMut.mutate(member.id)}
                     >
-                      <TrashIcon className="w-4 h-4" />
-                    </Button>
+                      <TrashIcon />
+                    </IconButton>
                   </div>
                 )}
               </li>
