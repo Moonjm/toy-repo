@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- top person (root) -->
+  <circle cx="16" cy="5" r="3.5" fill="#3b82f6"/>
+  <!-- lines down from root -->
+  <line x1="16" y1="8.5" x2="16" y2="13" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- horizontal connector -->
+  <line x1="8" y1="13" x2="24" y2="13" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- left branch -->
+  <line x1="8" y1="13" x2="8" y2="17" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- right branch -->
+  <line x1="24" y1="13" x2="24" y2="17" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- left child -->
+  <circle cx="8" cy="20.5" r="3.5" fill="#60a5fa"/>
+  <!-- right child -->
+  <circle cx="24" cy="20.5" r="3.5" fill="#60a5fa"/>
+  <!-- left child branch down -->
+  <line x1="8" y1="24" x2="8" y2="28" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- right child branch down -->
+  <line x1="24" y1="24" x2="24" y2="28" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- grandchildren -->
+  <circle cx="8" cy="29.5" r="2.5" fill="#93c5fd"/>
+  <circle cx="24" cy="29.5" r="2.5" fill="#93c5fd"/>
+</svg>

@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, RequireAuth, LoginPage, AdminUsersPage } from '@repo/auth';
+import { AuthProvider, RequireAuth, LoginPage, ProfilePage, AdminUsersPage } from '@repo/auth';
 import { FullPageLoader } from '@repo/ui';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
@@ -34,6 +34,14 @@ export default function App() {
               element={
                 <RequireAuth allow={['USER', 'ADMIN']}>
                   <TreeDetailPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/me"
+              element={
+                <RequireAuth allow={['USER', 'ADMIN']}>
+                  <ProfilePage backTo="/trees" />
                 </RequireAuth>
               }
             />
