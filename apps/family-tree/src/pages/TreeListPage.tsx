@@ -6,6 +6,7 @@ import {
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
+  UserCircleIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
@@ -84,6 +85,13 @@ export default function TreeListPage() {
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
             >
               <PlusIcon className="w-4 h-4" />새 가계도
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/me')}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
+            >
+              <UserCircleIcon className="w-4 h-4" />내 정보
             </Button>
             <Button
               variant="secondary"

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Button, FormField, Input } from '@repo/ui';
+import { Button, DatePicker, FormField, Input } from '@repo/ui';
 import { updateMe, type Gender } from './api/users';
 import { useAuth } from './AuthContext';
 import PageHeader from './PageHeader';
@@ -108,7 +108,7 @@ export default function ProfilePage({ backTo = '/' }: ProfilePageProps) {
                   <button
                     key={value}
                     type="button"
-                    className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                    className={`cursor-pointer flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
                       gender === value
                         ? 'border-blue-300 bg-blue-50 text-blue-700'
                         : 'border-slate-200 bg-white text-slate-600'
@@ -121,11 +121,7 @@ export default function ProfilePage({ backTo = '/' }: ProfilePageProps) {
               </div>
             </FormField>
             <FormField label="생년월일">
-              <Input
-                type="date"
-                value={birthDate}
-                onChange={(event) => setBirthDate(event.target.value)}
-              />
+              <DatePicker value={birthDate} onChange={setBirthDate} placeholder="생년월일" />
             </FormField>
             <FormField label="기존 비밀번호">
               <Input
