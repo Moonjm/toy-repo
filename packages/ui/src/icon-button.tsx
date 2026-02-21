@@ -3,9 +3,9 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './utils';
 
-export const buttonVariants = cva(
+export const iconButtonVariants = cva(
   [
-    'inline-flex items-center justify-center font-semibold transition',
+    'inline-flex items-center justify-center transition',
     'cursor-pointer select-none',
     'rounded-[var(--btn-radius)]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
@@ -21,31 +21,31 @@ export const buttonVariants = cva(
         danger: 'bg-red-600 text-white hover:bg-red-700',
       },
       size: {
-        sm: 'h-8 px-3 text-xs gap-1',
-        md: 'h-9 px-4 text-sm gap-1.5',
-        lg: 'h-11 px-5 text-base gap-2',
+        sm: 'h-7 w-7 [&>svg]:h-3.5 [&>svg]:w-3.5',
+        md: 'h-9 w-9 [&>svg]:h-4 [&>svg]:w-4',
+        lg: 'h-11 w-11 [&>svg]:h-5 [&>svg]:w-5',
       },
     },
     defaultVariants: {
-      variant: 'primary',
+      variant: 'ghost',
       size: 'md',
     },
   }
 );
 
-export type ButtonProps = React.ComponentPropsWithoutRef<'button'> &
-  VariantProps<typeof buttonVariants> & {
+export type IconButtonProps = React.ComponentPropsWithoutRef<'button'> &
+  VariantProps<typeof iconButtonVariants> & {
     asChild?: boolean;
   };
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ asChild, className, variant, size, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
 
     return (
-      <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+      <Comp ref={ref} className={cn(iconButtonVariants({ variant, size }), className)} {...props} />
     );
   }
 );
 
-Button.displayName = 'Button';
+IconButton.displayName = 'IconButton';
