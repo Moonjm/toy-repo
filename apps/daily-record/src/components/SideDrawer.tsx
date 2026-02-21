@@ -33,11 +33,11 @@ export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDra
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <span className="text-base font-semibold text-slate-800">메뉴</span>
           <IconButton
-            variant="ghost"
+            variant="none"
             size="md"
             onClick={onClose}
             style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-            className="text-slate-500"
+            className="hover:bg-slate-100 text-slate-500"
           >
             <XMarkIcon />
           </IconButton>
@@ -69,10 +69,10 @@ export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDra
             onConfirm={onLogout}
             trigger={
               <Button
-                variant="ghost"
+                variant="none"
                 size="md"
                 type="button"
-                className="w-full justify-start text-slate-500 hover:text-slate-700"
+                className="w-full justify-start hover:bg-slate-100 text-slate-500 hover:text-slate-700"
               >
                 <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
                 로그아웃

@@ -178,9 +178,9 @@ export default function PairPage() {
                 onConfirm={handleUnpair}
                 trigger={
                   <Button
-                    variant="secondary"
+                    variant="none"
                     size="lg"
-                    className="w-full border border-red-200 text-red-600"
+                    className="w-full bg-slate-100 hover:bg-slate-200 border border-red-200 text-red-600"
                     disabled={busy}
                     type="button"
                   >
@@ -203,9 +203,9 @@ export default function PairPage() {
               </span>
             </div>
             <Button
-              variant="secondary"
+              variant="none"
               size="lg"
-              className="w-full border border-slate-200 text-slate-700"
+              className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700"
               onClick={() => handleCopy(inviteCode)}
               type="button"
             >
@@ -221,9 +221,9 @@ export default function PairPage() {
                 onConfirm={handleUnpair}
                 trigger={
                   <Button
-                    variant="secondary"
+                    variant="none"
                     size="lg"
-                    className="w-full border border-slate-200 text-slate-600"
+                    className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600"
                     disabled={busy}
                     type="button"
                   >

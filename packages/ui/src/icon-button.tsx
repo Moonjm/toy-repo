@@ -19,6 +19,7 @@ export const iconButtonVariants = cva(
         secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
         ghost: 'text-slate-900 hover:bg-slate-100',
         danger: 'bg-red-600 text-white hover:bg-red-700',
+        none: '',
       },
       size: {
         xs: 'h-6 w-6 [&>svg]:h-3 [&>svg]:w-3',

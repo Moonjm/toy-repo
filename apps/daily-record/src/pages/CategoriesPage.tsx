@@ -102,14 +102,14 @@ function SortableItem({
             {item.isActive ? 'ACTIVE' : 'INACTIVE'}
           </span>
           <IconButton
-            variant="secondary"
+            variant="none"
             size="sm"
             onClick={onEditStart}
             type="button"
             aria-label="편집"
             title="편집"
             style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-            className="text-slate-600"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-600"
           >
             <PencilSquareIcon />
           </IconButton>
@@ -121,14 +121,14 @@ function SortableItem({
             onConfirm={onDelete}
             trigger={
               <IconButton
-                variant="secondary"
+                variant="none"
                 size="sm"
                 disabled={busy}
                 type="button"
                 aria-label="삭제"
                 title="삭제"
                 style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-                className="border border-red-200 text-red-600 hover:border-red-300"
+                className="bg-slate-100 hover:bg-slate-200 border border-red-200 text-red-600 hover:border-red-300"
               >
                 <TrashIcon />
               </IconButton>
@@ -179,9 +179,9 @@ function SortableItem({
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
                 <Button
                   type="button"
-                  variant={editForm.isActive ? 'primary' : 'secondary'}
+                  variant={editForm.isActive ? 'none' : 'secondary'}
                   size="sm"
-                  className={`flex-1 ${editForm.isActive ? 'bg-emerald-500 hover:bg-emerald-500' : ''}`}
+                  className={`flex-1 ${editForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''}`}
                   onClick={() =>
                     setEditForm((prev) => ({
                       ...prev,
@@ -415,9 +415,9 @@ export default function CategoriesPage() {
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
                     <Button
                       type="button"
-                      variant={createForm.isActive ? 'primary' : 'secondary'}
+                      variant={createForm.isActive ? 'none' : 'secondary'}
                       size="md"
-                      className={`flex-1 ${createForm.isActive ? 'bg-emerald-500 hover:bg-emerald-500' : ''}`}
+                      className={`flex-1 ${createForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''}`}
                       onClick={() =>
                         setCreateForm((prev) => ({
                           ...prev,

@@ -29,7 +29,7 @@ export default function OvereatSelector({
           return (
             <Button
               key={level}
-              variant="secondary"
+              variant="none"
               size="xs"
               type="button"
               style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}

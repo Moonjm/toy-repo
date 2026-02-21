@@ -25,11 +25,11 @@ export default function CalendarHeader({
     <header className="flex flex-shrink-0 items-center justify-between px-4 py-3">
       <div className="flex items-center gap-2">
         <IconButton
-          variant="ghost"
+          variant="none"
           size="md"
           onClick={onOpenDrawer}
           style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
-          className="text-slate-700 [&>svg]:h-6 [&>svg]:w-6"
+          className="hover:bg-slate-100 text-slate-700 [&>svg]:h-6 [&>svg]:w-6"
         >
           <Bars3Icon />
         </IconButton>
