@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, ConfirmDialog, FormField, Input } from '@repo/ui';
+import { Button, IconButton, ConfirmDialog, FormField, Input } from '@repo/ui';
 import { Bars3Icon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
@@ -101,16 +101,18 @@ function SortableItem({
           >
             {item.isActive ? 'ACTIVE' : 'INACTIVE'}
           </span>
-          <Button
+          <IconButton
             variant="secondary"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600"
+            size="sm"
             onClick={onEditStart}
             type="button"
             aria-label="편집"
             title="편집"
+            style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+            className="text-slate-600"
           >
-            <PencilSquareIcon className="h-4 w-4" />
-          </Button>
+            <PencilSquareIcon />
+          </IconButton>
           <ConfirmDialog
             title="카테고리 삭제"
             description={`${item.name}을(를) 삭제할까요?`}
@@ -118,16 +120,18 @@ function SortableItem({
             cancelLabel="취소"
             onConfirm={onDelete}
             trigger={
-              <Button
+              <IconButton
                 variant="secondary"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:border-red-300"
+                size="sm"
                 disabled={busy}
                 type="button"
                 aria-label="삭제"
                 title="삭제"
+                style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+                className="border border-red-200 text-red-600 hover:border-red-300"
               >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+                <TrashIcon />
+              </IconButton>
             }
           />
         </div>
@@ -176,9 +180,8 @@ function SortableItem({
                 <Button
                   type="button"
                   variant={editForm.isActive ? 'primary' : 'secondary'}
-                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                    editForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''
-                  }`}
+                  size="sm"
+                  className={`flex-1 ${editForm.isActive ? 'bg-emerald-500 hover:bg-emerald-500' : ''}`}
                   onClick={() =>
                     setEditForm((prev) => ({
                       ...prev,
@@ -191,9 +194,8 @@ function SortableItem({
                 <Button
                   type="button"
                   variant={!editForm.isActive ? 'primary' : 'secondary'}
-                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
-                    !editForm.isActive ? 'bg-slate-900 text-white hover:bg-slate-900' : ''
-                  }`}
+                  size="sm"
+                  className={`flex-1 ${!editForm.isActive ? 'bg-slate-900 hover:bg-slate-900' : ''}`}
                   onClick={() =>
                     setEditForm((prev) => ({
                       ...prev,
@@ -207,17 +209,12 @@ function SortableItem({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm"
-              onClick={onEditSave}
-              disabled={busy}
-              type="button"
-            >
+            <Button variant="primary" size="md" onClick={onEditSave} disabled={busy} type="button">
               저장
             </Button>
             <Button
               variant="secondary"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600"
+              size="md"
               onClick={onEditCancel}
               disabled={busy}
               type="button"
@@ -419,9 +416,8 @@ export default function CategoriesPage() {
                     <Button
                       type="button"
                       variant={createForm.isActive ? 'primary' : 'secondary'}
-                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold ${
-                        createForm.isActive ? 'bg-emerald-500 text-white hover:bg-emerald-500' : ''
-                      }`}
+                      size="md"
+                      className={`flex-1 ${createForm.isActive ? 'bg-emerald-500 hover:bg-emerald-500' : ''}`}
                       onClick={() =>
                         setCreateForm((prev) => ({
                           ...prev,
@@ -434,9 +430,8 @@ export default function CategoriesPage() {
                     <Button
                       type="button"
                       variant={!createForm.isActive ? 'primary' : 'secondary'}
-                      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold ${
-                        !createForm.isActive ? 'bg-slate-900 text-white hover:bg-slate-900' : ''
-                      }`}
+                      size="md"
+                      className={`flex-1 ${!createForm.isActive ? 'bg-slate-900 hover:bg-slate-900' : ''}`}
                       onClick={() =>
                         setCreateForm((prev) => ({
                           ...prev,
@@ -450,7 +445,9 @@ export default function CategoriesPage() {
                 </FormField>
               </div>
               <Button
-                className="mt-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:translate-y-[-1px]"
+                variant="accent"
+                size="lg"
+                className="mt-2 bg-gradient-to-r from-orange-500 to-amber-400 shadow-lg shadow-orange-200 hover:translate-y-[-1px]"
                 type="submit"
                 disabled={createMutation.isPending}
               >

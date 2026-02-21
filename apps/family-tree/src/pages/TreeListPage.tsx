@@ -10,7 +10,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@repo/auth';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, IconButton, ConfirmDialog } from '@repo/ui';
 import {
   fetchFamilyTrees,
   createFamilyTree,
@@ -70,33 +70,21 @@ export default function TreeListPage() {
           <h1 className="text-2xl font-bold text-slate-800">가계도</h1>
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/admin/users')}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
-              >
+              <Button variant="secondary" size="md" onClick={() => navigate('/admin/users')}>
                 <UsersIcon className="w-4 h-4" />
                 사용자 관리
               </Button>
             )}
-            <Button
-              variant="accent"
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
-            >
+            <Button variant="accent" size="md" onClick={() => setShowCreate(true)}>
               <PlusIcon className="w-4 h-4" />새 가계도
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/me')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
-            >
+            <Button variant="secondary" size="md" onClick={() => navigate('/me')}>
               <UserCircleIcon className="w-4 h-4" />내 정보
             </Button>
             <Button
               variant="secondary"
+              size="md"
               onClick={() => logout().then(() => queryClient.clear())}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm"
             >
               <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
               로그아웃
@@ -130,8 +118,9 @@ export default function TreeListPage() {
               </div>
               {tree.myRole === 'OWNER' && (
                 <div className="flex items-center gap-1">
-                  <Button
+                  <IconButton
                     variant="ghost"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditTarget({
@@ -140,10 +129,10 @@ export default function TreeListPage() {
                         description: tree.description ?? '',
                       });
                     }}
-                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-400 hover:text-slate-600"
                   >
-                    <PencilSquareIcon className="w-4 h-4" />
-                  </Button>
+                    <PencilSquareIcon />
+                  </IconButton>
                   <ConfirmDialog
                     title="가계도 삭제"
                     description={`"${tree.name}" 가계도를 삭제하시겠습니까?`}
@@ -151,13 +140,14 @@ export default function TreeListPage() {
                     cancelLabel="취소"
                     onConfirm={() => deleteMutation.mutate(tree.id)}
                     trigger={
-                      <Button
+                      <IconButton
                         variant="ghost"
+                        size="sm"
                         onClick={(e) => e.stopPropagation()}
-                        className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                        className="hover:bg-red-50 text-slate-400 hover:text-red-500"
                       >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
+                        <TrashIcon />
+                      </IconButton>
                     }
                   />
                 </div>

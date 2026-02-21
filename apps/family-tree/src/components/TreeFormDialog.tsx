@@ -51,19 +51,15 @@ export default function TreeFormDialog({
           />
         </FormField>
         <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg text-sm"
-          >
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} className="flex-1">
             취소
           </Button>
           <Button
             type="submit"
             variant="accent"
+            size="lg"
             disabled={!name.trim() || isPending}
-            className="flex-1 py-2.5 rounded-lg text-sm"
+            className="flex-1"
           >
             {isPending ? pendingLabel : submitLabel}
           </Button>

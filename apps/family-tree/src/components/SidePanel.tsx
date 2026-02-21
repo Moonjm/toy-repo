@@ -8,7 +8,7 @@ import {
 import type { Person, FamilyTreeDetail } from '../types';
 import { getPersonRelations } from '../hooks/usePersonMutations';
 import { useSidePanelDialogs } from '../hooks/useSidePanelDialogs';
-import { Button, ConfirmDialog } from '@repo/ui';
+import { Button, IconButton, ConfirmDialog } from '@repo/ui';
 
 type Props = {
   person: Person;
@@ -26,9 +26,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
       <div className="relative z-20 w-80 bg-white border-l border-slate-200 h-full overflow-y-auto p-5 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg text-slate-800">인물 정보</h3>
-          <Button variant="ghost" onClick={onClose} className="p-1 rounded-lg">
-            <XMarkIcon className="w-5 h-5 text-slate-400" />
-          </Button>
+          <IconButton variant="ghost" size="md" onClick={onClose} className="text-slate-400">
+            <XMarkIcon />
+          </IconButton>
         </div>
 
         {/* Profile */}
@@ -109,8 +109,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
           <div className="space-y-2">
             <Button
               variant="ghost"
+              size="md"
               onClick={actions.openAddParent}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+              className="w-full border border-slate-200 text-slate-700"
             >
               <UserPlusIcon className="w-4 h-4" />
               부모 추가
@@ -118,8 +119,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             {!spouse && (
               <Button
                 variant="ghost"
+                size="md"
                 onClick={actions.openAddSpouse}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+                className="w-full border border-slate-200 text-slate-700"
               >
                 <HeartIcon className="w-4 h-4" />
                 배우자 추가
@@ -127,8 +129,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             )}
             <Button
               variant="ghost"
+              size="md"
               onClick={actions.openAddChild}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+              className="w-full border border-slate-200 text-slate-700"
             >
               <UserPlusIcon className="w-4 h-4" />
               자녀 추가
@@ -136,8 +139,9 @@ export default function SidePanel({ person, tree, onClose }: Props) {
             <hr className="my-2" />
             <Button
               variant="ghost"
+              size="md"
               onClick={actions.openEdit}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-slate-700 border border-slate-200"
+              className="w-full border border-slate-200 text-slate-700"
             >
               <PencilSquareIcon className="w-4 h-4" />
               수정
@@ -151,7 +155,8 @@ export default function SidePanel({ person, tree, onClose }: Props) {
               trigger={
                 <Button
                   variant="ghost"
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200"
+                  size="md"
+                  className="w-full hover:bg-red-50 text-red-600 border border-red-200"
                 >
                   <TrashIcon className="w-4 h-4" />
                   삭제
