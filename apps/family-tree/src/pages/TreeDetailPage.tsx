@@ -79,10 +79,10 @@ export default function TreeDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 shadow-sm">
         <IconButton
-          variant="ghost"
+          variant="none"
           size="md"
           onClick={() => navigate('/trees')}
-          className="text-slate-500"
+          className="hover:bg-slate-100 text-slate-500"
         >
           <ArrowLeftIcon />
         </IconButton>
@@ -92,10 +92,10 @@ export default function TreeDetailPage() {
         </div>
         {tree.myRole === 'OWNER' && (
           <IconButton
-            variant="ghost"
+            variant="none"
             size="md"
             onClick={() => setShowShare(true)}
-            className="text-slate-500"
+            className="hover:bg-slate-100 text-slate-500"
           >
             <ShareIcon />
           </IconButton>

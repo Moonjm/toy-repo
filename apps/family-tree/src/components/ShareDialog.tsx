@@ -166,9 +166,9 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
                       <option value="VIEWER">뷰어</option>
                     </Select>
                     <IconButton
-                      variant="ghost"
+                      variant="none"
                       size="sm"
-                      className="text-slate-400 hover:text-rose-500"
+                      className="hover:bg-slate-100 text-slate-400 hover:text-rose-500"
                       onClick={() => removeMut.mutate(member.id)}
                     >
                       <TrashIcon />

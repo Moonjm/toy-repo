@@ -26,7 +26,12 @@ export default function SidePanel({ person, tree, onClose }: Props) {
       <div className="relative z-20 w-80 bg-white border-l border-slate-200 h-full overflow-y-auto p-5 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg text-slate-800">인물 정보</h3>
-          <IconButton variant="ghost" size="md" onClick={onClose} className="text-slate-400">
+          <IconButton
+            variant="none"
+            size="md"
+            onClick={onClose}
+            className="hover:bg-slate-100 text-slate-400"
+          >
             <XMarkIcon />
           </IconButton>
         </div>
@@ -108,40 +113,40 @@ export default function SidePanel({ person, tree, onClose }: Props) {
         {canEdit && (
           <div className="space-y-2">
             <Button
-              variant="ghost"
+              variant="none"
               size="md"
               onClick={actions.openAddParent}
-              className="w-full border border-slate-200 text-slate-700"
+              className="w-full hover:bg-slate-100 border border-slate-200 text-slate-700"
             >
               <UserPlusIcon className="w-4 h-4" />
               부모 추가
             </Button>
             {!spouse && (
               <Button
-                variant="ghost"
+                variant="none"
                 size="md"
                 onClick={actions.openAddSpouse}
-                className="w-full border border-slate-200 text-slate-700"
+                className="w-full hover:bg-slate-100 border border-slate-200 text-slate-700"
               >
                 <HeartIcon className="w-4 h-4" />
                 배우자 추가
               </Button>
             )}
             <Button
-              variant="ghost"
+              variant="none"
               size="md"
               onClick={actions.openAddChild}
-              className="w-full border border-slate-200 text-slate-700"
+              className="w-full hover:bg-slate-100 border border-slate-200 text-slate-700"
             >
               <UserPlusIcon className="w-4 h-4" />
               자녀 추가
             </Button>
             <hr className="my-2" />
             <Button
-              variant="ghost"
+              variant="none"
               size="md"
               onClick={actions.openEdit}
-              className="w-full border border-slate-200 text-slate-700"
+              className="w-full hover:bg-slate-100 border border-slate-200 text-slate-700"
             >
               <PencilSquareIcon className="w-4 h-4" />
               수정
@@ -154,7 +159,7 @@ export default function SidePanel({ person, tree, onClose }: Props) {
               onConfirm={() => actions.deleteMutation.mutate()}
               trigger={
                 <Button
-                  variant="ghost"
+                  variant="none"
                   size="md"
                   className="w-full hover:bg-red-50 text-red-600 border border-red-200"
                 >

@@ -166,7 +166,7 @@ export default function PairEventsPage() {
                     onConfirm={() => handleDelete(event.id)}
                     trigger={
                       <IconButton
-                        variant="secondary"
+                        variant="none"
                         size="sm"
                         disabled={deleteMutation.isPending && deleteMutation.variables === event.id}
                         type="button"

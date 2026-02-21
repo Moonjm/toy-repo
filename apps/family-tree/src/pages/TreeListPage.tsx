@@ -119,7 +119,7 @@ export default function TreeListPage() {
               {tree.myRole === 'OWNER' && (
                 <div className="flex items-center gap-1">
                   <IconButton
-                    variant="ghost"
+                    variant="none"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -129,7 +129,7 @@ export default function TreeListPage() {
                         description: tree.description ?? '',
                       });
                     }}
-                    className="text-slate-400 hover:text-slate-600"
+                    className="hover:bg-slate-100 text-slate-400 hover:text-slate-600"
                   >
                     <PencilSquareIcon />
                   </IconButton>
@@ -141,7 +141,7 @@ export default function TreeListPage() {
                     onConfirm={() => deleteMutation.mutate(tree.id)}
                     trigger={
                       <IconButton
-                        variant="ghost"
+                        variant="none"
                         size="sm"
                         onClick={(e) => e.stopPropagation()}
                         className="hover:bg-red-50 text-slate-400 hover:text-red-500"

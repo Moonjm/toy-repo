@@ -1,5 +1,5 @@
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { IconButton } from '@repo/ui';
+import { IconButton, ConfirmDialog } from '@repo/ui';
 import type { DailyRecord } from '../../api/dailyRecords';
 
 type RecordListProps = {
@@ -45,20 +45,26 @@ export default function RecordList({
                 {record.memo && <span className="text-slate-500">{record.memo}</span>}
                 <span className="flex-1" />
                 {isMine && (
-                  <IconButton
-                    variant="ghost"
-                    size="xs"
-                    className="flex-shrink-0 border border-red-200 bg-white text-red-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(record.id);
-                    }}
-                    disabled={busy}
-                    type="button"
-                    aria-label="삭제"
-                  >
-                    <TrashIcon />
-                  </IconButton>
+                  <ConfirmDialog
+                    title="기록 삭제"
+                    description={`"${record.category.name}" 기록을 삭제하시겠어요?`}
+                    confirmLabel="삭제"
+                    cancelLabel="취소"
+                    onConfirm={() => onDelete(record.id)}
+                    trigger={
+                      <IconButton
+                        variant="none"
+                        size="xs"
+                        className="flex-shrink-0 border border-red-200 bg-white text-red-500"
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={busy}
+                        type="button"
+                        aria-label="삭제"
+                      >
+                        <TrashIcon />
+                      </IconButton>
+                    }
+                  />
                 )}
               </div>
             );
@@ -78,20 +84,26 @@ export default function RecordList({
           <span className="text-slate-800">{record.category.name}</span>
           {record.memo && <span className="text-slate-500">{record.memo}</span>}
           <span className="flex-1" />
-          <IconButton
-            variant="ghost"
-            size="xs"
-            className="flex-shrink-0 border border-red-200 bg-white text-red-500"
-            onClick={async (e) => {
-              e.stopPropagation();
-              await onDelete(record.id);
-            }}
-            disabled={busy}
-            type="button"
-            aria-label="삭제"
-          >
-            <TrashIcon />
-          </IconButton>
+          <ConfirmDialog
+            title="기록 삭제"
+            description={`"${record.category.name}" 기록을 삭제하시겠어요?`}
+            confirmLabel="삭제"
+            cancelLabel="취소"
+            onConfirm={() => onDelete(record.id)}
+            trigger={
+              <IconButton
+                variant="none"
+                size="xs"
+                className="flex-shrink-0 border border-red-200 bg-white text-red-500"
+                onClick={(e) => e.stopPropagation()}
+                disabled={busy}
+                type="button"
+                aria-label="삭제"
+              >
+                <TrashIcon />
+              </IconButton>
+            }
+          />
         </div>
       ))}
       {isPaired && partnerNormal.length > 0 && (

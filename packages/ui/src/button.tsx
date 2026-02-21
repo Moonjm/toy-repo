@@ -19,6 +19,7 @@ export const buttonVariants = cva(
         secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
         ghost: 'text-slate-900 hover:bg-slate-100',
         danger: 'bg-red-600 text-white hover:bg-red-700',
+        none: '',
       },
       size: {
         xs: 'h-7 px-2 text-xs gap-0.5',
