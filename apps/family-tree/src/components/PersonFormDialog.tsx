@@ -122,10 +122,10 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
               <span className="text-xs text-slate-500 flex-1">기존 사진</span>
               <Button
                 type="button"
-                variant="ghost"
+                variant="none"
                 size="sm"
                 onClick={() => setProfileImageId(null)}
-                className="text-rose-500 hover:text-rose-600"
+                className="hover:bg-slate-100 text-rose-500 hover:text-rose-600"
               >
                 삭제
               </Button>
