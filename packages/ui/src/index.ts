@@ -1,5 +1,8 @@
-export { Button } from './button';
+export { Button, buttonVariants } from './button';
 export type { ButtonProps } from './button';
+
+export { IconButton, iconButtonVariants } from './icon-button';
+export type { IconButtonProps } from './icon-button';
 
 export { DatePicker } from './date-picker';
 export type { DatePickerProps } from './date-picker';
