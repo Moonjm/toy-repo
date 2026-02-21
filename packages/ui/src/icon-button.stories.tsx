@@ -14,15 +14,20 @@ const meta: Meta<typeof IconButton> = {
     children: <PlusIcon />,
     variant: 'ghost',
     size: 'md',
+    radius: 'lg',
   },
   argTypes: {
     variant: {
       control: 'radio',
-      options: ['primary', 'accent', 'secondary', 'ghost', 'danger'],
+      options: ['primary', 'accent', 'secondary', 'ghost', 'danger', 'none'],
     },
     size: {
       control: 'radio',
       options: ['xs', 'sm', 'md', 'lg'],
+    },
+    radius: {
+      control: 'radio',
+      options: ['sm', 'md', 'lg', 'xl', 'full'],
     },
   },
 };
@@ -51,6 +56,10 @@ export const Small: Story = {
 
 export const Large: Story = {
   args: { size: 'lg' },
+};
+
+export const FullRadius: Story = {
+  args: { radius: 'full' },
 };
 
 export const AllVariants: Story = {

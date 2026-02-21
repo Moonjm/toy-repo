@@ -7,7 +7,6 @@ export const iconButtonVariants = cva(
   [
     'inline-flex items-center justify-center transition',
     'cursor-pointer select-none',
-    'rounded-[var(--btn-radius)]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
     'disabled:pointer-events-none disabled:opacity-50',
   ],
@@ -22,15 +21,23 @@ export const iconButtonVariants = cva(
         none: '',
       },
       size: {
-        xs: 'h-6 w-6 [&>svg]:h-3 [&>svg]:w-3',
-        sm: 'h-7 w-7 [&>svg]:h-3.5 [&>svg]:w-3.5',
-        md: 'h-9 w-9 [&>svg]:h-4 [&>svg]:w-4',
-        lg: 'h-11 w-11 [&>svg]:h-5 [&>svg]:w-5',
+        xs: 'h-6 w-6 [&>svg]:h-3.5 [&>svg]:w-3.5',
+        sm: 'h-7 w-7 [&>svg]:h-4 [&>svg]:w-4',
+        md: 'h-9 w-9 [&>svg]:h-5 [&>svg]:w-5',
+        lg: 'h-11 w-11 [&>svg]:h-6 [&>svg]:w-6',
+      },
+      radius: {
+        sm: 'rounded-sm',
+        md: 'rounded-md',
+        lg: 'rounded-lg',
+        xl: 'rounded-xl',
+        full: 'rounded-full',
       },
     },
     defaultVariants: {
       variant: 'ghost',
       size: 'md',
+      radius: 'lg',
     },
   }
 );
@@ -41,11 +48,15 @@ export type IconButtonProps = React.ComponentPropsWithoutRef<'button'> &
   };
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ asChild, className, variant, size, ...props }, ref) => {
+  ({ asChild, className, variant, size, radius, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
 
     return (
-      <Comp ref={ref} className={cn(iconButtonVariants({ variant, size }), className)} {...props} />
+      <Comp
+        ref={ref}
+        className={cn(iconButtonVariants({ variant, size, radius }), className)}
+        {...props}
+      />
     );
   }
 );

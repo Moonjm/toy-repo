@@ -8,15 +8,20 @@ const meta: Meta<typeof Button> = {
     children: 'Click me',
     variant: 'primary',
     size: 'md',
+    radius: 'lg',
   },
   argTypes: {
     variant: {
       control: 'radio',
-      options: ['primary', 'accent', 'secondary', 'ghost', 'danger'],
+      options: ['primary', 'accent', 'secondary', 'ghost', 'danger', 'none'],
     },
     size: {
       control: 'radio',
       options: ['xs', 'sm', 'md', 'lg'],
+    },
+    radius: {
+      control: 'radio',
+      options: ['sm', 'md', 'lg', 'xl', 'full'],
     },
   },
 };
@@ -51,15 +56,8 @@ export const Large: Story = {
   args: { size: 'lg' },
 };
 
-export const CustomRadius: Story = {
-  args: { children: 'Pill Button' },
-  decorators: [
-    (Story) => (
-      <div style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}>
-        <Story />
-      </div>
-    ),
-  ],
+export const Pill: Story = {
+  args: { children: 'Pill Button', radius: 'full' },
 };
 
 export const AllVariants: Story = {
@@ -81,6 +79,18 @@ export const AllSizes: Story = {
       <Button size="sm">Small</Button>
       <Button size="md">Medium</Button>
       <Button size="lg">Large</Button>
+    </div>
+  ),
+};
+
+export const AllRadii: Story = {
+  render: () => (
+    <div className="flex items-center gap-3">
+      <Button radius="sm">sm</Button>
+      <Button radius="md">md</Button>
+      <Button radius="lg">lg</Button>
+      <Button radius="xl">xl</Button>
+      <Button radius="full">full</Button>
     </div>
   ),
 };

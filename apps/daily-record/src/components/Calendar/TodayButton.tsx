@@ -14,7 +14,7 @@ export default function TodayButton({ visibleMonth, onGoToday }: TodayButtonProp
       size="md"
       type="button"
       onClick={onGoToday}
-      style={{ '--btn-radius': 'var(--radius-full)' } as React.CSSProperties}
+      radius="full"
       className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 border border-slate-200 bg-white text-slate-700 shadow-md active:bg-slate-50"
     >
       &lsaquo; 오늘
