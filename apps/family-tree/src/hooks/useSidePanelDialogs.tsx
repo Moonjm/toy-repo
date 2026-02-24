@@ -1,7 +1,8 @@
 import { type ReactNode, useState } from 'react';
 import { Button, Modal } from '@repo/ui';
 import type { Person, FamilyTreeDetail } from '../types';
-import { usePersonMutations, getPersonRelations } from './usePersonMutations';
+import { usePersonMutations } from './usePersonMutations';
+import { getPersonRelations } from './personRelations';
 import PersonFormDialog from '../components/PersonFormDialog';
 
 type DialogMode =

@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Person } from '../types';
+import { PERSON_WIDTH } from '../hooks/useTreeLayout';
 
 type PersonNodeData = { person: Person };
 
@@ -12,8 +13,9 @@ export default function PersonNode({ data }: NodeProps) {
     <>
       <Handle type="target" position={Position.Top} className="!bg-slate-400 !w-2 !h-2" />
       <div
+        style={{ width: PERSON_WIDTH }}
         className={`
-          px-4 py-3 rounded-xl shadow-md bg-white border-2 w-[200px] text-center
+          px-4 py-3 rounded-xl shadow-md bg-white border-2 text-center
           transition-colors cursor-pointer hover:shadow-lg
           ${isMale ? 'border-blue-400' : isFemale ? 'border-pink-400' : 'border-slate-300'}
         `}
