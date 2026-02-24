@@ -6,7 +6,7 @@ import {
   HeartIcon,
 } from '@heroicons/react/24/outline';
 import type { Person, FamilyTreeDetail } from '../types';
-import { getPersonRelations } from '../hooks/usePersonMutations';
+import { getPersonRelations } from '../hooks/personRelations';
 import { useSidePanelDialogs } from '../hooks/useSidePanelDialogs';
 import { Button, IconButton, ConfirmDialog } from '@repo/ui';
 

@@ -3,11 +3,13 @@ import dagre from '@dagrejs/dagre';
 import type { Node, Edge } from '@xyflow/react';
 import type { Person, Spouse, ParentChild } from '../types';
 
-const PERSON_WIDTH = 200;
+export const PERSON_WIDTH = 200;
 const PERSON_HEIGHT = 80;
 const COUPLE_SIZE = 16;
 const COUPLE_GAP = 40;
 const COUPLE_BLOCK_WIDTH = PERSON_WIDTH * 2 + COUPLE_GAP + COUPLE_SIZE;
+const NODE_SEP = 80;
+const RANK_SEP = 120;
 
 function compareBirthDate(
   a: { birthDate?: string | null; fallback: string | number },
@@ -31,9 +33,7 @@ type TreeContext = {
   personMap: Map<number, Person>;
   spouseOf: Map<number, number>;
   coupleIds: Map<string, { minId: number; maxId: number }>;
-  inCouple: Set<number>;
   childParents: Map<number, number[]>;
-  spouseLookup: Map<number, Set<number>>;
 };
 
 function buildLookups(
@@ -53,27 +53,13 @@ function buildLookups(
     coupleIds.set(`couple:${minId}:${maxId}`, { minId, maxId });
   }
 
-  const inCouple = new Set<number>();
-  for (const s of spouses) {
-    inCouple.add(s.personAId);
-    inCouple.add(s.personBId);
-  }
-
   const childParents = new Map<number, number[]>();
   for (const pc of parentChild) {
     if (!childParents.has(pc.childId)) childParents.set(pc.childId, []);
     childParents.get(pc.childId)!.push(pc.parentId);
   }
 
-  const spouseLookup = new Map<number, Set<number>>();
-  for (const s of spouses) {
-    if (!spouseLookup.has(s.personAId)) spouseLookup.set(s.personAId, new Set());
-    if (!spouseLookup.has(s.personBId)) spouseLookup.set(s.personBId, new Set());
-    spouseLookup.get(s.personAId)!.add(s.personBId);
-    spouseLookup.get(s.personBId)!.add(s.personAId);
-  }
-
-  return { personMap, spouseOf, coupleIds, inCouple, childParents, spouseLookup };
+  return { personMap, spouseOf, coupleIds, childParents };
 }
 
 function dagreNodeId(personId: number, spouseOf: Map<number, number>): string {
@@ -94,7 +80,7 @@ function buildDagreGraph(
 ): { graph: dagre.graphlib.Graph; addedEdges: Set<string> } {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 120 });
+  g.setGraph({ rankdir: 'TB', nodesep: NODE_SEP, ranksep: RANK_SEP });
 
   // Add couple blocks as wide nodes
   const processedCouples = new Set<string>();
@@ -109,7 +95,7 @@ function buildDagreGraph(
 
   // Add standalone person nodes (not in any couple)
   for (const p of persons) {
-    if (!ctx.inCouple.has(p.id)) {
+    if (!ctx.spouseOf.has(p.id)) {
       g.setNode(`person:${p.id}`, { width: PERSON_WIDTH, height: PERSON_HEIGHT });
     }
   }
@@ -130,7 +116,7 @@ function buildDagreGraph(
     let sourceId: string;
     if (parents.length === 2) {
       const [p1, p2] = parents;
-      if (ctx.spouseLookup.get(p1)?.has(p2)) {
+      if (ctx.spouseOf.get(p1) === p2) {
         const minId = Math.min(p1, p2);
         const maxId = Math.max(p1, p2);
         sourceId = `couple:${minId}:${maxId}`;
@@ -196,16 +182,15 @@ function correctSiblingOrder(
     const groupCenter =
       children.reduce((sum, id) => sum + (graph.node(id)?.x ?? 0), 0) / children.length;
 
-    const nodesep = 80;
     const totalWidth =
-      childInfo.reduce((sum, c) => sum + c.width, 0) + (childInfo.length - 1) * nodesep;
+      childInfo.reduce((sum, c) => sum + c.width, 0) + (childInfo.length - 1) * NODE_SEP;
     let curX = groupCenter - totalWidth / 2;
 
     for (const child of childInfo) {
       const node = graph.node(child.nodeId);
       if (node) {
         node.x = curX + child.width / 2;
-        curX += child.width + nodesep;
+        curX += child.width + NODE_SEP;
       }
     }
   }
@@ -296,7 +281,7 @@ function buildFlowElements(
 
   // Add standalone person nodes
   for (const p of persons) {
-    if (ctx.inCouple.has(p.id)) continue;
+    if (ctx.spouseOf.has(p.id)) continue;
     const pos = graph.node(`person:${p.id}`);
     if (!pos) continue;
     flowNodes.push({
@@ -317,7 +302,7 @@ function buildFlowElements(
     let fromCouple = false;
     if (parents.length === 2) {
       const [p1, p2] = parents;
-      if (ctx.spouseLookup.get(p1)?.has(p2)) {
+      if (ctx.spouseOf.get(p1) === p2) {
         fromCouple = true;
       }
     }
