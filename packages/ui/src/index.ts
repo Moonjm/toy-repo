@@ -30,3 +30,7 @@ export type { FullPageLoaderProps } from './full-page-loader';
 
 export { Modal } from './modal';
 export type { ModalProps } from './modal';
+
+export { Toaster } from './toast';
+export { addToast, removeToast } from './toast-store';
+export type { Toast, ToastType } from './toast-store';

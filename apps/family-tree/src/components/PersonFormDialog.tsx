@@ -8,7 +8,9 @@ import {
   RadioGroup,
   Select,
   Textarea,
+  addToast,
 } from '@repo/ui';
+import { isApiError } from '@repo/api';
 import type { Person, PersonRequest, Gender, CalendarType } from '../types';
 import { uploadFile } from '../api/files';
 
@@ -42,6 +44,9 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
     try {
       const fileId = await uploadFile(file);
       setProfileImageId(fileId);
+    } catch (error) {
+      const message = isApiError(error) ? error.message : '파일 업로드에 실패했습니다';
+      addToast(message, 'error');
     } finally {
       setUploading(false);
     }
