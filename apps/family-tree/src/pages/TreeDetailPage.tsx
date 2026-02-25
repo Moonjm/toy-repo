@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftIcon, PlusIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { Button, IconButton, FullPageLoader } from '@repo/ui';
 import { fetchFamilyTree } from '../api/familyTrees';
@@ -11,7 +11,6 @@ import TreeFlow from '../components/TreeFlow';
 import SidePanel from '../components/SidePanel';
 import PersonFormDialog from '../components/PersonFormDialog';
 import ShareDialog from '../components/ShareDialog';
-import { useQueryClient } from '@tanstack/react-query';
 
 export default function TreeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,11 +55,13 @@ export default function TreeDetailPage() {
     }
   }, [tree, selectedPerson]);
 
-  const handleCreateInitial = async (personData: PersonRequest) => {
-    await createPerson(treeId, personData);
-    void queryClient.invalidateQueries({ queryKey: queryKeys.tree(treeId) });
-    setShowInitialForm(false);
-  };
+  const createInitialMutation = useMutation({
+    mutationFn: (personData: PersonRequest) => createPerson(treeId, personData),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tree(treeId) });
+      setShowInitialForm(false);
+    },
+  });
 
   if (isLoading) {
     return <FullPageLoader label="불러오는 중..." />;
@@ -136,7 +137,7 @@ export default function TreeDetailPage() {
       {canEdit && showInitialForm && (
         <PersonFormDialog
           title="첫 번째 인물 추가"
-          onSubmit={handleCreateInitial}
+          onSubmit={createInitialMutation.mutateAsync}
           onClose={() => setShowInitialForm(false)}
         />
       )}
