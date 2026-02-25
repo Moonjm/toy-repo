@@ -17,8 +17,9 @@ export default function RecordSheet({
 }: RecordSheetProps) {
   return (
     <>
-      <div
-        role="presentation"
+      <button
+        type="button"
+        aria-label="시트 닫기"
         className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
@@ -30,9 +31,10 @@ export default function RecordSheet({
         }`}
         style={{ maxHeight: '70dvh' }}
       >
-        <div
-          role="presentation"
-          className="flex-shrink-0 px-5 pt-5 cursor-grab active:cursor-grabbing"
+        <button
+          type="button"
+          aria-label="시트 닫기"
+          className="flex-shrink-0 px-5 pt-5 cursor-grab active:cursor-grabbing text-left w-full"
           onTouchStart={(e) => {
             e.stopPropagation();
             const startY = e.touches[0]?.clientY ?? 0;
@@ -58,7 +60,7 @@ export default function RecordSheet({
         >
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
           {header}
-        </div>
+        </button>
         <div ref={sheetScrollRef} className="grid gap-3 overflow-y-auto px-5 pb-5">
           {children}
         </div>
