@@ -18,6 +18,7 @@ export default function RecordSheet({
   return (
     <>
       <div
+        role="presentation"
         className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
@@ -30,6 +31,7 @@ export default function RecordSheet({
         style={{ maxHeight: '70dvh' }}
       >
         <div
+          role="presentation"
           className="flex-shrink-0 px-5 pt-5 cursor-grab active:cursor-grabbing"
           onTouchStart={(e) => {
             e.stopPropagation();

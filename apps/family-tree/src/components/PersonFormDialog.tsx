@@ -79,6 +79,7 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
     <Modal open onClose={onClose} title={title ?? (initial ? '인물 수정' : '인물 추가')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField label="이름" required>
+          {/* eslint-disable jsx-a11y/no-autofocus */}
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -86,6 +87,7 @@ export default function PersonFormDialog({ initial, onSubmit, onClose, title }: 
             required
             autoFocus
           />
+          {/* eslint-enable jsx-a11y/no-autofocus */}
         </FormField>
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-3">

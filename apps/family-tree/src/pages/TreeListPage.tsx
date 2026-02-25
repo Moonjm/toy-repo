@@ -104,8 +104,16 @@ export default function TreeListPage() {
           {trees.map((tree) => (
             <div
               key={tree.id}
+              role="button"
+              tabIndex={0}
               className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer flex items-center justify-between"
               onClick={() => navigate(`/trees/${tree.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/trees/${tree.id}`);
+                }
+              }}
             >
               <div>
                 <h2 className="font-semibold text-slate-800">{tree.name}</h2>
