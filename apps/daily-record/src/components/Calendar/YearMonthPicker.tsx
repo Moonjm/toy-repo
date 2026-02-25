@@ -79,7 +79,14 @@ export default function YearMonthPicker({
           })}
         </div>
       </div>
-      {open && <div role="presentation" className="absolute inset-0 z-20" onClick={onClose} />}
+      {open && (
+        <button
+          type="button"
+          aria-label="피커 닫기"
+          className="absolute inset-0 z-20"
+          onClick={onClose}
+        />
+      )}
     </>
   );
 }
