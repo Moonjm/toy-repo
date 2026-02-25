@@ -35,8 +35,8 @@ export default function PairPage() {
     if (pair?.status === 'PENDING' && !inviteCode && !fetchInviteMutation.isPending) {
       fetchInviteMutation.mutate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pair?.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchInviteMutation은 guard용
+  }, [pair?.status, inviteCode]);
 
   const createInviteMutation = useMutation({
     mutationFn: () => createInvite(),
