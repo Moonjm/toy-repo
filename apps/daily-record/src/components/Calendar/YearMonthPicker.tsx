@@ -79,7 +79,7 @@ export default function YearMonthPicker({
           })}
         </div>
       </div>
-      {open && <div className="absolute inset-0 z-20" onClick={onClose} />}
+      {open && <div role="presentation" className="absolute inset-0 z-20" onClick={onClose} />}
     </>
   );
 }

@@ -99,18 +99,29 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
       {/* Add member section */}
       <div className="flex items-end gap-2 mb-4">
         <div className="relative flex-1" ref={dropdownRef}>
-          <label className="block text-sm font-medium text-slate-700 mb-1">사용자 검색</label>
+          <label
+            htmlFor="share-user-search"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
+            사용자 검색
+          </label>
           <Input
+            id="share-user-search"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             onFocus={() => search.length > 0 && !selectedUser && setShowDropdown(true)}
             placeholder="이름 또는 아이디 검색"
           />
           {showDropdown && filteredUsers.length > 0 && (
-            <ul className="absolute z-10 mt-1 w-full max-h-40 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+            <ul
+              className="absolute z-10 mt-1 w-full max-h-40 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg"
+              role="listbox"
+            >
               {filteredUsers.map((u) => (
                 <li
                   key={u.id}
+                  role="option"
+                  aria-selected={selectedUser?.id === u.id}
                   className="px-3 py-2 text-sm cursor-pointer hover:bg-slate-100"
                   onMouseDown={() => handleSelectUser(u)}
                 >
@@ -122,8 +133,17 @@ export default function ShareDialog({ treeId, open, onClose }: Props) {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">역할</label>
-          <Select value={role} onChange={(e) => setRole(e.target.value as FamilyTreeRole)}>
+          <label
+            htmlFor="share-role-select"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
+            역할
+          </label>
+          <Select
+            id="share-role-select"
+            value={role}
+            onChange={(e) => setRole(e.target.value as FamilyTreeRole)}
+          >
             <option value="EDITOR">편집자</option>
             <option value="VIEWER">뷰어</option>
           </Select>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
 import { ClipboardDocumentIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
-import { acceptInvite, createInvite, getPairStatus, unpair, type PairResponse } from '../api/pair';
+import { acceptInvite, createInvite, getPairStatus, unpair } from '../api/pair';
 import { PageHeader } from '@repo/auth';
 import { queryKeys } from '../queryKeys';
 
@@ -35,6 +35,7 @@ export default function PairPage() {
     if (pair?.status === 'PENDING' && !inviteCode && !fetchInviteMutation.isPending) {
       fetchInviteMutation.mutate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pair?.status]);
 
   const createInviteMutation = useMutation({

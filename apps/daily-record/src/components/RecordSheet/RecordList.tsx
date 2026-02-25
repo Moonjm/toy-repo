@@ -37,8 +37,20 @@ export default function RecordList({
             return (
               <div
                 key={`t-${record.id}`}
+                role={isMine ? 'button' : undefined}
+                tabIndex={isMine ? 0 : undefined}
                 className={`flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs${isMine ? ' cursor-pointer active:bg-blue-100' : ''}`}
                 onClick={isMine ? () => onEdit(record) : undefined}
+                onKeyDown={
+                  isMine
+                    ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onEdit(record);
+                        }
+                      }
+                    : undefined
+                }
               >
                 <span className="text-sm">{record.category.emoji}</span>
                 <span className="text-slate-800">{record.category.name}</span>
@@ -77,8 +89,16 @@ export default function RecordList({
       {myNormal.map((record) => (
         <div
           key={record.id}
+          role="button"
+          tabIndex={0}
           className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs active:bg-slate-50"
           onClick={() => onEdit(record)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onEdit(record);
+            }
+          }}
         >
           <span className="text-sm">{record.category.emoji}</span>
           <span className="text-slate-800">{record.category.name}</span>

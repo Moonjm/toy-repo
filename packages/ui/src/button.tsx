@@ -48,12 +48,13 @@ export type ButtonProps = React.ComponentPropsWithoutRef<'button'> &
   };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ asChild, className, variant, size, radius, ...props }, ref) => {
+  ({ asChild, className, variant, size, radius, type, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
 
     return (
       <Comp
         ref={ref}
+        type={asChild ? type : (type ?? 'button')}
         className={cn(buttonVariants({ variant, size, radius }), className)}
         {...props}
       />

@@ -34,6 +34,7 @@ export default function TreeFormDialog({
     <Modal open onClose={onClose} title={title}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField label="이름" required>
+          {/* eslint-disable jsx-a11y/no-autofocus */}
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -41,6 +42,7 @@ export default function TreeFormDialog({
             required
             autoFocus
           />
+          {/* eslint-enable jsx-a11y/no-autofocus */}
         </FormField>
         <FormField label="설명">
           <Textarea

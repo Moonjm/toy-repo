@@ -1,6 +1,6 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 
-export default function CoupleNode(_props: NodeProps) {
+export default function CoupleNode() {
   return (
     <>
       <Handle type="target" position={Position.Left} className="!bg-transparent !border-0" />
