@@ -2,6 +2,8 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from '
 import dayjs from 'dayjs';
 
 const INITIAL_RANGE = 12;
+const SCROLL_THRESHOLD = 300;
+const EXTEND_MONTHS = 6;
 
 export function useCalendarRange(scrollContainerRef: React.RefObject<HTMLDivElement | null>) {
   const [rangeStart, setRangeStart] = useState(() =>
@@ -37,18 +39,18 @@ export function useCalendarRange(scrollContainerRef: React.RefObject<HTMLDivElem
     const el = scrollContainerRef.current;
     if (!el || isExtendingRef.current) return;
 
-    const needsPrepend = el.scrollTop < 300;
-    const needsAppend = el.scrollHeight - el.scrollTop - el.clientHeight < 300;
+    const needsPrepend = el.scrollTop < SCROLL_THRESHOLD;
+    const needsAppend = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
 
     if (needsPrepend || needsAppend) {
       isExtendingRef.current = true;
 
       if (needsPrepend) {
         scrollRestoreRef.current = { prevHeight: el.scrollHeight };
-        setRangeStart((prev) => prev.subtract(6, 'month'));
+        setRangeStart((prev) => prev.subtract(EXTEND_MONTHS, 'month'));
       }
       if (needsAppend) {
-        setRangeEnd((prev) => prev.add(6, 'month'));
+        setRangeEnd((prev) => prev.add(EXTEND_MONTHS, 'month'));
       }
 
       requestAnimationFrame(() => {
@@ -61,10 +63,10 @@ export function useCalendarRange(scrollContainerRef: React.RefObject<HTMLDivElem
   const extendRangeIfNeeded = useCallback(
     (target: dayjs.Dayjs) => {
       if (target.isBefore(rangeStart)) {
-        setRangeStart(target.subtract(6, 'month').startOf('month'));
+        setRangeStart(target.subtract(EXTEND_MONTHS, 'month').startOf('month'));
       }
       if (target.isAfter(rangeEnd)) {
-        setRangeEnd(target.add(6, 'month').startOf('month'));
+        setRangeEnd(target.add(EXTEND_MONTHS, 'month').startOf('month'));
       }
     },
     [rangeStart, rangeEnd]

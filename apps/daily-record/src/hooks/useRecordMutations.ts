@@ -11,7 +11,7 @@ import {
 interface UseRecordMutationsParams {
   selectedKey: string | null;
   selectedDate: Date | null;
-  reloadMonthRecords: (date: Date) => Promise<void> | void;
+  reloadMonthRecords: (date: Date) => Promise<void>;
   editingRecordId: number | null;
   selectedCategoryId: number | null;
   memoInput: string;
