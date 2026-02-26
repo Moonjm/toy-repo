@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, ConfirmDialog, Input } from '@repo/ui';
@@ -12,12 +12,33 @@ function formatError(error: unknown): string {
   return '요청 처리 중 문제가 발생했습니다.';
 }
 
+function copyToClipboard(text: string, onSuccess: () => void): void {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess);
+    return;
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  onSuccess();
+}
+
 export default function PairPage() {
   const queryClient = useQueryClient();
   const [inputCode, setInputCode] = useState('');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const clearMessages = () => {
+    setError(null);
+    setNotice(null);
+  };
 
   const { data: pair = null, isLoading: loading } = useQuery({
     queryKey: queryKeys.pair.status(),
@@ -76,8 +97,7 @@ export default function PairPage() {
     createInviteMutation.isPending || acceptInviteMutation.isPending || unpairMutation.isPending;
 
   const handleCreateInvite = () => {
-    setError(null);
-    setNotice(null);
+    clearMessages();
     createInviteMutation.mutate();
   };
 
@@ -87,32 +107,166 @@ export default function PairPage() {
       setError('초대 코드는 6자리입니다.');
       return;
     }
-    setError(null);
-    setNotice(null);
+    clearMessages();
     acceptInviteMutation.mutate(code);
   };
 
   const handleUnpair = () => {
-    setError(null);
-    setNotice(null);
+    clearMessages();
     unpairMutation.mutate();
   };
 
-  const handleCopy = (code: string) => {
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(code).then(() => setNotice('초대 코드가 복사되었습니다.'));
-    } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = code;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setNotice('초대 코드가 복사되었습니다.');
+  function renderContent() {
+    if (pair?.status === 'CONNECTED') {
+      return (
+        <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <div className="mb-6 text-center">
+            <div className="mb-2 text-4xl">💑</div>
+            <h2 className="text-lg font-bold text-slate-900">페어 연결됨</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {pair.partnerName ?? '상대방'}님과 연결되어 있습니다
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">상대방</span>
+              <span className="font-semibold text-slate-800">{pair.partnerName ?? '-'}</span>
+            </div>
+            {pair.connectedAt && (
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-slate-500">연결일</span>
+                <span className="font-semibold text-slate-800">
+                  {new Date(pair.connectedAt).toLocaleDateString('ko-KR')}
+                </span>
+              </div>
+            )}
+          </div>
+          <Link
+            to="/pair/events"
+            className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <CalendarDaysIcon className="h-4 w-4" />
+            기념일 관리
+          </Link>
+          <div className="mt-4">
+            <ConfirmDialog
+              title="페어 해제"
+              description="정말로 페어를 해제하시겠어요? 상대방의 기록을 더 이상 볼 수 없습니다."
+              confirmLabel="해제"
+              cancelLabel="취소"
+              onConfirm={handleUnpair}
+              trigger={
+                <Button
+                  variant="none"
+                  size="lg"
+                  className="w-full bg-slate-100 hover:bg-slate-200 border border-red-200 text-red-600"
+                  disabled={busy}
+                  type="button"
+                >
+                  페어 해제
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      );
     }
-  };
+
+    if (pair?.status === 'PENDING' && inviteCode) {
+      return (
+        <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <div className="mb-6 text-center">
+            <div className="mb-2 text-4xl">⏳</div>
+            <h2 className="text-lg font-bold text-slate-900">초대 대기 중</h2>
+            <p className="mt-1 text-sm text-slate-500">상대방에게 아래 코드를 공유하세요</p>
+          </div>
+          <div className="mx-auto mb-4 rounded-xl border border-slate-200 bg-slate-50 px-6 py-4 text-center">
+            <span className="text-2xl font-bold tracking-[0.3em] text-slate-900">{inviteCode}</span>
+          </div>
+          <Button
+            variant="none"
+            size="lg"
+            className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700"
+            onClick={() =>
+              copyToClipboard(inviteCode, () => setNotice('초대 코드가 복사되었습니다.'))
+            }
+            type="button"
+          >
+            <ClipboardDocumentIcon className="h-4 w-4" />
+            코드 복사
+          </Button>
+          <div className="mt-4">
+            <ConfirmDialog
+              title="초대 취소"
+              description="초대를 취소하시겠어요?"
+              confirmLabel="취소하기"
+              cancelLabel="돌아가기"
+              onConfirm={handleUnpair}
+              trigger={
+                <Button
+                  variant="none"
+                  size="lg"
+                  className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600"
+                  disabled={busy}
+                  type="button"
+                >
+                  초대 취소
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <div className="mb-6 text-center">
+            <div className="mb-2 text-4xl">🔗</div>
+            <h2 className="text-lg font-bold text-slate-900">페어 연결</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              상대방과 캘린더를 공유하여 서로의 기록을 확인하세요
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleCreateInvite}
+            disabled={busy}
+            type="button"
+          >
+            {busy ? '생성 중...' : '초대 코드 생성'}
+          </Button>
+        </div>
+
+        <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <h3 className="mb-4 text-center text-sm font-semibold text-slate-500">
+            초대 코드가 있다면
+          </h3>
+          <div className="flex gap-2">
+            <Input
+              value={inputCode}
+              maxLength={6}
+              onChange={(event) => setInputCode(event.target.value.toUpperCase())}
+              placeholder="6자리 코드 입력"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-lg font-bold tracking-[0.2em] text-slate-800 uppercase"
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleAcceptInvite}
+              disabled={busy || inputCode.trim().length !== 6}
+              type="button"
+            >
+              연결
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -139,148 +293,7 @@ export default function PairPage() {
             {notice}
           </div>
         )}
-
-        {pair?.status === 'CONNECTED' ? (
-          <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
-            <div className="mb-6 text-center">
-              <div className="mb-2 text-4xl">💑</div>
-              <h2 className="text-lg font-bold text-slate-900">페어 연결됨</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {pair.partnerName ?? '상대방'}님과 연결되어 있습니다
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">상대방</span>
-                <span className="font-semibold text-slate-800">{pair.partnerName ?? '-'}</span>
-              </div>
-              {pair.connectedAt && (
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-slate-500">연결일</span>
-                  <span className="font-semibold text-slate-800">
-                    {new Date(pair.connectedAt).toLocaleDateString('ko-KR')}
-                  </span>
-                </div>
-              )}
-            </div>
-            <Link
-              to="/pair/events"
-              className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <CalendarDaysIcon className="h-4 w-4" />
-              기념일 관리
-            </Link>
-            <div className="mt-4">
-              <ConfirmDialog
-                title="페어 해제"
-                description="정말로 페어를 해제하시겠어요? 상대방의 기록을 더 이상 볼 수 없습니다."
-                confirmLabel="해제"
-                cancelLabel="취소"
-                onConfirm={handleUnpair}
-                trigger={
-                  <Button
-                    variant="none"
-                    size="lg"
-                    className="w-full bg-slate-100 hover:bg-slate-200 border border-red-200 text-red-600"
-                    disabled={busy}
-                    type="button"
-                  >
-                    페어 해제
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-        ) : pair?.status === 'PENDING' && inviteCode ? (
-          <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
-            <div className="mb-6 text-center">
-              <div className="mb-2 text-4xl">⏳</div>
-              <h2 className="text-lg font-bold text-slate-900">초대 대기 중</h2>
-              <p className="mt-1 text-sm text-slate-500">상대방에게 아래 코드를 공유하세요</p>
-            </div>
-            <div className="mx-auto mb-4 rounded-xl border border-slate-200 bg-slate-50 px-6 py-4 text-center">
-              <span className="text-2xl font-bold tracking-[0.3em] text-slate-900">
-                {inviteCode}
-              </span>
-            </div>
-            <Button
-              variant="none"
-              size="lg"
-              className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700"
-              onClick={() => handleCopy(inviteCode)}
-              type="button"
-            >
-              <ClipboardDocumentIcon className="h-4 w-4" />
-              코드 복사
-            </Button>
-            <div className="mt-4">
-              <ConfirmDialog
-                title="초대 취소"
-                description="초대를 취소하시겠어요?"
-                confirmLabel="취소하기"
-                cancelLabel="돌아가기"
-                onConfirm={handleUnpair}
-                trigger={
-                  <Button
-                    variant="none"
-                    size="lg"
-                    className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600"
-                    disabled={busy}
-                    type="button"
-                  >
-                    초대 취소
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
-              <div className="mb-6 text-center">
-                <div className="mb-2 text-4xl">🔗</div>
-                <h2 className="text-lg font-bold text-slate-900">페어 연결</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  상대방과 캘린더를 공유하여 서로의 기록을 확인하세요
-                </p>
-              </div>
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={handleCreateInvite}
-                disabled={busy}
-                type="button"
-              >
-                {busy ? '생성 중...' : '초대 코드 생성'}
-              </Button>
-            </div>
-
-            <div className="rounded-3xl bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
-              <h3 className="mb-4 text-center text-sm font-semibold text-slate-500">
-                초대 코드가 있다면
-              </h3>
-              <div className="flex gap-2">
-                <Input
-                  value={inputCode}
-                  maxLength={6}
-                  onChange={(event) => setInputCode(event.target.value.toUpperCase())}
-                  placeholder="6자리 코드 입력"
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-lg font-bold tracking-[0.2em] text-slate-800 uppercase"
-                />
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleAcceptInvite}
-                  disabled={busy || inputCode.trim().length !== 6}
-                  type="button"
-                >
-                  연결
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+        {renderContent()}
       </div>
     </div>
   );

@@ -11,6 +11,15 @@ import {
 import { getPairStatus, fetchPartnerDailyRecords, type PairResponse } from '../api/pair';
 import { fetchPairEvents, type PairEvent } from '../api/pairEvents';
 
+function getMonthRange(targetMonth: Date): { key: string; from: string; to: string } {
+  const d = dayjs(targetMonth);
+  return {
+    key: d.format('YYYY-MM'),
+    from: d.startOf('month').format('YYYY-MM-DD'),
+    to: d.endOf('month').format('YYYY-MM-DD'),
+  };
+}
+
 export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
   const [recordsByDate, setRecordsByDate] = useState<Record<string, DailyRecord[]>>({});
   const [partnerRecordsByDate, setPartnerRecordsByDate] = useState<Record<string, DailyRecord[]>>(
@@ -32,26 +41,22 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
 
   const isPaired = pairInfo?.status === 'CONNECTED';
 
-  // Use ref for visibleMonth to avoid effect re-triggering on scroll
   const visibleMonthRef = useRef(visibleMonth);
   visibleMonthRef.current = visibleMonth;
 
   /* ---------- Load functions ---------- */
 
   const loadMonthRecords = useCallback((targetMonth: Date) => {
-    const mk = dayjs(targetMonth).format('YYYY-MM');
+    const { key: mk, from, to } = getMonthRange(targetMonth);
     if (loadedMonthsRef.current.records.has(mk)) return;
     loadedMonthsRef.current.records.add(mk);
-    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
     fetchDailyRecords({ from, to })
       .then((res) => {
         setRecordsByDate((prev) => {
           const next = { ...prev };
           (res.data ?? []).forEach((record) => {
             const key = dayjs(record.date).format('YYYY-MM-DD');
-            if (!next[key]) next[key] = [];
-            next[key].push(record);
+            (next[key] ||= []).push(record);
           });
           return next;
         });
@@ -64,19 +69,16 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
   const loadPartnerRecords = useCallback(
     (targetMonth: Date) => {
       if (!pairInfo || pairInfo.status !== 'CONNECTED') return;
-      const mk = dayjs(targetMonth).format('YYYY-MM');
+      const { key: mk, from, to } = getMonthRange(targetMonth);
       if (loadedMonthsRef.current.partner.has(mk)) return;
       loadedMonthsRef.current.partner.add(mk);
-      const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-      const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
       fetchPartnerDailyRecords({ from, to })
         .then((res) => {
           setPartnerRecordsByDate((prev) => {
             const next = { ...prev };
             (res.data ?? []).forEach((record) => {
               const key = dayjs(record.date).format('YYYY-MM-DD');
-              if (!next[key]) next[key] = [];
-              next[key].push(record);
+              (next[key] ||= []).push(record);
             });
             return next;
           });
@@ -91,11 +93,9 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
   const loadPairEvents = useCallback(
     (targetMonth: Date) => {
       if (!pairInfo || pairInfo.status !== 'CONNECTED') return;
-      const mk = dayjs(targetMonth).format('YYYY-MM');
+      const { key: mk, from, to } = getMonthRange(targetMonth);
       if (loadedMonthsRef.current.events.has(mk)) return;
       loadedMonthsRef.current.events.add(mk);
-      const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-      const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
       fetchPairEvents({ from, to })
         .then((res) => {
           setPairEventsByDate((prev) => {
@@ -105,8 +105,7 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
               const eventDay = event.eventDate.substring(8, 10);
               const year = dayjs(targetMonth).year();
               const key = `${year}-${eventMonth}-${eventDay}`;
-              if (!next[key]) next[key] = [];
-              next[key].push(event);
+              (next[key] ||= []).push(event);
             });
             return next;
           });
@@ -119,11 +118,9 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
   );
 
   const loadOvereats = useCallback((targetMonth: Date) => {
-    const mk = dayjs(targetMonth).format('YYYY-MM');
+    const { key: mk, from, to } = getMonthRange(targetMonth);
     if (loadedMonthsRef.current.overeats.has(mk)) return;
     loadedMonthsRef.current.overeats.add(mk);
-    const from = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
-    const to = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
     fetchDailyOvereats(from, to)
       .then((res) => {
         setOvereatByDate((prev) => {
@@ -150,8 +147,7 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
   );
 
   const reloadMonthRecords = useCallback(async (targetDate: Date) => {
-    const from = dayjs(targetDate).startOf('month').format('YYYY-MM-DD');
-    const to = dayjs(targetDate).endOf('month').format('YYYY-MM-DD');
+    const { from, to } = getMonthRange(targetDate);
     try {
       const [res, ovRes] = await Promise.all([
         fetchDailyRecords({ from, to }),
@@ -185,7 +181,6 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
 
   /* ---------- Initial data loading ---------- */
 
-  // Holidays
   useEffect(() => {
     const years = new Set(months.map((m) => String(m.year())));
     years.forEach((year) => {
@@ -201,8 +196,7 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
                 const key = dayjs(item.date).format('YYYY-MM-DD');
                 const label = item.localName ?? item.name;
                 if (!label) return;
-                if (!next[key]) next[key] = [];
-                next[key].push(label);
+                (next[key] ||= []).push(label);
               }
             );
             return next;
@@ -214,7 +208,6 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
     });
   }, [months]);
 
-  // Categories
   useEffect(() => {
     let cancelled = false;
     fetchCategories(true)
@@ -228,7 +221,6 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
     };
   }, []);
 
-  // Pair status
   useEffect(() => {
     let cancelled = false;
     getPairStatus()
@@ -242,7 +234,6 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
     };
   }, []);
 
-  // Load partner data after pair info loads
   useEffect(() => {
     if (!isPaired) return;
     const current = dayjs(visibleMonthRef.current + '-01');

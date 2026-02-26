@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
 
 type YearMonthPickerProps = {
@@ -19,11 +19,16 @@ export default function YearMonthPicker({
   const visibleMonthRef = useRef(visibleMonth);
   visibleMonthRef.current = visibleMonth;
 
+  const currentMonth = useMemo(() => dayjs(visibleMonth + '-01'), [visibleMonth]);
+  const selectedYear = currentMonth.year();
+  const selectedMonthNum = currentMonth.month() + 1;
+
   useEffect(() => {
     if (!open) return;
     requestAnimationFrame(() => {
-      const y = dayjs(visibleMonthRef.current + '-01').year();
-      const row = yearScrollRef.current?.querySelector(`[data-year="${y}"]`) as HTMLElement | null;
+      const row = yearScrollRef.current?.querySelector(
+        `[data-year="${dayjs(visibleMonthRef.current + '-01').year()}"]`
+      ) as HTMLElement | null;
       if (row && yearScrollRef.current) {
         yearScrollRef.current.scrollTop =
           row.offsetTop - yearScrollRef.current.offsetHeight / 2 + row.offsetHeight / 2;
@@ -44,39 +49,33 @@ export default function YearMonthPicker({
           ref={yearScrollRef}
           className="flex h-48 w-28 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain"
         >
-          {Array.from({ length: 20 }, (_, i) => 2018 + i).map((y) => {
-            const isSelected = dayjs(visibleMonth + '-01').year() === y;
-            return (
-              <button
-                key={y}
-                data-year={y}
-                type="button"
-                className={`snap-center px-3 py-2 text-center text-sm ${
-                  isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
-                }`}
-                onClick={() => onSelectMonth(dayjs(visibleMonth + '-01').year(y))}
-              >
-                {y}년
-              </button>
-            );
-          })}
+          {Array.from({ length: 20 }, (_, i) => 2018 + i).map((y) => (
+            <button
+              key={y}
+              data-year={y}
+              type="button"
+              className={`snap-center px-3 py-2 text-center text-sm ${
+                selectedYear === y ? 'font-bold text-slate-900' : 'text-slate-400'
+              }`}
+              onClick={() => onSelectMonth(currentMonth.year(y))}
+            >
+              {y}년
+            </button>
+          ))}
         </div>
         <div className="flex h-48 w-20 snap-y snap-mandatory flex-col overflow-y-auto overscroll-contain">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
-            const isSelected = dayjs(visibleMonth + '-01').month() + 1 === m;
-            return (
-              <button
-                key={m}
-                type="button"
-                className={`snap-center px-3 py-2 text-center text-sm ${
-                  isSelected ? 'font-bold text-slate-900' : 'text-slate-400'
-                }`}
-                onClick={() => onSelectMonth(dayjs(visibleMonth + '-01').month(m - 1))}
-              >
-                {m}월
-              </button>
-            );
-          })}
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`snap-center px-3 py-2 text-center text-sm ${
+                selectedMonthNum === m ? 'font-bold text-slate-900' : 'text-slate-400'
+              }`}
+              onClick={() => onSelectMonth(currentMonth.month(m - 1))}
+            >
+              {m}월
+            </button>
+          ))}
         </div>
       </div>
       {open && (

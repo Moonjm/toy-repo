@@ -19,8 +19,9 @@ type SideDrawerProps = {
 export default function SideDrawer({ open, onClose, isAdmin, onLogout }: SideDrawerProps) {
   return (
     <>
-      <div
-        role="presentation"
+      <button
+        type="button"
+        aria-label="메뉴 닫기"
         className={`fixed inset-0 z-50 bg-black/30 transition-opacity ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}

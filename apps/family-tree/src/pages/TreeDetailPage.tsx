@@ -120,18 +120,11 @@ export default function TreeDetailPage() {
         </div>
         {selectedPerson && (
           <>
-            <div
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               aria-label="패널 닫기"
               className="absolute inset-0 z-10 sm:hidden"
               onClick={() => setSelectedPerson(null)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setSelectedPerson(null);
-                }
-              }}
             />
             <SidePanel
               person={selectedPerson}
