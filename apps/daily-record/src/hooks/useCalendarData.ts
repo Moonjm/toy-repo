@@ -174,8 +174,9 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
         }, {});
         return { ...otherMonths, ...reloaded };
       });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to reload month records:', err);
+      throw err;
     }
   }, []);
 
