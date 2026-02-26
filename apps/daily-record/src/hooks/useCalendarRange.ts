@@ -11,6 +11,7 @@ export function useCalendarRange(scrollContainerRef: React.RefObject<HTMLDivElem
     dayjs().add(INITIAL_RANGE, 'month').startOf('month')
   );
   const scrollRestoreRef = useRef<{ prevHeight: number } | null>(null);
+  const isExtendingRef = useRef(false);
 
   const months = useMemo(() => {
     const result: dayjs.Dayjs[] = [];
@@ -34,15 +35,25 @@ export function useCalendarRange(scrollContainerRef: React.RefObject<HTMLDivElem
   /* Infinite scroll */
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
-    if (!el) return;
+    if (!el || isExtendingRef.current) return;
 
-    if (el.scrollTop < 300) {
-      scrollRestoreRef.current = { prevHeight: el.scrollHeight };
-      setRangeStart((prev) => prev.subtract(6, 'month'));
-    }
+    const needsPrepend = el.scrollTop < 300;
+    const needsAppend = el.scrollHeight - el.scrollTop - el.clientHeight < 300;
 
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
-      setRangeEnd((prev) => prev.add(6, 'month'));
+    if (needsPrepend || needsAppend) {
+      isExtendingRef.current = true;
+
+      if (needsPrepend) {
+        scrollRestoreRef.current = { prevHeight: el.scrollHeight };
+        setRangeStart((prev) => prev.subtract(6, 'month'));
+      }
+      if (needsAppend) {
+        setRangeEnd((prev) => prev.add(6, 'month'));
+      }
+
+      requestAnimationFrame(() => {
+        isExtendingRef.current = false;
+      });
     }
   }, [scrollContainerRef]);
 

@@ -11,7 +11,7 @@ import {
 interface UseRecordMutationsParams {
   selectedKey: string | null;
   selectedDate: Date | null;
-  reloadMonthRecords: (date: Date) => void;
+  reloadMonthRecords: (date: Date) => Promise<void> | void;
   editingRecordId: number | null;
   selectedCategoryId: number | null;
   memoInput: string;
@@ -37,16 +37,24 @@ export function useRecordMutations({
 }: UseRecordMutationsParams) {
   const deleteMutation = useMutation({
     mutationFn: (recordId: number) => deleteDailyRecord(recordId),
-    onSuccess: () => {
-      if (selectedDate) reloadMonthRecords(selectedDate);
+    onSuccess: async () => {
+      try {
+        if (selectedDate) await reloadMonthRecords(selectedDate);
+      } catch {
+        /* logged in reloadMonthRecords */
+      }
     },
   });
 
   const overeatMutation = useMutation({
     mutationFn: ({ date, level }: { date: string; level: OvereatLevel }) =>
       updateOvereatLevel(date, level),
-    onSuccess: () => {
-      if (selectedDate) reloadMonthRecords(selectedDate);
+    onSuccess: async () => {
+      try {
+        if (selectedDate) await reloadMonthRecords(selectedDate);
+      } catch {
+        /* logged in reloadMonthRecords */
+      }
     },
   });
 
@@ -65,12 +73,16 @@ export function useRecordMutations({
         await createDailyRecord(req);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setEditingRecordId(null);
       setSelectedCategoryId(null);
       setMemoInput('');
       setTogetherInput(false);
-      if (selectedDate) reloadMonthRecords(selectedDate);
+      try {
+        if (selectedDate) await reloadMonthRecords(selectedDate);
+      } catch {
+        /* logged in reloadMonthRecords */
+      }
     },
   });
 
