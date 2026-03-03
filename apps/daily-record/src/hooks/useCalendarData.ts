@@ -189,19 +189,8 @@ export function useCalendarData(months: dayjs.Dayjs[], visibleMonth: string) {
       holidayCacheRef.current[year] = true;
       fetchHolidays(year)
         .then((res) => {
-          if (!Array.isArray(res?.data)) return;
-          setHolidayMap((prev) => {
-            const next = { ...prev };
-            res.data.forEach(
-              (item: { date: string; localName?: string | null; name?: string | null }) => {
-                const key = dayjs(item.date).format('YYYY-MM-DD');
-                const label = item.localName ?? item.name;
-                if (!label) return;
-                (next[key] ||= []).push(label);
-              }
-            );
-            return next;
-          });
+          if (!res?.data) return;
+          setHolidayMap((prev) => ({ ...prev, ...res.data }));
         })
         .catch(() => {
           holidayCacheRef.current[year] = false;
