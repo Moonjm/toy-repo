@@ -20,7 +20,7 @@ export default function CategoryIcon({ emoji, className = '' }: CategoryIconProp
         src={`/icons/${fileName}.svg`}
         alt={fileName}
         className={`inline-block ${className}`}
-        style={{ width: '1em', height: '1em' }}
+        style={{ width: '1.2em', height: '1.2em', verticalAlign: '-0.1em' }}
         onError={(e) => {
           e.currentTarget.style.display = 'none';
         }}
