@@ -4,6 +4,7 @@ import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { getPairStatus, fetchPartnerDailyRecords } from '../api/pair';
 import { PageHeader } from '@repo/auth';
 import { Button, FormField, Select } from '@repo/ui';
+import CategoryIcon from '../components/CategoryIcon';
 
 type Filter = 'all' | 'together' | 'solo';
 
@@ -189,7 +190,7 @@ export default function StatsPage() {
                 <div key={item.id} className="grid gap-2">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{item.emoji}</span>
+                      <CategoryIcon emoji={item.emoji} className="text-lg" />
                       <span className="font-semibold text-slate-800">{item.name}</span>
                     </div>
                     <span className="text-xs font-semibold text-slate-500">

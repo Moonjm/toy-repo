@@ -4,6 +4,7 @@ import { PageHeader } from '@repo/auth';
 import { FormField, Input, Select } from '@repo/ui';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { fetchCategories, type Category } from '../api/categories';
+import CategoryIcon from '../components/CategoryIcon';
 
 export default function SearchPage() {
   const now = dayjs();
@@ -154,7 +155,7 @@ export default function SearchPage() {
                     {dayjs(record.date).format('M월 D일 dddd')}
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <span className="text-lg">{record.category.emoji}</span>
+                    <CategoryIcon emoji={record.category.emoji} className="text-lg" />
                     {record.category.name}
                     {record.together && (
                       <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">

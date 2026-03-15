@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Button, Input } from '@repo/ui';
 import type { Category } from '../../api/categories';
+import CategoryIcon from '../CategoryIcon';
 
 type RecordFormProps = {
   categories: Category[];
@@ -61,7 +62,7 @@ export default function RecordForm({
                   onClick={() => onSelectCategory(category.id)}
                   type="button"
                 >
-                  <span className="mr-1">{category.emoji}</span>
+                  <CategoryIcon emoji={category.emoji} className="mr-1" />
                   {category.name}
                 </Button>
               );

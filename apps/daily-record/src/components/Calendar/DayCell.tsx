@@ -1,6 +1,7 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import type { CalendarDataMaps } from '../../types/calendar';
+import CategoryIcon from '../CategoryIcon';
 
 type DayCellProps = {
   date: dayjs.Dayjs;
@@ -112,9 +113,11 @@ const DayCell = React.memo(function DayCell({ date, data, isPaired, onSelect }: 
             {togetherEmojis.length > 0 && (
               <div className="flex flex-wrap justify-center gap-0.5 rounded-full bg-blue-100 px-1">
                 {togetherEmojis.map((emoji, i) => (
-                  <span key={`t-${i}`} className="text-[10px] leading-tight">
-                    {emoji}
-                  </span>
+                  <CategoryIcon
+                    key={`t-${i}`}
+                    emoji={emoji}
+                    className="text-[10px] leading-tight"
+                  />
                 ))}
               </div>
             )}
@@ -125,9 +128,11 @@ const DayCell = React.memo(function DayCell({ date, data, isPaired, onSelect }: 
               <div className="flex w-full items-stretch justify-center gap-0.5">
                 <div className="flex flex-col items-center">
                   {myEmojis.map((emoji, i) => (
-                    <span key={`m-${i}`} className="text-[10px] leading-tight">
-                      {emoji}
-                    </span>
+                    <CategoryIcon
+                      key={`m-${i}`}
+                      emoji={emoji}
+                      className="text-[10px] leading-tight"
+                    />
                   ))}
                 </div>
                 {myEmojis.length > 0 && partnerEmojis.length > 0 && (
@@ -135,9 +140,11 @@ const DayCell = React.memo(function DayCell({ date, data, isPaired, onSelect }: 
                 )}
                 <div className="flex flex-col items-center">
                   {partnerEmojis.map((emoji, i) => (
-                    <span key={`p-${i}`} className="text-[10px] leading-tight opacity-60">
-                      {emoji}
-                    </span>
+                    <CategoryIcon
+                      key={`p-${i}`}
+                      emoji={emoji}
+                      className="text-[10px] leading-tight opacity-60"
+                    />
                   ))}
                 </div>
               </div>
@@ -146,9 +153,7 @@ const DayCell = React.memo(function DayCell({ date, data, isPaired, onSelect }: 
         ) : myEmojis.length > 0 ? (
           <div className="flex flex-wrap justify-center gap-0.5">
             {myEmojis.map((emoji, i) => (
-              <span key={`${key}-${i}`} className="text-xs leading-none">
-                {emoji}
-              </span>
+              <CategoryIcon key={`${key}-${i}`} emoji={emoji} className="text-xs leading-none" />
             ))}
           </div>
         ) : null}
