@@ -24,6 +24,7 @@ import {
 } from '../api/categories';
 import { PageHeader } from '@repo/auth';
 import { queryKeys } from '../queryKeys';
+import CategoryIcon from '../components/CategoryIcon';
 
 const emptyForm: CategoryRequest = {
   emoji: '',
@@ -88,7 +89,7 @@ function SortableItem({
           >
             <Bars3Icon className="h-5 w-5" />
           </button>
-          <span className="text-3xl">{item.emoji}</span>
+          <CategoryIcon emoji={item.emoji} className="text-3xl" />
           <div>
             <p className="text-base font-semibold text-slate-900">{item.name}</p>
           </div>

@@ -2,6 +2,7 @@ import type { KeyboardEvent } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { IconButton, ConfirmDialog } from '@repo/ui';
 import type { DailyRecord } from '../../api/dailyRecords';
+import CategoryIcon from '../CategoryIcon';
 
 type RecordListProps = {
   myRecords: DailyRecord[];
@@ -25,7 +26,7 @@ function handleActivate(callback: () => void) {
 function RecordContent({ record }: { record: DailyRecord }) {
   return (
     <>
-      <span className="text-sm">{record.category.emoji}</span>
+      <CategoryIcon emoji={record.category.emoji} className="text-sm" />
       <span className="text-slate-800">{record.category.name}</span>
       {record.memo && <span className="text-slate-500">{record.memo}</span>}
     </>
