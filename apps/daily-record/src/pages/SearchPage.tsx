@@ -4,7 +4,7 @@ import { PageHeader } from '@repo/auth';
 import { FormField, Input, Select } from '@repo/ui';
 import { fetchDailyRecords, type DailyRecord } from '../api/dailyRecords';
 import { fetchCategories, type Category } from '../api/categories';
-import CategoryIcon from '../components/CategoryIcon';
+import CategoryIcon, { isCustomIcon } from '../components/CategoryIcon';
 
 export default function SearchPage() {
   const now = dayjs();
@@ -119,7 +119,9 @@ export default function SearchPage() {
                   <option value="all">전체</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.emoji} {category.name}
+                      {isCustomIcon(category.emoji)
+                        ? category.name
+                        : `${category.emoji} ${category.name}`}
                     </option>
                   ))}
                 </Select>
